@@ -1,94 +1,148 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Электромагнитная индукция</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; margin: 0; padding: 10px; user-select: none; }
-        .container { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 15px; }
-        canvas { display: block; cursor: grab; }
-        canvas:active { cursor: grabbing; }
-        .info { margin-top: 10px; font-size: 13px; color: #555; text-align: center; max-width: 400px; }
+        /* Адаптация под мобильные устройства */
+        body { 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background: #f0f2f5; 
+            margin: 0; 
+            padding: 10px; 
+            touch-action: none; /* Отключает случайную прокрутку страницы при движении магнита */
+            overflow: hidden;
+            height: 100vh;
+            justify-content: center;
+        }
+        .container { 
+            background: white; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
+            padding: 15px; 
+            width: 90%; 
+            max-width: 400px;
+        }
+        canvas { 
+            display: block; 
+            width: 100%; /* Растягивается по ширине контейнера */
+            height: auto;
+            background: #fafafa;
+            border-radius: 8px;
+            touch-action: none;
+        }
+        .info { 
+            margin-top: 15px; 
+            font-size: 14px; 
+            color: #444; 
+            text-align: center; 
+            line-height: 1.4;
+        }
         b { color: #d63031; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <canvas id="c" width="450" height="500"></canvas>
+        <canvas id="c" width="400" height="500"></canvas>
         <div class="info">
-            Двигайте <b>магнит</b> сквозь катушку.<br>
-            Чем быстрее движение, тем сильнее ток (Закон Фарадея).
+            Двигайте <b>магнит</b> пальцем сквозь катушку.<br>
+            Закон Фарадея: чем быстрее движение, тем сильнее индукционный ток.
         </div>
     </div>
 
     <script>
         const cvs = document.getElementById('c'), ctx = cvs.getContext('2d');
-        let magY = 100, lastY = 100, drag = false, current = 0;
-        const coilY = 300, coilR = 40;
+        let magY = 150, lastY = 150, drag = false, current = 0;
+        let offsetY = 0;
+        const coilY = 320, coilR = 50;
 
-        cvs.onmousedown = e => { if(Math.abs(e.offsetY - magY) < 60) drag = true; };
-        window.onmouseup = () => drag = false;
-        cvs.onmousemove = e => { if(drag) magY = Math.max(50, Math.min(450, e.offsetY)); };
+        // Обработка касаний (смартфон + мышь)
+        cvs.addEventListener('pointerdown', e => {
+            const rect = cvs.getBoundingClientRect();
+            const clientY = (e.clientY - rect.top) * (cvs.height / rect.height);
+            
+            // Если нажали в области магнита (с запасом для пальца)
+            if(Math.abs(clientY - magY) < 80) {
+                drag = true;
+                offsetY = clientY - magY;
+                cvs.setPointerCapture(e.pointerId); // Удерживает фокус, даже если палец ушел чуть в сторону
+            }
+        });
+
+        window.addEventListener('pointerup', () => drag = false);
+
+        window.addEventListener('pointermove', e => {
+            if(!drag) return;
+            const rect = cvs.getBoundingClientRect();
+            const clientY = (e.clientY - rect.top) * (cvs.height / rect.height);
+            magY = Math.max(60, Math.min(440, clientY - offsetY));
+        });
 
         function draw() {
-            ctx.clearRect(0, 0, 450, 500);
+            ctx.clearRect(0, 0, 400, 500);
 
-            // 1. Расчет индукции (ЭДС ~ dФ/dt)
-            // Ток возникает только при изменении положения магнита относительно катушки
+            // 1. Расчет физики (Индукция)
             let dy = magY - lastY;
             let dist = Math.abs(magY - coilY);
-            // Коэффициент близости (чем ближе к катушке, тем сильнее влияние)
-            let effect = Math.exp(-Math.pow(dist/60, 2)); 
+            // Эффект близости к катушке (гауссова кривая)
+            let effect = Math.exp(-Math.pow(dist/50, 2)); 
             
-            // Плавное затухание стрелки
-            current = current * 0.8 + (dy * effect * 5) * 0.2;
+            // Плавное движение стрелки (инерция)
+            current = current * 0.85 + (dy * effect * 8) * 0.15;
             lastY = magY;
 
-            // 2. Рисуем гальванометр (сверху)
-            const gx = 225, gy = 80;
+            // 2. Рисуем гальванометр
+            const gx = 200, gy = 100;
             ctx.strokeStyle = "#333"; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(gx, gy, 60, Math.PI, 0); ctx.stroke();
+            ctx.beginPath(); ctx.arc(gx, gy, 70, Math.PI, 0); ctx.stroke();
+            
             // Шкала
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
             for(let a=-Math.PI; a<=0; a+=Math.PI/10) {
-                ctx.moveTo(gx+Math.cos(a)*50, gy+Math.sin(a)*50);
-                ctx.lineTo(gx+Math.cos(a)*60, gy+Math.sin(a)*60);
+                ctx.moveTo(gx+Math.cos(a)*60, gy+Math.sin(a)*60);
+                ctx.lineTo(gx+Math.cos(a)*70, gy+Math.sin(a)*70);
             }
             ctx.stroke();
-            // Стрелка
-            let angle = -Math.PI/2 + (current * 0.1);
+
+            // Стрелка гальванометра
+            let angle = -Math.PI/2 + (current * 0.12);
+            // Ограничение угла стрелки
+            angle = Math.max(-Math.PI + 0.2, Math.min(-0.2, angle));
+            
             ctx.strokeStyle = "#d63031"; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.moveTo(gx, gy);
-            ctx.lineTo(gx + Math.cos(angle)*55, gy + Math.sin(angle)*55);
+            ctx.lineTo(gx + Math.cos(angle)*65, gy + Math.sin(angle)*65);
             ctx.stroke();
-            ctx.fillStyle = "#333"; ctx.fillText("G", gx-5, gy-70);
+            ctx.fillStyle = "#333"; ctx.fillText("ГАЛЬВАНОМЕТР", gx, gy + 20);
 
-            // 3. Рисуем катушку (в разрезе)
-            ctx.strokeStyle = "#fdcb6e"; ctx.lineWidth = 4;
-            for(let i=0; i<6; i++) {
+            // 3. Рисуем катушку (медные витки)
+            ctx.strokeStyle = "#d35400"; ctx.lineWidth = 5;
+            for(let i=0; i<8; i++) {
                 ctx.beginPath();
-                ctx.ellipse(225, coilY - 20 + i*8, 50, 15, 0, 0, Math.PI*2);
+                ctx.ellipse(200, coilY - 30 + i*9, 60, 18, 0, 0, Math.PI*2);
                 ctx.stroke();
             }
 
-            // 4. Рисуем провода к гальванометру
-            ctx.strokeStyle = "#aaa"; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
-            ctx.beginPath(); ctx.moveTo(175, coilY); ctx.lineTo(165, gy); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(275, coilY); ctx.lineTo(285, gy); ctx.stroke();
-            ctx.setLineDash([]);
-
-            // 5. Рисуем магнит
-            ctx.lineWidth = 1;
-            // Северный полюс (N)
-            ctx.fillStyle = "#d63031";
-            ctx.fillRect(205, magY - 60, 40, 60);
-            ctx.fillStyle = "white"; ctx.fillText("N", 220, magY - 30);
-            // Южный полюс (S)
+            // 4. Рисуем магнит
+            const mx = 175, mw = 50, mh = 120;
+            // Южный полюс (S) - синий
             ctx.fillStyle = "#0984e3";
-            ctx.fillRect(205, magY, 40, 60);
-            ctx.fillStyle = "white"; ctx.fillText("S", 220, magY + 35);
+            ctx.fillRect(mx, magY, mw, mh/2);
+            ctx.fillStyle = "white"; ctx.fillText("S", mx + mw/2, magY + 40);
+            // Северный полюс (N) - красный
+            ctx.fillStyle = "#d63031";
+            ctx.fillRect(mx, magY - mh/2, mw, mh/2);
+            ctx.fillStyle = "white"; ctx.fillText("N", mx + mw/2, magY - 20);
 
             requestAnimationFrame(draw);
         }
+
         draw();
     </script>
 </body>
