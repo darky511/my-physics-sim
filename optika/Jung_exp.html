@@ -1,25 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Эксперимент Юнга</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Опыт Юнга</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #1a1a1a; color: white; margin: 0; padding: 10px; }
-        canvas { background: black; border: 1px solid #444; border-radius: 8px; cursor: crosshair; }
-        .ui { margin-top: 15px; background: #333; padding: 15px; border-radius: 12px; display: grid; gap: 10px; width: 400px; }
-        .row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        input[type=range] { width: 180px; }
-        b { color: #00ffcc; }
+        body { 
+            font-family: -apple-system, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background: #121212; /* Глубокий черный для контраста волн */
+            color: white; 
+            margin: 0; 
+            padding: 10px; 
+            touch-action: manipulation; 
+        }
+        .container {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas { 
+            background: #000; 
+            border-radius: 12px; 
+            width: 100%; 
+            height: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.1);
+        }
+        .ui { 
+            margin-top: 15px; 
+            background: #252525; 
+            padding: 20px; 
+            border-radius: 16px; 
+            display: flex;
+            flex-direction: column;
+            gap: 15px; 
+            width: 90%; 
+        }
+        .row { 
+            display: flex; 
+            flex-direction: column;
+            gap: 8px;
+            font-size: 14px; 
+        }
+        .label-group {
+            display: flex;
+            justify-content: space-between;
+        }
+        input[type=range] { 
+            width: 100%; 
+            height: 30px; /* Удобно для пальца */
+            cursor: pointer;
+        }
+        b { color: #00ffcc; font-size: 16px; }
+        .hint {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
 
-    <canvas id="yCanvas" width="450" height="500"></canvas>
+    <div class="container">
+        <canvas id="yCanvas" width="450" height="550"></canvas>
 
-    <div class="ui">
-        <div class="row">Длина волны (λ): <input type="range" id="waveL" min="10" max="60" value="30"> <b id="vL">30</b></div>
-        <div class="row">Расстояние щелей (d): <input type="range" id="dist" min="10" max="100" value="40"> <b id="vD">40</b></div>
-        <div style="font-size: 11px; color: #aaa; text-align: center; margin-top: 5px;">
-            Меняйте параметры, чтобы увидеть изменение интерференционной картины
+        <div class="ui">
+            <div class="row">
+                <div class="label-group">
+                    <span>Длина волны (λ):</span>
+                    <b id="vL">30</b>
+                </div>
+                <input type="range" id="waveL" min="15" max="60" value="30">
+            </div>
+            
+            <div class="row">
+                <div class="label-group">
+                    <span>Расстояние между щелями (d):</span>
+                    <b id="vD">40</b>
+                </div>
+                <input type="range" id="dist" min="15" max="100" value="40">
+            </div>
+            
+            <div class="hint">
+                Чем меньше <b>d</b> и больше <b>λ</b>, тем шире интерференционные полосы.
+            </div>
         </div>
     </div>
 
@@ -35,70 +104,80 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const screenY = 350; // Положение экрана
-            const sourceY = 50;  // Положение щелей
+            const screenY = 320; 
+            const sourceY = 60;  
             const centerX = canvas.width / 2;
 
-            // 1. Рисуем щели (S1 и S2)
+            // 1. Рисуем экран с щелями
             const s1x = centerX - d / 2;
             const s2x = centerX + d / 2;
 
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, sourceY - 2, canvas.width, 4); // Непрозрачный экран
-            ctx.clearRect(s1x - 2, sourceY - 5, 4, 10);    // Щель 1
-            ctx.clearRect(s2x - 2, sourceY - 5, 4, 10);    // Щель 2
+            ctx.strokeStyle = "#444";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, sourceY); ctx.lineTo(s1x - 5, sourceY);
+            ctx.moveTo(s1x + 5, sourceY); ctx.lineTo(s2x - 5, sourceY);
+            ctx.moveTo(s2x + 5, sourceY); ctx.lineTo(canvas.width, sourceY);
+            ctx.stroke();
             
             ctx.fillStyle = "#00ffcc";
-            ctx.fillText("S1", s1x - 5, sourceY - 15);
-            ctx.fillText("S2", s2x - 5, sourceY - 15);
+            ctx.font = "bold 14px Arial";
+            ctx.fillText("S1", s1x - 8, sourceY - 15);
+            ctx.fillText("S2", s2x - 8, sourceY - 15);
 
-            // 2. Расчет интерференции на нижнем экране
-            // Формула интенсивности: I = I0 * cos²(pi * d * sin(theta) / lambda)
-            // При малых углах sin(theta) ≈ x / L
+            // 2. Генерация интерференционной картины (настоящие пиксели)
+            const stripeHeight = 60;
+            const imgData = ctx.createImageData(canvas.width, stripeHeight);
             
-            const imgData = ctx.createImageData(canvas.width, 50);
             for (let x = 0; x < canvas.width; x++) {
                 let distToCenter = x - centerX;
+                // Разность хода: Δ = d * sin(θ) ≈ d * (x/L)
                 let pathDiff = (d * distToCenter) / (screenY - sourceY);
+                // Интенсивность I = cos²(π * Δ / λ)
                 let intensity = Math.pow(Math.cos(Math.PI * pathDiff / lambda), 2);
                 
                 let val = intensity * 255;
-                let idx = x * 4;
-                imgData.data[idx] = 0;           // R
-                imgData.data[idx + 1] = val;     // G
-                imgData.data[idx + 2] = val * 0.8; // B
-                imgData.data[idx + 3] = 255;     // A
+                for (let y = 0; y < stripeHeight; y++) {
+                    let idx = (x + y * canvas.width) * 4;
+                    imgData.data[idx] = 0;           // R
+                    imgData.data[idx + 1] = val;     // G
+                    imgData.data[idx + 2] = val * 0.7; // B (бирюзовый оттенок)
+                    imgData.data[idx + 3] = 255;     // Alpha
+                }
             }
             ctx.putImageData(imgData, 0, screenY);
 
-            // 3. Рисуем график интенсивности
+            // 3. График интенсивности
             ctx.strokeStyle = "#00ffcc";
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 2;
             ctx.beginPath();
             for (let x = 0; x < canvas.width; x++) {
                 let distToCenter = x - centerX;
                 let pathDiff = (d * distToCenter) / (screenY - sourceY);
                 let intensity = Math.pow(Math.cos(Math.PI * pathDiff / lambda), 2);
                 
-                let y = (screenY + 120) - intensity * 60;
-                if (x === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+                let graphY = (screenY + 160) - intensity * 80;
+                if (x === 0) ctx.moveTo(x, graphY);
+                else ctx.lineTo(x, graphY);
             }
             ctx.stroke();
 
-            // 4. Схематичные волны (декоративно)
-            ctx.globalAlpha = 0.2;
-            ctx.setLineDash([5, 10]);
-            for (let r = 20; r < 300; r += lambda) {
+            // 4. Схематичные волны (анимированные)
+            const time = Date.now() * 0.005;
+            ctx.globalAlpha = 0.15;
+            ctx.setLineDash([2, 4]);
+            for (let r = (time % lambda); r < 280; r += lambda) {
                 ctx.beginPath(); ctx.arc(s1x, sourceY, r, 0, Math.PI); ctx.stroke();
                 ctx.beginPath(); ctx.arc(s2x, sourceY, r, 0, Math.PI); ctx.stroke();
             }
             ctx.setLineDash([]);
             ctx.globalAlpha = 1.0;
 
-            ctx.fillStyle = "white";
-            ctx.fillText("Интерференционная картина на экране", 10, screenY - 10);
-            ctx.fillText("График интенсивности (I)", 10, screenY + 140);
+            // Подписи
+            ctx.fillStyle = "#aaa";
+            ctx.font = "12px Arial";
+            ctx.fillText("ЭКРАН НАБЛЮДЕНИЯ", 10, screenY - 15);
+            ctx.fillText("РАСПРЕДЕЛЕНИЕ ЭНЕРГИИ (I)", 10, screenY + 190);
 
             requestAnimationFrame(draw);
         }
