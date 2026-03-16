@@ -1,27 +1,140 @@
-<h1>Лаборатория симуляций</h1>
-    <p>Выберите нужную модель для запуска:</p>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Физическая лаборатория</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f59e0b;
+        }
 
-    <!-- Группа: Механика -->
-    <section>
-        <h3>Механика</h3>
-        <ul>
-            <li><a href="mechanics/ball.html">Свободное падение шарика</a></li>
-            <li><a href="mechanics/math_pendulum.html">Колебания маятника</a></li>
-        </ul>
-    </section>
-    
-    <!-- Группа: Электродинамика -->
-    <section>
-        <h3>Электродинамика</h3>
-        <ul>
-            <li><a href="electrodynamics/em_ind.html">Электромагнитная индукция</a></li>
-        </ul>
-    </section>
-    <!-- Группа: Оптика -->
-    <section>
-        <h3>Оптика</h3>
-        <ul>
-            <li><a href="optika/Jung_exp.html">Двухщелевой опыт Юнга</a></li>
-            <li><a href="optika/conv_lens.html">Собирающая линза</a></li>
-        </ul>
-    </section>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.5;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        section {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        section:hover {
+            transform: translateY(-4px);
+        }
+
+        h3 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        /* Цветовые акценты для разделов */
+        .mechanics h3 { color: var(--accent-blue); }
+        .electro h3 { color: var(--accent-orange); }
+        .optics h3 { color: var(--accent-purple); }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            margin-bottom: 12px;
+        }
+
+        a {
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 500;
+            display: block;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            transition: all 0.2s ease;
+        }
+
+        a:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .optics a:hover { background: var(--accent-purple); }
+        .electro a:hover { background: var(--accent-orange); }
+
+    </style>
+</head>
+<body>
+
+    <h1>Лаборатория симуляций</h1>
+    <p class="subtitle">Интерактивные модели физических процессов</p>
+
+    <div class="grid">
+        <!-- Механика -->
+        <section class="mechanics">
+            <h3>⚙️ Механика</h3>
+            <ul>
+                <li><a href="mechanics/ball.html">Свободное падение</a></li>
+                <li><a href="mechanics/math_pendulum.html">Маятник</a></li>
+            </ul>
+        </section>
+
+        <!-- Электродинамика -->
+        <section class="electro">
+            <h3>⚡ Электродинамика</h3>
+            <ul>
+                <li><a href="electrodynamics/em_ind.html">Эм. индукция</a></li>
+            </ul>
+        </section>
+
+        <!-- Оптика -->
+        <section class="optics">
+            <h3>👁️ Оптика</h3>
+            <ul>
+                <li><a href="optika/Jung_exp.html">Опыт Юнга</a></li>
+                <li><a href="optika/conv_lens.html">Линза</a></li>
+            </ul>
+        </section>
+    </div>
+
+</body>
+</html>
