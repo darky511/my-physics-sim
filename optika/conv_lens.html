@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Физическая симуляция: Линза</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f0f0; }
+        canvas { background: white; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 20px; }
+        .controls { margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; display: grid; gap: 10px; }
+        label { display: flex; justify-content: space-between; gap: 20px; }
+        button { padding: 10px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+
+    <canvas id="simCanvas" width="800" height="400"></canvas>
+
+    <div class="controls">
+        <label>Фокус (F): <input type="range" id="focusRange" min="50" max="150" value="100"></label>
+        <label>Источник X: <input type="range" id="srcX" min="50" max="380" value="150"></label>
+        <label>Источник Y: <input type="range" id="srcY" min="50" max="350" value="100"></label>
+        <button id="startBtn">ПУСК</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const centerY = canvas.height / 2;
+const centerX = canvas.width / 2;
+
+// Параметры
+let F = 100;
+let source = { x: 150, y: 100 };
+let isAnimating = false;
+let progress = 0;
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 1. Главная оптическая ось
+    ctx.strokeStyle = 'black';
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(0, centerY);
+    ctx.lineTo(canvas.width, centerY);
+    ctx.stroke();
+
+    // 2. Тонкая линза
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(centerX, 50);
+    ctx.lineTo(centerX, 350);
+    ctx.stroke();
+    // Стрелочки линзы (собирающая)
+    ctx.moveTo(centerX-10, 60); ctx.lineTo(centerX, 50); ctx.lineTo(centerX+10, 60);
+    ctx.moveTo(centerX-10, 340); ctx.lineTo(centerX, 350); ctx.lineTo(centerX+10, 340);
+    ctx.stroke();
+
+    // 3. Точка O и Фокусы
+    ctx.fillStyle = 'black';
+    ctx.fillText('O', centerX + 5, centerY - 5);
+    
+    const points = [
+        {x: centerX - F, lbl: 'F'}, {x: centerX - 2*F, lbl: '2F'},
+        {x: centerX + F, lbl: 'F'}, {x: centerX + 2*F, lbl: '2F'}
+    ];
+    points.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, centerY, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillText(p.lbl, p.x - 5, centerY + 15);
+    });
+
+    // 4. Фокальная плоскость (пунктир за линзой)
+    ctx.beginPath();
+    ctx.setLineDash([5, 5]);
+    ctx.moveTo(centerX + F, 0);
+    ctx.lineTo(centerX + F, canvas.height);
+    ctx.stroke();
+
+    // 5. Источник света (Оранжевый)
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'orange';
+    ctx.beginPath();
+    ctx.arc(source.x, source.y, 6, 0, Math.PI*2);
+    ctx.fill();
+
+    if (isAnimating) {
+        animateRays();
+    }
+}
+
+function animateRays() {
+    progress += 0.01;
+    if (progress > 1) progress = 1;
+
+    const hitY = centerY + 40; // Точка падения второго луча на линзу (произвольная)
+    
+    // ЛУЧ 1: Через центр O (не преломляется)
+    const angle1 = Math.atan2(centerY - source.y, centerX - source.x);
+    const dist1 = 800 * progress;
+    ctx.strokeStyle = 'orange';
+    ctx.beginPath();
+    ctx.moveTo(source.x, source.y);
+    ctx.lineTo(source.x + Math.cos(angle1) * dist1, source.y + Math.sin(angle1) * dist1);
+    ctx.stroke();
+
+    // ЛУЧ 2: Падающий на линзу
+    const prog1 = Math.min(progress * 2, 1);
+    ctx.beginPath();
+    ctx.moveTo(source.x, source.y);
+    ctx.lineTo(source.x + (centerX - source.x) * prog1, source.y + (hitY - source.y) * prog1);
+    ctx.stroke();
+
+    // Побочная оптическая ось (параллельно лучу 2 через O)
+    const slope2 = (hitY - source.y) / (centerX - source.x);
+    ctx.strokeStyle = 'gray';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(centerX - 200, centerY - 200 * slope2);
+    ctx.lineTo(centerX + 200, centerY + 200 * slope2);
+    ctx.stroke();
+
+    // ЛУЧ 2: Преломленный (через пересечение побочной оси и фок. плоскости)
+    if (progress > 0.5) {
+        const prog2 = (progress - 0.5) * 2;
+        const focalPointY = centerY + (F * slope2); // Точка в фокальной плоскости
+        const angleOut = Math.atan2(focalPointY - hitY, F);
+        
+        ctx.strokeStyle = 'orange';
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(centerX, hitY);
+        ctx.lineTo(centerX + Math.cos(angleOut) * 500 * prog2, hitY + Math.sin(angleOut) * 500 * prog2);
+        ctx.stroke();
+    }
+}
+
+// Управление
+function updateParams() {
+    F = parseInt(document.getElementById('focusRange').value);
+    source.x = parseInt(document.getElementById('srcX').value);
+    source.y = parseInt(document.getElementById('srcY').value);
+    isAnimating = false;
+    progress = 0;
+    draw();
+}
+
+document.getElementById('startBtn').onclick = () => { progress = 0; isAnimating = true; };
+document.querySelectorAll('input').forEach(i => i.oninput = updateParams);
+
+function loop() {
+    if (isAnimating) draw();
+    requestAnimationFrame(loop);
+}
+
+draw();
+loop();
+</script>
+</body>
+</html>
