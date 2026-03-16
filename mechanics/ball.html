@@ -1,61 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Простая симуляция</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Физика: Мячик</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #f0f0f0; font-family: sans-serif; }
-        canvas { display: block; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: 20px auto; }
-        .controls { text-align: center; margin-top: 10px; }
+        body { margin: 0; background: #f0f0f0; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        canvas { background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.2); touch-action: none; max-width: 95%; height: auto; border-radius: 8px; }
+        .controls { margin-bottom: 15px; color: #333; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="controls">Кликните по экрану, чтобы подбросить мяч</div>
+    <div class="controls">Нажми на экран, чтобы подбросить!</div>
     <canvas id="simCanvas"></canvas>
 
     <script>
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
 
-        canvas.width = 600;
-        canvas.height = 400;
+        canvas.width = 400;
+        canvas.height = 500;
 
-        // Параметры физики
-        let y = 50;          // Положение по вертикали
-        let velocity = 0;    // Скорость
-        const gravity = 0.5; // Ускорение (сила тяжести)
-        const bounce = -0.7; // Коэффициент отскока (потеря энергии)
-        const radius = 20;
+        let y = 50;
+        let velocity = 0;
+        const gravity = 0.6;
+        const bounce = -0.7;
+        const radius = 25;
 
         function draw() {
-            // 1. Очистка экрана
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 2. Отрисовка мяча
+            // Мяч с небольшим градиентом для красоты
             ctx.beginPath();
             ctx.arc(canvas.width / 2, y, radius, 0, Math.PI * 2);
             ctx.fillStyle = "#007bff";
             ctx.fill();
             ctx.closePath();
 
-            // 3. Расчет физики
-            velocity += gravity; // Прибавляем ускорение к скорости
-            y += velocity;       // Прибавляем скорость к координате
+            velocity += gravity;
+            y += velocity;
 
-            // 4. Проверка столкновения с полом
             if (y + radius > canvas.height) {
                 y = canvas.height - radius;
-                velocity *= bounce; // Мяч отскакивает и теряет скорость
+                velocity *= bounce;
+                if (Math.abs(velocity) < 1) velocity = 0; // Остановка дрожания
             }
 
-            requestAnimationFrame(draw); // Запуск следующего кадра
+            requestAnimationFrame(draw);
         }
 
-        // Интерактив: подбросить при клике
-        canvas.addEventListener('mousedown', () => {
-            velocity = -15; 
+        // Работает везде: и мышка, и палец
+        canvas.addEventListener('pointerdown', (e) => {
+            velocity = -15;
         });
 
-        draw(); // Запуск симуляции
+        draw();
     </script>
 </body>
 </html>
