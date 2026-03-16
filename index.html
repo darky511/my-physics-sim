@@ -1,40 +1,27 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои физические симуляции</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-        h1 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        ul { list-style: none; padding: 0; }
-        li { margin: 10px 0; }
-        a { text-decoration: none; color: #3498db; font-size: 18px; font-weight: bold; }
-        a:hover { color: #2980b9; text-decoration: underline; }
-        p { color: #7f8c8d; }
-    </style>
-</head>
-<body>
-
-    <h1>Лаборатория симуляций</h1>
+<h1>Лаборатория симуляций</h1>
     <p>Выберите нужную модель для запуска:</p>
 
-    <ul>
-        <!-- Замените 'ball.html' на реальное название вашего файла -->
-        <li><a href="mechanics/ball.html"> Свободное падение шарика</a></li>
-        
-        <!-- Замените 'pendulum.html' на реальное название вашего файла -->
-        <li><a href="mechanics/math_pendulum.html"> Колебания маятника</a></li>
-        
-        <!-- Добавляйте новые строки по аналогии -->
-        <li><a href="optika/Jung_exp.html"> Двухщелевой опыт Юнга</a></li>
-
-        <!-- Добавляйте новые строки по аналогии -->
-        <li><a href="electrodynamics/em_ind.html"> Электромагнитная индукция</a></li>
-        
-        <!-- Добавляйте новые строки по аналогии -->
-        <li><a href="optika/conv_lens.html"> Собирающая линза</a></li>
-    </ul>
-
-</body>
-</html>
+    <!-- Группа: Механика -->
+    <section>
+        <h3>Механика</h3>
+        <ul>
+            <li><a href="mechanics/ball.html">Свободное падение шарика</a></li>
+            <li><a href="mechanics/math_pendulum.html">Колебания маятника</a></li>
+        </ul>
+    </section>
+    
+    <!-- Группа: Электродинамика -->
+    <section>
+        <h3>Электродинамика</h3>
+        <ul>
+            <li><a href="electrodynamics/em_ind.html">Электромагнитная индукция</a></li>
+        </ul>
+    </section>
+    <!-- Группа: Оптика -->
+    <section>
+        <h3>Оптика</h3>
+        <ul>
+            <li><a href="optika/Jung_exp.html">Двухщелевой опыт Юнга</a></li>
+            <li><a href="optika/conv_lens.html">Собирающая линза</a></li>
+        </ul>
+    </section>
