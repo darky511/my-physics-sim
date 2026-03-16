@@ -1,18 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Pendulum Lab</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Лаборатория маятника</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f8f9fa; margin: 0; padding: 5px; transform: scale(0.95); }
-        .container { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 10px; }
-        canvas { background: #fff; border-bottom: 1px solid #eee; display: block; }
-        .ui { padding: 10px; display: grid; gap: 8px; width: 380px; }
-        .row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        .btns { display: flex; gap: 8px; margin-top: 5px; }
-        button { flex: 1; padding: 8px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; color: white; font-size: 12px; }
+        body { 
+            font-family: -apple-system, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background: #f8f9fa; 
+            margin: 0; 
+            padding: 10px; 
+            touch-action: none; /* Важно: отключает зум и скролл при перетаскивании */
+        }
+        .container { 
+            background: white; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+        }
+        canvas { 
+            display: block; 
+            width: 100%; 
+            height: auto;
+            background: #fff;
+            touch-action: none;
+        }
+        .ui { padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #444; }
+        .btns { display: flex; gap: 10px; margin-top: 5px; }
+        
+        button { 
+            flex: 1; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            color: white; 
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        button:active { opacity: 0.7; }
         .btn-pause { background: #ff9f43; }
         .btn-reset { background: #6c757d; }
-        input[type=range] { width: 160px; margin: 0; }
+        
+        input[type=range] { 
+            width: 55%; 
+            height: 25px; /* Увеличили область нажатия для пальца */
+            cursor: pointer;
+        }
+        b { color: #007bff; }
     </style>
 </head>
 <body>
@@ -29,67 +70,106 @@
                 <input type="range" id="gS" min="0.1" max="2" step="0.1" value="0.8">
             </div>
             <div class="btns">
-                <button class="btn-pause" onclick="tglP()" id="pB">ПУСК</button>
-                <button class="btn-reset" onclick="reset()">СБРОС В НАЧАЛО</button>
+                <button class="btn-pause" id="pB">ПУСК</button>
+                <button class="btn-reset" id="rB">СБРОС</button>
             </div>
         </div>
     </div>
 
     <script>
         const cvs = document.getElementById('mc'), ctx = cvs.getContext('2d');
-        let ang = Math.PI/4, vel = 0, paused = true, drag = false, hist = [], bX, bY;
+        const pB = document.getElementById('pB'), rB = document.getElementById('rB');
+        
+        let ang = Math.PI/4, vel = 0, paused = true, drag = false;
+        let hist = [], bX, bY;
         const origin = { x: 200, y: 30 };
 
-        function tglP() { paused = !paused; document.getElementById('pB').innerText = paused ? "ПУСК" : "ПАУЗА"; }
+        // Управление кнопками
+        pB.onclick = () => {
+            paused = !paused;
+            pB.innerText = paused ? "ПУСК" : "ПАУЗА";
+            pB.style.background = paused ? "#ff9f43" : "#2ecc71";
+        };
         
-        function reset() {
+        rB.onclick = () => {
             ang = Math.PI/4; vel = 0; hist = [];
-            paused = true; // Останавливаем симуляцию
-            document.getElementById('pB').innerText = "ПУСК";
-        }
+            paused = true;
+            pB.innerText = "ПУСК";
+            pB.style.background = "#ff9f43";
+        };
 
-        cvs.addEventListener('mousedown', e => {
+        // Универсальный захват для смартфонов и ПК
+        cvs.addEventListener('pointerdown', e => {
             const r = cvs.getBoundingClientRect();
-            if (Math.hypot(e.clientX-r.left-bX, e.clientY-r.top-bY) < 25) drag = true;
+            const mouseX = (e.clientX - r.left) * (cvs.width / r.width);
+            const mouseY = (e.clientY - r.top) * (cvs.height / r.height);
+            
+            if (Math.hypot(mouseX - bX, mouseY - bY) < 40) { // Увеличили область захвата для пальца
+                drag = true;
+                cvs.setPointerCapture(e.pointerId);
+            }
         });
-        window.addEventListener('mouseup', () => drag = false);
-        cvs.addEventListener('mousemove', e => {
+
+        window.addEventListener('pointerup', () => drag = false);
+
+        cvs.addEventListener('pointermove', e => {
             if (drag) {
                 const r = cvs.getBoundingClientRect();
-                ang = Math.atan2(e.clientX-r.left-origin.x, e.clientY-r.top-origin.y);
+                const mouseX = (e.clientX - r.left) * (cvs.width / r.width);
+                const mouseY = (e.clientY - r.top) * (cvs.height / r.height);
+                ang = Math.atan2(mouseX - origin.x, mouseY - origin.y);
                 vel = 0;
             }
         });
 
         function draw() {
             const L = +document.getElementById('lS').value, g = +document.getElementById('gS').value;
-            document.getElementById('vL').innerText = L; document.getElementById('vG').innerText = g;
+            document.getElementById('vL').innerText = L; 
+            document.getElementById('vG').innerText = g;
 
             ctx.clearRect(0,0,400,420);
+            
             if (!paused && !drag) {
-                vel += (-1*g/L)*Math.sin(ang); vel *= 0.995; ang += vel;
+                // Физика маятника (уравнение d²θ/dt² + (g/L)sinθ = 0)
+                let acceleration = (-1 * g / L) * Math.sin(ang);
+                vel += acceleration;
+                vel *= 0.998; // Небольшое затухание (трение воздуха)
+                ang += vel;
             }
+            
             if (!paused || drag) {
-                hist.push(ang); if(hist.length > 400) hist.shift();
+                hist.push(ang); 
+                if(hist.length > 400) hist.shift();
             }
 
-            // Маятник
-            bX = L*Math.sin(ang)+origin.x; bY = L*Math.cos(ang)+origin.y;
-            ctx.strokeStyle="#ccc"; ctx.lineWidth=2; ctx.beginPath();
-            ctx.moveTo(origin.x, origin.y); ctx.lineTo(bX, bY); ctx.stroke();
-            ctx.fillStyle = drag ? "#ff9f43" : "#007bff";
-            ctx.beginPath(); ctx.arc(bX, bY, 15, 0, 7); ctx.fill();
+            // Отрисовка нити
+            bX = L * Math.sin(ang) + origin.x; 
+            bY = L * Math.cos(ang) + origin.y;
+            
+            ctx.strokeStyle = "#bbb"; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(bX, bY); ctx.stroke();
+            
+            // Груз (меняет цвет при захвате)
+            ctx.fillStyle = drag ? "#e67e22" : "#007bff";
+            ctx.shadowBlur = 10; ctx.shadowColor = "rgba(0,0,0,0.1)";
+            ctx.beginPath(); ctx.arc(bX, bY, 18, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
 
             // График
-            const gY = 340;
-            ctx.strokeStyle="#eee"; ctx.beginPath(); ctx.moveTo(0,gY); ctx.lineTo(400,gY); ctx.stroke();
-            ctx.strokeStyle="#ff4757"; ctx.lineWidth=2; ctx.beginPath();
+            const gY = 350;
+            ctx.strokeStyle = "#f0f0f0"; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(0, gY); ctx.lineTo(400, gY); ctx.stroke();
+            
+            ctx.strokeStyle = "#ff4757"; ctx.lineWidth = 2;
+            ctx.beginPath();
             hist.forEach((v, i) => {
-                let y = gY + v*50;
+                let y = gY + v * 40;
                 i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
             });
             ctx.stroke();
-            ctx.fillStyle="#999"; ctx.font="11px Arial"; ctx.fillText("ГРАФИК УГЛА", 10, gY-50);
+            
+            ctx.fillStyle = "#999"; ctx.font = "bold 12px Arial";
+            ctx.fillText("ГРАФИК УГЛА", 15, gY - 45);
 
             requestAnimationFrame(draw);
         }
