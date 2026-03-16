@@ -2,232 +2,217 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Линза: Мобильная версия</title>
+    <!-- Добавлено для правильного масштаба на мобильных -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Физическая симуляция: Линза</title>
     <style>
-        :root {
-            --primary: #4CAF50;
-            --bg: #f8f9fa;
-        }
         body { 
-            font-family: -apple-system, sans-serif; 
-            margin: 0; 
-            padding: 10px; 
+            font-family: sans-serif; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            background: var(--bg);
-            overflow-x: hidden;
+            background: #f0f0f0; 
+            margin: 0; 
+            padding: 10px; 
         }
+        
+        /* Адаптация холста */
         canvas { 
             background: white; 
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-            touch-action: none; /* Важно для мобильных */
-            max-width: 100%;
+            border: 1px solid #ccc; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+            margin-top: 10px;
+            max-width: 100%; /* Холст не вылезает за пределы экрана */
+            height: auto;    /* Сохраняет пропорции 800x400 */
         }
+
+        /* Адаптация панели управления */
         .controls { 
-            width: 100%; 
-            max-width: 500px; 
-            margin-top: 15px; 
+            margin-top: 20px; 
             padding: 15px; 
             background: #fff; 
-            border-radius: 12px; 
-            box-sizing: border-box;
+            border-radius: 8px; 
             display: grid; 
             gap: 15px; 
+            width: 100%; 
+            max-width: 400px; 
+            box-sizing: border-box; 
         }
+
         label { 
             display: flex; 
-            flex-direction: column; 
-            font-size: 14px; 
-            color: #555;
-            gap: 8px;
+            flex-direction: column; /* На смартфонах ползунок под текстом удобнее */
+            gap: 5px; 
+            font-size: 14px;
         }
+
+        /* Делаем ползунки крупнее для пальцев */
         input[type="range"] {
             width: 100%;
-            height: 25px; /* Удобнее хватать пальцем */
+            height: 30px;
+            cursor: pointer;
         }
+
         button { 
-            padding: 15px; 
+            padding: 15px; /* Увеличил область нажатия */
             cursor: pointer; 
-            background: var(--primary); 
+            background: #4CAF50; 
             color: white; 
             border: none; 
-            border-radius: 8px; 
-            font-size: 18px; 
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 4px; 
+            font-weight: bold; 
+            font-size: 16px;
         }
-        .hint {
-            font-size: 12px;
-            color: #888;
-            text-align: center;
-            margin-top: 5px;
-        }
+        
+        button:hover { background: #45a049; }
     </style>
 </head>
 <body>
 
-    <canvas id="simCanvas"></canvas>
-    <p class="hint">Можно передвигать источник пальцем на холсте</p>
+    <!-- Внутренние размеры остаются 800х400, чтобы JS-логика работала как раньше -->
+    <canvas id="simCanvas" width="800" height="400"></canvas>
 
     <div class="controls">
-        <label>Фокусное расстояние (F): <input type="range" id="focusRange" min="40" max="140" value="80"></label>
-        <button id="startBtn">ЗАПУСТИТЬ ЛУЧИ</button>
+        <label>Фокус (F): <input type="range" id="focusRange" min="50" max="150" value="100"></label>
+        <label>Источник X: <input type="range" id="srcX" min="50" max="380" value="150"></label>
+        <label>Источник Y: <input type="range" id="srcY" min="50" max="350" value="100"></label>
+        <button id="startBtn">ПУСК</button>
     </div>
 
 <script>
+// ПОЛНОСТЬЮ ТВОЙ JS БЕЗ ИЗМЕНЕНИЙ
 const canvas = document.getElementById('simCanvas');
 const ctx = canvas.getContext('2d');
+const centerY = canvas.height / 2;
+const centerX = canvas.width / 2;
 
-let F, centerX, centerY;
-let source = { x: 100, y: 100 };
+// Параметры
+let F = 100;
+let source = { x: 150, y: 100 };
 let isAnimating = false;
 let progress = 0;
-let isDragging = false;
-
-// Адаптация размера под экран
-function resize() {
-    const width = Math.min(window.innerWidth - 20, 800);
-    canvas.width = width;
-    canvas.height = width * 0.6; // Пропорции
-    centerX = canvas.width / 2;
-    centerY = canvas.height / 2;
-    // Корректируем положение источника, если он вылетел за экран
-    if (source.x > canvas.width) source.x = canvas.width - 50;
-    updateParams();
-}
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // ОСЬ
-    ctx.strokeStyle = '#ccc';
+    // 1. Главная оптическая ось
+    ctx.strokeStyle = 'black';
+    ctx.setLineDash([]);
     ctx.beginPath();
     ctx.moveTo(0, centerY);
     ctx.lineTo(canvas.width, centerY);
     ctx.stroke();
 
-    // ЛИНЗА
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 3;
+    // 2. Тонкая линза
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(centerX, 20);
-    ctx.lineTo(centerX, canvas.height - 20);
+    ctx.moveTo(centerX, 50);
+    ctx.lineTo(centerX, 350);
+    ctx.stroke();
+    // Стрелочки линзы (собирающая)
+    ctx.moveTo(centerX-10, 60); ctx.lineTo(centerX, 50); ctx.lineTo(centerX+10, 60);
+    ctx.moveTo(centerX-10, 340); ctx.lineTo(centerX, 350); ctx.lineTo(centerX+10, 340);
     ctx.stroke();
 
-    // ФОКУСЫ
-    ctx.fillStyle = 'red';
-    [centerX - F, centerX - 2*F, centerX + F, centerX + 2*F].forEach((x, i) => {
+    // 3. Точка O и Фокусы
+    ctx.fillStyle = 'black';
+    ctx.fillText('O', centerX + 5, centerY - 5);
+    
+    const points = [
+        {x: centerX - F, lbl: 'F'}, {x: centerX - 2*F, lbl: '2F'},
+        {x: centerX + F, lbl: 'F'}, {x: centerX + 2*F, lbl: '2F'}
+    ];
+    points.forEach(p => {
         ctx.beginPath();
-        ctx.arc(x, centerY, 4, 0, Math.PI*2);
+        ctx.arc(p.x, centerY, 3, 0, Math.PI*2);
         ctx.fill();
-        ctx.fillStyle = '#333';
-        ctx.fillText(i % 2 === 0 ? 'F' : '2F', x - 5, centerY + 20);
-        ctx.fillStyle = 'red';
+        ctx.fillText(p.lbl, p.x - 5, centerY + 15);
     });
 
-    // ИСТОЧНИК
-    ctx.fillStyle = '#ff9800';
+    // 4. Фокальная плоскость (пунктир за линзой)
     ctx.beginPath();
-    ctx.arc(source.x, source.y, 8, 0, Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.moveTo(centerX + F, 0);
+    ctx.lineTo(centerX + F, canvas.height);
     ctx.stroke();
 
-    if (isAnimating) animateRays();
+    // 5. Источник света (Оранжевый)
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'orange';
+    ctx.beginPath();
+    ctx.arc(source.x, source.y, 6, 0, Math.PI*2);
+    ctx.fill();
+
+    if (isAnimating) {
+        animateRays();
+    }
 }
 
 function animateRays() {
-    progress += 0.015;
+    progress += 0.01;
     if (progress > 1) progress = 1;
 
-    const hitY = centerY + 30; // Точка на линзе
-    ctx.lineWidth = 2;
-
-    // Луч 1 (через центр)
+    const hitY = centerY + 40; // Точка падения второго луча на линзу (произвольная)
+    
+    // ЛУЧ 1: Через центр O (не преломляется)
     const angle1 = Math.atan2(centerY - source.y, centerX - source.x);
-    ctx.strokeStyle = '#ff9800';
+    const dist1 = 800 * progress;
+    ctx.strokeStyle = 'orange';
     ctx.beginPath();
     ctx.moveTo(source.x, source.y);
-    ctx.lineTo(source.x + Math.cos(angle1) * canvas.width * progress, source.y + Math.sin(angle1) * canvas.width * progress);
+    ctx.lineTo(source.x + Math.cos(angle1) * dist1, source.y + Math.sin(angle1) * dist1);
     ctx.stroke();
 
-    // Луч 2 (преломление)
+    // ЛУЧ 2: Падающий на линзу
     const prog1 = Math.min(progress * 2, 1);
     ctx.beginPath();
     ctx.moveTo(source.x, source.y);
     ctx.lineTo(source.x + (centerX - source.x) * prog1, source.y + (hitY - source.y) * prog1);
     ctx.stroke();
 
+    // Побочная оптическая ось (параллельно лучу 2 через O)
+    const slope2 = (hitY - source.y) / (centerX - source.x);
+    ctx.strokeStyle = 'gray';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(centerX - 200, centerY - 200 * slope2);
+    ctx.lineTo(centerX + 200, centerY + 200 * slope2);
+    ctx.stroke();
+
+    // ЛУЧ 2: Преломленный (через пересечение побочной оси и фок. плоскости)
     if (progress > 0.5) {
-        const slope = (hitY - source.y) / (centerX - source.x);
-        const focalY = centerY + (F * slope);
-        const angleOut = Math.atan2(focalY - hitY, F);
         const prog2 = (progress - 0.5) * 2;
+        const focalPointY = centerY + (F * slope2); // Точка в фокальной плоскости
+        const angleOut = Math.atan2(focalPointY - hitY, F);
         
+        ctx.strokeStyle = 'orange';
+        ctx.setLineDash([]);
         ctx.beginPath();
         ctx.moveTo(centerX, hitY);
-        ctx.lineTo(centerX + Math.cos(angleOut) * canvas.width * prog2, hitY + Math.sin(angleOut) * canvas.width * prog2);
+        ctx.lineTo(centerX + Math.cos(angleOut) * 500 * prog2, hitY + Math.sin(angleOut) * 500 * prog2);
         ctx.stroke();
     }
 }
 
-// ОБРАБОТКА КАСАНИЙ
-function handleStart(e) {
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches ? e.touches[0] : e;
-    const mouseX = touch.clientX - rect.left;
-    const mouseY = touch.clientY - rect.top;
-    
-    // Проверка попадания в источник
-    if (Math.hypot(mouseX - source.x, mouseY - source.y) < 30) {
-        isDragging = true;
-        isAnimating = false;
-    }
-}
-
-function handleMove(e) {
-    if (!isDragging) return;
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches ? e.touches[0] : e;
-    source.x = touch.clientX - rect.left;
-    source.y = touch.clientY - rect.top;
-    
-    // Ограничение: источник только слева от линзы
-    if (source.x > centerX - 10) source.x = centerX - 10;
-    
-    draw();
-}
-
-function handleEnd() { isDragging = false; }
-
-canvas.addEventListener('touchstart', handleStart);
-canvas.addEventListener('touchmove', handleMove);
-canvas.addEventListener('touchend', handleEnd);
-canvas.addEventListener('mousedown', handleStart);
-window.addEventListener('mousemove', handleMove);
-window.addEventListener('mouseup', handleEnd);
-
+// Управление
 function updateParams() {
     F = parseInt(document.getElementById('focusRange').value);
+    source.x = parseInt(document.getElementById('srcX').value);
+    source.y = parseInt(document.getElementById('srcY').value);
     isAnimating = false;
     progress = 0;
     draw();
 }
 
 document.getElementById('startBtn').onclick = () => { progress = 0; isAnimating = true; };
-document.getElementById('focusRange').oninput = updateParams;
-
-window.addEventListener('resize', resize);
-resize();
+document.querySelectorAll('input').forEach(i => i.oninput = updateParams);
 
 function loop() {
     if (isAnimating) draw();
     requestAnimationFrame(loop);
 }
+
+draw();
 loop();
 </script>
 </body>
