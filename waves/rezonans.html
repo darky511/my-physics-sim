@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Физика Резонанса: Стенд</title>
+    <style>
+        body { 
+            margin: 0; background: #050508; color: #00ffcc; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
+        #status { height: 35px; line-height: 35px; text-align: center; font-weight: 900; font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; color: #555; }
+        canvas { flex-grow: 1; background: #050508; touch-action: none; }
+
+        .ui { background: #0e0e14; border-top: 1px solid #222; padding: 10px 15px; box-sizing: border-box; }
+        
+        .detectors { display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px; }
+        .blob-container { text-align: center; font-size: 9px; color: #888; width: 120px; line-height: 1.2; }
+        .blob { width: 12px; height: 12px; border-radius: 50%; margin: 4px auto; }
+        #blob-drive { background: #ff00ff; box-shadow: 0 0 8px #ff00ff; }
+        #blob-nat { background: #00ffcc; box-shadow: 0 0 8px #00ffcc; }
+        
+        .freq-label { font-weight: bold; color: #fff; font-size: 13px; margin-top: 2px; display: block;}
+
+        .control-panel { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: flex-end; }
+        .control-group { width: 180px; }
+        .label-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #666; margin-bottom: 4px; }
+        
+        input[type=number] {
+            background: #1a1a25; border: 1px solid #333; color: #00ffcc;
+            border-radius: 4px; padding: 2px; width: 45px; font-size: 12px; text-align: center;
+        }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: #ff00ff; height: 14px; }
+
+        .btn-box { display: flex; flex-direction: column; gap: 5px; }
+        button { padding: 6px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
+        #start { background: #00ffcc; color: #000; }
+        #stop { background: #333; color: #aaa; }
+    </style>
+</head>
+<body>
+
+    <div id="status">Настройте частоты для резонанса</div>
+    <canvas id="sim"></canvas>
+
+    <div class="ui">
+        <div class="detectors">
+            <div class="blob-container">
+                ВЫНУЖДАЮЩАЯ (Рука)
+                <div id="blob-drive" class="blob"></div>
+                <span class="freq-label" id="f-drive-val">0.50 Hz</span>
+            </div>
+            <div id="match-indicator" style="font-size: 1.2rem;">❌</div>
+            <div class="blob-container">
+                СОБСТВЕННАЯ (Маятник)
+                <div id="blob-nat" class="blob"></div>
+                <span class="freq-label" id="f-nat-val">0.50 Hz</span>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="control-group">
+                <div class="label-row">ЧАСТОТА РУКИ (Гц)<input type="number" id="num-f" step="0.01" min="0.01" value="0.50"></div>
+                <input type="range" id="f-range" min="0.01" max="1.5" step="0.01" value="0.5">
+            </div>
+
+            <div class="btn-box">
+                <button id="start">ПУСК</button>
+                <button id="stop">СБРОС</button>
+            </div>
+
+            <div class="control-group">
+                <div class="label-row">СОБСТВ. ЧАСТОТА (Гц)<input type="number" id="num-f-nat" step="0.01" min="0.2" value="0.65"></div>
+                <input type="range" id="L-range" min="60" max="300" step="1" value="150">
+                <div class="label-row" style="margin-top:2px">ДЛИНА НИТИ (Px): <span id="l-display">150</span></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('sim');
+    const ctx = canvas.getContext('2d');
+    const fRange = document.getElementById('f-range'), fNum = document.getElementById('num-f');
+    const LRange = document.getElementById('L-range'), fNatNum = document.getElementById('num-f-nat');
+    const fDriveText = document.getElementById('f-drive-val'), fNatText = document.getElementById('f-nat-val');
+    const status = document.getElementById('status');
+
+    let w, h, isRunning = false, angle = 0, angleVel = 0, time = 0;
+    const g = 0.6; 
+
+    // Логика связи физических величин
+    const calcNatFreq = (L) => (1 / (2 * Math.PI)) * Math.sqrt(g * 10 / L) * 4;
+    const calcLength = (f) => (g * 10) / Math.pow(f * 2 * Math.PI / 4, 2);
+
+    fRange.oninput = () => fNum.value = fRange.value;
+    fNum.oninput = () => fRange.value = fNum.value;
+
+    // Изменение собственной частоты через ползунок длины
+    LRange.oninput = () => {
+        fNatNum.value = calcNatFreq(LRange.value).toFixed(2);
+        document.getElementById('l-display').innerText = LRange.value;
+    };
+
+    // Изменение собственной частоты напрямую числом
+    fNatNum.oninput = () => {
+        let newL = calcLength(fNatNum.value);
+        LRange.value = Math.min(Math.max(newL, 60), 300);
+        document.getElementById('l-display').innerText = Math.round(LRange.value);
+    };
+
+    const resize = () => { w = canvas.width = window.innerWidth; h = canvas.height = canvas.offsetHeight; };
+    window.onresize = resize; setTimeout(resize, 100);
+
+    document.getElementById('start').onclick = () => isRunning = true;
+    document.getElementById('stop').onclick = () => { isRunning = false; angle = 0; angleVel = 0; time = 0; };
+
+    function drawHand(x, y, push) {
+        ctx.save();
+        ctx.translate(x - 55 + push * 15, y - 10);
+        ctx.fillStyle = "#ff00ff";
+        
+        // Рисуем ладонь
+        ctx.beginPath();
+        ctx.roundRect(0, 0, 35, 20, 4);
+        ctx.fill();
+        // Палец
+        ctx.beginPath();
+        ctx.roundRect(30, 4, 20, 6, 3);
+        ctx.fill();
+
+        // Подпись руки
+        ctx.fillStyle = "rgba(255, 0, 255, 0.5)";
+        ctx.font = "bold 9px sans-serif";
+        ctx.fillText("РУКА", 5, -5);
+        ctx.restore();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, w, h);
+        const L = parseFloat(LRange.value);
+        const fd = parseFloat(fRange.value);
+        const f_nat = calcNatFreq(L);
+
+        fDriveText.innerText = fd.toFixed(2) + " Hz";
+        fNatText.innerText = f_nat.toFixed(2) + " Hz";
+
+        const cx = w/2, cy = 30;
+        const pushPhase = Math.sin(time * fd * 4);
+        const isMatched = Math.abs(fd - f_nat) < 0.05;
+
+        document.getElementById('match-indicator').innerText = isMatched ? "✅" : "❌";
+        document.getElementById('blob-drive').style.transform = `scale(${1 + pushPhase * 0.2})`;
+        document.getElementById('blob-nat').style.transform = `scale(${1 + Math.sin(time * f_nat) * 0.2})`;
+
+        if (isRunning) {
+            const pushForce = Math.max(0, pushPhase) * 0.014;
+            angleVel += pushForce * Math.cos(angle);
+            angleVel += (-g / L) * Math.sin(angle);
+            angleVel *= 0.993;
+            angle += angleVel;
+            time += 0.1;
+
+            if (Math.abs(angle) > 0.8) {
+                status.innerText = "РЕЗОНАНС ДОСТИГНУТ! ⚡";
+                status.style.color = "#ff00ff";
+            } else {
+                status.innerText = isMatched ? "ФАЗЫ СОВПАЛИ" : "НАСТРОЙТЕ В ТАКТ";
+                status.style.color = "#00ffcc";
+            }
+        }
+
+        const rx = cx + Math.sin(angle) * L;
+        const ry = cy + Math.cos(angle) * L;
+        
+        drawHand(cx - 35, cy + L, pushPhase);
+
+        ctx.strokeStyle = isMatched ? '#ff00ff' : '#00ffcc';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(rx, ry); ctx.stroke();
+
+        ctx.fillStyle = isMatched ? "#ff00ff" : "#00ffcc";
+        ctx.shadowBlur = isMatched ? 20 : 0;
+        ctx.shadowColor = "#ff00ff";
+        ctx.beginPath(); ctx.arc(rx, ry, 15, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>
