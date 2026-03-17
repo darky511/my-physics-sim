@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Лабораторный стенд: Сложение волн</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; background: #fff; color: #333; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; flex-direction: column; 
+            height: 100vh; overflow: hidden; /* Запрещаем скролл всей страницы */
+        }
+        #status { 
+            height: 30px; line-height: 30px; text-align: center; 
+            font-weight: bold; background: #f8f9fa; border-bottom: 1px solid #ddd; font-size: 12px; 
+        }
+        #canvas-container { 
+            flex: 1; /* Занимает всё свободное пространство */
+            position: relative; width: 100%; overflow: hidden;
+        }
+        canvas { display: block; touch-action: none; }
+
+        .ui { 
+            height: auto; min-height: 180px; /* Фиксируем примерную высоту панели управления */
+            background: #f1f3f5; border-top: 1px solid #ccc; 
+            padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; 
+            overflow-y: auto; /* Если экран совсем маленький, скроллится только панель */
+        }
+        .panel { background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 8px; width: 240px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .panel h4 { margin: 0 0 8px 0; font-size: 10px; text-transform: uppercase; color: #888; border-bottom: 1px solid #eee; }
+        .control { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; font-size: 11px; }
+        .control label { flex: 1; white-space: nowrap; }
+        .control input[type=number] { width: 45px; border: 1px solid #eee; text-align: center; font-size: 10px; }
+        .control input[type=range] { flex: 2; cursor: pointer; accent-color: #444; }
+        
+        .btn-box { display: flex; flex-direction: column; gap: 5px; justify-content: center; }
+        button { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        #start { background: #28a745; color: #fff; border: none; }
+        #stop { background: #fff; color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div id="status">Виртуальный осциллограф: Сложение колебаний</div>
+<div id="canvas-container"><canvas id="sim"></canvas></div>
+
+<div class="ui">
+    <div class="btn-box">
+        <button id="start">ПУСК</button>
+        <button id="stop">СБРОС</button>
+    </div>
+    <div class="panel">
+        <h4>Волна А</h4>
+        <div class="control"><label>Ампл:</label><input type="number" id="ampA-n" value="35"><input type="range" id="ampA-r" min="0" max="60" value="35"></div>
+        <div class="control"><label>Част:</label><input type="number" id="freqA-n" value="0.50" step="0.01"><input type="range" id="freqA-r" min="0.1" max="2.0" step="0.01" value="0.50"></div>
+        <div class="control"><label>Фаза:</label><input type="number" id="phA-n" value="0"><input type="range" id="phA-r" min="0" max="360" value="0"></div>
+    </div>
+    <div class="panel">
+        <h4>Волна Б</h4>
+        <div class="control"><label>Ампл:</label><input type="number" id="ampB-n" value="35"><input type="range" id="ampB-r" min="0" max="60" value="35"></div>
+        <div class="control"><label>Част:</label><input type="number" id="freqB-n" value="0.50" step="0.01"><input type="range" id="freqB-r" min="0.1" max="2.0" step="0.01" value="0.50"></div>
+        <div class="control"><label>Фаза:</label><input type="number" id="phB-n" value="180"><input type="range" id="phB-r" min="0" max="360" value="180"></div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('sim');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvas-container');
+
+    const bind = (rId, nId) => {
+        const r = document.getElementById(rId), n = document.getElementById(nId);
+        r.oninput = () => n.value = r.value;
+        n.oninput = () => r.value = n.value;
+    };
+    bind('ampA-r', 'ampA-n'); bind('freqA-r', 'freqA-n'); bind('phA-r', 'phA-n');
+    bind('ampB-r', 'ampB-n'); bind('freqB-r', 'freqB-n'); bind('phB-r', 'phB-n');
+
+    let w, h, time = 0, isRunning = false, history = [];
+
+    const resize = () => {
+        w = canvas.width = container.clientWidth;
+        h = canvas.height = container.clientHeight;
+    };
+    window.addEventListener('resize', resize);
+    resize();
+
+    document.getElementById('start').onclick = () => isRunning = true;
+    document.getElementById('stop').onclick = () => { isRunning = false; time = 0; history = []; };
+
+    function draw() {
+        ctx.clearRect(0, 0, w, h);
+        
+        const a1 = +document.getElementById('ampA-n').value, f1 = +document.getElementById('freqA-n').value, p1 = +document.getElementById('phA-n').value * Math.PI/180;
+        const a2 = +document.getElementById('ampB-n').value, f2 = +document.getElementById('freqB-n').value, p2 = +document.getElementById('phB-n').value * Math.PI/180;
+
+        const trackH = h / 3;
+        const ballX = w * 0.12;
+        const graphStart = ballX + 40;
+
+        const valA = Math.sin(time * f1 * 5 + p1) * a1;
+        const valB = Math.sin(time * f2 * 5 + p2) * a2;
+        const valSum = valA + valB;
+
+        if (isRunning) {
+            time += 0.03;
+            history.unshift({a: valA, b: valB, s: valSum});
+            if (history.length > w - graphStart) history.pop();
+        }
+
+        const renderTrack = (y, label, color, val, key, showStats = false) => {
+            // Оси всегда по центру дорожки
+            ctx.strokeStyle = "#eee"; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ballX, y - trackH/2.5); ctx.lineTo(ballX, y + trackH/2.5); ctx.stroke();
+            
+            ctx.fillStyle = color; ctx.font = "bold 9px sans-serif";
+            ctx.fillText(label, 5, y - trackH/2.5 + 10);
+
+            // Шар
+            ctx.beginPath(); ctx.arc(ballX, y - val, 8, 0, Math.PI*2); ctx.fill();
+
+            // График
+            if (history.length > 1) {
+                ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+                for (let i = 0; i < history.length; i++) {
+                    const tx = graphStart + i;
+                    const ty = y - history[i][key];
+                    if (i === 0) ctx.moveTo(tx, ty); else ctx.lineTo(tx, ty);
+                }
+                ctx.stroke();
+            }
+
+            if (showStats && history.length > 0) {
+                const currentAmp = Math.max(...history.map(d => Math.abs(d.s))).toFixed(1);
+                const avgF = ((f1 + f2) / 2).toFixed(2);
+                
+                // Табло параметров
+                ctx.fillStyle = "rgba(255,255,255,0.9)";
+                ctx.fillRect(5, y + 10, 100, 45);
+                ctx.strokeStyle = "#ccc"; ctx.strokeRect(5, y + 10, 100, 45);
+                ctx.fillStyle = "#333"; ctx.font = "10px monospace";
+                ctx.fillText(`A_max: ${currentAmp}`, 10, y + 25);
+                ctx.fillText(`f_avg: ${avgF} Hz`, 10, y + 38);
+                ctx.fillText(`T:     ${(1/avgF).toFixed(2)} c`, 10, y + 51);
+            }
+        };
+
+        renderTrack(trackH * 0.5, "ВОЛНА А", "#007bff", valA, 'a');
+        renderTrack(trackH * 1.5, "ВОЛНА Б", "#e83e8c", valB, 'b');
+        renderTrack(trackH * 2.5, "РЕЗУЛЬТАТ (А+Б)", "#333", valSum, 's', true);
+
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>
