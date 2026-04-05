@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elite Physics Lab: Final Edition</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0F1115;
+            --accent: #00d2ff;
+            --danger: #FF3B30;
+            --bulb-yellow: #FFD700;
+            --wire-dark: #1E2024;
+            --batt-grey: #2d3436;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0; background: var(--bg); color: #fff;
+            font-family: 'Montserrat', sans-serif; display: flex; flex-direction: column;
+            height: 100vh; width: 100vw; overflow: hidden;
+        }
+
+        #viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; min-height: 0; }
+        svg { max-width: 100%; max-height: 100%; overflow: visible; filter: drop-shadow(0 20px 60px rgba(0,0,0,0.4)); }
+
+        /* Эффект раскаливания и тряски */
+        @keyframes heat-shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -1px); }
+            100% { transform: translate(1px, -1px); }
+        }
+
+        #batt-body { fill: var(--batt-grey); stroke: #333; stroke-width: 2; transition: fill 0.4s, filter 0.4s; }
+        
+        /* Состояние КЗ для батарейки */
+        .is-shorting #batt-content { animation: heat-shake 0.05s infinite; }
+        .is-shorting #batt-body { 
+            fill: var(--danger) !important; 
+            stroke: #fff; 
+            filter: drop-shadow(0 0 25px var(--danger)); 
+        }
+
+        .is-exploded #batt-content { display: none; }
+
+        .wire-base { fill: none; stroke: var(--wire-dark); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+        .glow-path { fill: none; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transition: opacity 0.3s; }
+        
+        .mode-normal .glow-normal { opacity: 1; stroke: var(--accent); filter: drop-shadow(0 0 10px var(--accent)); }
+        .mode-short .glow-short { opacity: 1; stroke: var(--danger); filter: drop-shadow(0 0 15px var(--danger)); }
+
+        .charge { fill: #fff; filter: blur(1px); opacity: 0; pointer-events: none; }
+        .flowing .charge { opacity: 0.8; }
+
+        .amm-digits { font-family: 'JetBrains Mono', monospace; fill: var(--accent); font-size: 26px; }
+        .mode-short .amm-digits { fill: var(--danger); filter: drop-shadow(0 0 5px var(--danger)); }
+
+        /* Панель управления */
+        #controls {
+            flex-shrink: 0; background: rgba(20, 22, 26, 0.98); backdrop-filter: blur(25px);
+            padding: 20px 40px; display: flex; align-items: center; justify-content: center; gap: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1); z-index: 100;
+        }
+
+        .formula-box {
+            padding-right: 40px; border-right: 1px solid rgba(255,255,255,0.1);
+            font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--accent);
+            display: flex; flex-direction: column; min-width: 240px;
+        }
+        .formula-box small { font-size: 9px; color: #636e72; letter-spacing: 1px; margin-top: 4px; }
+
+        .param { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .param label { font-size: 8px; font-weight: 800; color: #86868b; text-transform: uppercase; letter-spacing: 1px; }
+        .param span { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #fff; }
+        
+        input[type="range"] { appearance: none; width: 110px; height: 2px; background: #333; outline: none; cursor: pointer; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px #fff; }
+
+        .btn-repair {
+            background: var(--accent); color: #000; border: none; padding: 12px 24px;
+            border-radius: 8px; font-weight: 900; cursor: pointer; display: none;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .is-exploded .btn-repair { display: block; }
+        .is-exploded .param, .is-exploded .formula-box { display: none; }
+    </style>
+</head>
+<body id="app">
+
+<div id="viewport">
+    <svg viewBox="0 0 1000 600" id="circuit">
+        <defs>
+            <path id="geo-main" d="M 150 240 L 150 140 Q 150 100 190 100 L 810 100 Q 850 100 850 140 L 850 460 Q 850 500 810 500 L 190 500 Q 150 500 150 460 L 150 360" />
+            <path id="geo-short" d="M 150 240 L 150 140 Q 150 100 190 100 L 500 100 L 500 500 L 190 500 Q 150 500 150 460 L 150 360" />
+            <radialGradient id="bulbGlowGrad">
+                <stop offset="0%" stop-color="var(--bulb-yellow)" stop-opacity="0.9" />
+                <stop offset="100%" stop-color="var(--bulb-yellow)" stop-opacity="0" />
+            </radialGradient>
+            <radialGradient id="boomGrad"><stop offset="0%" stop-color="#FFD700" /><stop offset="100%" stop-color="#FF3B30" stop-opacity="0" /></radialGradient>
+        </defs>
+
+        <g class="wire-base"><use href="#geo-main" /><line x1="500" y1="100" x2="500" y2="500" /></g>
+        <use href="#geo-main" id="glow-nm" class="glow-path glow-normal" />
+        <use href="#geo-short" id="glow-sh" class="glow-path glow-short" />
+
+        <!-- БАТАРЕЙКА (Energy Unit) -->
+        <g id="batt-anchor" transform="translate(80, 240)">
+            <g id="batt-content">
+                <rect id="batt-body" width="140" height="120" rx="10" />
+                <rect x="50" y="-12" width="40" height="12" rx="3" fill="#ac8e13" />
+                <text x="70" y="75" fill="#fff" text-anchor="middle" font-size="18" font-weight="900" letter-spacing="3" style="pointer-events:none">ENERGY</text>
+                <text x="70" y="35" fill="#ac8e13" font-size="32" font-weight="900" text-anchor="middle" style="pointer-events:none">+</text>
+            </g>
+        </g>
+
+        <!-- АМПЕРМЕТР -->
+        <g transform="translate(330, 100)">
+            <rect x="-75" y="-40" width="150" height="80" rx="10" fill="#000" stroke="#333" />
+            <text id="amm-display" x="0" y="12" text-anchor="middle" class="amm-digits">0.00 A</text>
+        </g>
+
+        <!-- Ключи -->
+        <g transform="translate(710, 100)" onclick="toggleKey('K1')" style="cursor:pointer">
+            <rect x="0" y="-22" width="80" height="44" rx="22" fill="#1a1a1a" stroke="#333" />
+            <circle id="knob-1" cx="22" cy="0" r="16" fill="#444" style="transition:0.3s" />
+            <text x="40" y="-45" text-anchor="middle" fill="#fff" font-size="28" font-weight="900">K1</text>
+        </g>
+        <g transform="translate(460, 230)" onclick="toggleKey('K2')" style="cursor:pointer">
+            <rect x="0" y="0" width="80" height="44" rx="22" fill="#1a1a1a" stroke="#333" transform="rotate(90, 40, 22)" />
+            <circle id="knob-2" cx="40" cy="5" r="16" fill="#444" style="transition:0.3s" />
+            <text x="115" y="30" text-anchor="middle" fill="#fff" font-size="28" font-weight="900">K2</text>
+        </g>
+
+        <!-- ЛАМПА -->
+        <g transform="translate(850, 310)">
+            <circle id="bulb-glow" r="140" fill="url(#bulbGlowGrad)" opacity="0" style="transition: opacity 0.1s, transform 0.1s" />
+            <circle r="50" fill="none" stroke="#333" stroke-width="2" />
+            <path id="filament" d="M -18 18 L 0 -18 L 18 18" stroke="#333" stroke-width="4" fill="none" />
+        </g>
+
+        <g id="charge-layer"></g>
+        <g id="fx-layer"></g>
+    </svg>
+</div>
+
+<div id="controls">
+    <div class="formula-box">
+        <span>I = ε / (R + r + R<sub>w</sub>)</span>
+        <small>ЗАКОН ОМА ДЛЯ ПОЛНОЙ ЦЕПИ</small>
+    </div>
+    <button class="btn-repair" onclick="repair()">Repair System</button>
+    <div class="param"><label>ЭДС (ε)</label><input type="range" id="u-in" min="0" max="100" value="12"><span id="u-val">12.0 V</span></div>
+    <div class="param"><label>Сопротивление лампы (R)</label><input type="range" id="r-in" min="1" max="100" value="24"><span id="r-val">24.0 Ω</span></div>
+    <div class="param"><label>Внутренне сопротивление (r)</label><input type="range" id="ri-in" min="0.1" max="10" step="0.1" value="2.0"><span id="ri-val">2.0 Ω</span></div>
+    <div class="param"><label>Сопротивление проводов (Rw)</label><input type="range" id="rw-in" min="0.0" max="5" step="0.1" value="0.1"><span id="rw-val">0.1 Ω</span></div>
+</div>
+
+<script>
+    const state = { u: 12, r: 24, ri: 2.0, rw: 0.1, K1: false, K2: false, charges: [], exploded: false, heat: 0 };
+    const fxLayer = document.getElementById('fx-layer');
+
+    for(let i=0; i<40; i++) {
+        const c = document.createElementNS("http://w3.org", "circle");
+        c.setAttribute('r', 4); c.classList.add('charge');
+        document.getElementById('charge-layer').appendChild(c);
+        state.charges.push({ el: c, offset: i / 40 });
+    }
+
+    function toggleKey(id) {
+        if(state.exploded) return;
+        state[id] = !state[id];
+        const knob = document.getElementById('knob-' + (id === 'K1' ? '1' : '2'));
+        knob.style.transform = state[id] ? (id === 'K1' ? 'translateX(36px)' : 'translateY(36px)') : '';
+        knob.style.fill = state[id] ? (id === 'K1' ? 'var(--accent)' : 'var(--danger)') : '#444';
+    }
+
+    function explode() {
+        state.exploded = true;
+        document.getElementById('app').classList.add('is-exploded');
+        const flash = document.createElementNS("http://w3.org", "circle");
+        flash.setAttribute('cx', 150); flash.setAttribute('cy', 300); flash.setAttribute('r', 10); flash.setAttribute('fill', 'url(#boomGrad)');
+        fxLayer.appendChild(flash);
+        flash.animate([{ r: 10, opacity: 1 }, { r: 600, opacity: 0 }], { duration: 700 }).onfinish = () => flash.remove();
+    }
+
+    function repair() {
+        state.exploded = false; state.K2 = false; state.heat = 0;
+        document.getElementById('app').classList.remove('is-exploded');
+        document.getElementById('knob-2').style.transform = ''; document.getElementById('knob-2').style.fill = '#444';
+    }
+
+    document.getElementById('u-in').oninput = e => { state.u = parseFloat(e.target.value); document.getElementById('u-val').innerText = state.u.toFixed(1) + " V"; };
+    document.getElementById('r-in').oninput = e => { state.r = parseFloat(e.target.value); document.getElementById('r-val').innerText = state.r.toFixed(1) + " Ω"; };
+    document.getElementById('ri-in').oninput = e => { state.ri = parseFloat(e.target.value); document.getElementById('ri-val').innerText = state.ri.toFixed(1) + " Ω"; };
+    document.getElementById('rw-in').oninput = e => { state.rw = parseFloat(e.target.value); document.getElementById('rw-val').innerText = state.rw.toFixed(1) + " Ω"; };
+
+    function loop() {
+        const app = document.getElementById('app');
+        let I = 0, pId = 'geo-main';
+        app.classList.remove('flowing', 'mode-normal', 'mode-short', 'is-shorting');
+
+        if (!state.exploded) {
+            if (state.K2 && state.u > 0) {
+                I = state.u / (state.ri + state.rw + 0.05);
+                pId = 'geo-short';
+                app.classList.add('flowing', 'mode-short', 'is-shorting');
+                state.heat += (I * I * state.ri) / 10000;
+                if(state.heat > 100) explode();
+                // Искры
+                if(Math.random() > 0.4) {
+                    const s = document.createElementNS("http://w3.org", "line");
+                    const a = Math.random()*6.28, d = 30+Math.random()*40;
+                    s.setAttribute('x1', 150); s.setAttribute('y1', 230);
+                    s.setAttribute('x2', 150+Math.cos(a)*5); s.setAttribute('y2', 230+Math.sin(a)*5);
+                    s.setAttribute('stroke', 'var(--bulb-yellow)'); s.setAttribute('stroke-width', '2');
+                    fxLayer.appendChild(s);
+                    s.animate([{opacity:1}, {transform:`translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`, opacity:0}], 300).onfinish = () => s.remove();
+                }
+            } else if (state.K1 && state.u > 0) {
+                I = state.u / (state.r + state.ri + state.rw);
+                pId = 'geo-main';
+                app.classList.add('flowing', 'mode-normal');
+                state.heat = Math.max(0, state.heat - 0.2);
+            }
+        }
+
+        document.getElementById('amm-display').textContent = I.toFixed(2) + " A";
+
+        if (I > 0) {
+            const path = document.getElementById(pId);
+            const pLen = path.getTotalLength();
+            const speed = I * 0.0035;
+            state.charges.forEach(c => {
+                c.offset = (c.offset + speed) % 1;
+                const pt = path.getPointAtLength(c.offset * pLen);
+                c.el.setAttribute('cx', pt.x); c.el.setAttribute('cy', pt.y);
+            });
+        }
+
+        const bulbOn = state.K1 && !state.K2 && state.u > 0 && !state.exploded;
+        const power = I * I * state.r;
+        const intensity = Math.min(power / 100, 1.5); 
+        document.getElementById('bulb-glow').style.opacity = bulbOn ? intensity : 0;
+        document.getElementById('bulb-glow').style.transform = `scale(${0.8 + intensity * 0.4})`;
+        document.getElementById('filament').setAttribute('stroke', bulbOn ? 'var(--bulb-yellow)' : '#333');
+
+        requestAnimationFrame(loop);
+    }
+    loop();
+</script>
+</body>
+</html>
