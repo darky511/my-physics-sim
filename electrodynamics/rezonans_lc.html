@@ -6,20 +6,20 @@
     <style>
         :root { --gold: #D4AF37; --blue: #3A86FF; --bg: #050505; --panel: #111; }
         body { margin: 0; background: var(--bg); color: #f0f0f0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
-        #canvas-container { flex: 1; position: relative; }
+        #canvas-container { flex: 1; position: relative; background: #000; }
         canvas { width: 100%; height: 100%; display: block; }
         .ui-panel { 
             width: 320px; background: var(--panel); border-left: 2px solid #333; 
-            padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;
+            padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;
         }
-        .control { display: flex; flex-direction: column; gap: 4px; }
-        label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.2px; color: #888; }
-        input[type=range] { width: 100%; accent-color: var(--gold); cursor: pointer; }
-        .value { color: var(--gold); font-weight: bold; float: right; font-family: monospace; font-size: 1rem; }
-        .stats { margin-top: 5px; padding: 12px; background: #000; border: 1px solid #444; border-radius: 8px; font-family: monospace; }
-        #res-label { text-align: center; color: var(--gold); font-weight: 900; letter-spacing: 4px; margin-top: 8px; font-size: 1.1rem; text-shadow: 0 0 10px var(--gold); }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px; }
-        button { padding: 10px; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
+        .control { display: flex; flex-direction: column; gap: 2px; }
+        label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: #888; }
+        input[type=range] { width: 100%; accent-color: var(--gold); cursor: pointer; margin: 5px 0; }
+        .value { color: var(--gold); font-weight: bold; float: right; font-family: monospace; }
+        .stats { padding: 12px; background: #000; border: 1px solid #444; border-radius: 8px; font-family: monospace; }
+        #res-label { text-align: center; color: var(--gold); font-weight: 900; letter-spacing: 3px; margin-top: 5px; font-size: 1rem; text-shadow: 0 0 10px var(--gold); }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 8px; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
         button.active { background: var(--gold); color: black; }
     </style>
 </head>
@@ -30,7 +30,7 @@
 </div>
 
 <div class="ui-panel">
-    <h3 style="color:var(--gold); margin:0; letter-spacing:2px; font-size:1.1rem">RLC RESONANCE 2.6</h3>
+    <h3 style="color:var(--gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1rem">RLC RESONANCE</h3>
     <div class="btn-group">
         <button id="startBtn" class="active">ПУСК</button>
         <button id="stopBtn">СТОП</button>
@@ -52,8 +52,8 @@
         <input type="range" id="w" min="0.1" max="10" step="0.1" value="1.0">
     </div>
     <div class="stats">
-        <div style="display:flex; justify-content:space-between; font-size:0.8rem"><span>ω (ИСТ):</span><span id="stat-w">1.00</span></div>
-        <div style="display:flex; justify-content:space-between; font-size:0.8rem"><span>ω₀ (КОНТ):</span><span id="stat-w0">1.00</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem"><span>ω (ИСТ):</span><span id="stat-w">1.00</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem"><span>ω₀ (КОНТ):</span><span id="stat-w0">1.00</span></div>
         <div id="res-label" style="opacity:0.1">РЕЗОНАНС</div>
     </div>
 </div>
@@ -88,8 +88,8 @@ function resize() {
 window.onresize = resize;
 resize();
 
-function getPos(pct, cx, cy) {
-    const S = 320, R = 60, side = S - 2*R, arc = Math.PI * R / 2, total = 4 * side + 4 * arc;
+function getPos(pct, cx, cy, S, R) {
+    const side = S - 2*R, arc = Math.PI * R / 2, total = 4 * side + 4 * arc;
     let d = pct * total;
     if (d < side) return { x: cx - side/2 + d, y: cy - S/2 }; d -= side;
     if (d < arc) { let a = (d/arc)*Math.PI/2 - Math.PI/2; return { x: cx + side/2 + Math.cos(a)*R, y: cy - side/2 + Math.sin(a)*R }; } d -= arc;
@@ -104,14 +104,10 @@ function getPos(pct, cx, cy) {
 function draw() {
     if (isRunning) p.t += 0.02;
     const w0 = 1/Math.sqrt(p.l*p.c);
-    const XL = p.w * p.l, XC = 1/(p.w * p.c);
-    const Z = Math.sqrt((p.r + 0.001)**2 + (XL - XC)**2);
+    const Z = Math.sqrt((p.r + 0.001)**2 + (p.w*p.l - 1/(p.w*p.c))**2);
     const I0 = 50 / Z;
     const resFactor = Math.pow(1 / (1 + Math.abs(p.w - w0)*2.5), 2);
-    
-    // ЛИМИТЕР ТОКА ДЛЯ ЭЛЕКТРОНОВ (чтобы не вылетали)
-    const limitedI = Math.min(I0, 500); 
-    const currentI = Math.sin(p.t * p.w) * limitedI;
+    const currentI = Math.sin(p.t * p.w) * Math.min(I0, 500);
     
     document.getElementById('stat-w').innerText = p.w.toFixed(2);
     document.getElementById('stat-w0').innerText = w0.toFixed(2);
@@ -120,79 +116,101 @@ function draw() {
     ctx.fillStyle = '#050505';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const cx = canvas.width * 0.38, cy = canvas.height / 2 - 120, S = 320;
+    const h = canvas.height;
+    const w = canvas.width;
+    const graphY = h * 0.82; 
+    const topZoneY = h * 0.38; 
+    const elementScale = Math.min(h / 950, w / 1400); 
+
+    const cx = w * 0.35, cy = topZoneY, S = 320 * elementScale, R_arc = 60 * elementScale;
 
     // 1. ЦЕПЬ
-    ctx.strokeStyle = '#222'; ctx.lineWidth = 14;
-    ctx.beginPath(); ctx.roundRect(cx - S/2, cy - S/2, S, S, 60); ctx.stroke();
+    ctx.strokeStyle = '#222'; ctx.lineWidth = 14 * elementScale;
+    ctx.beginPath(); ctx.roundRect(cx - S/2, cy - S/2, S, S, R_arc); ctx.stroke();
 
-    // Электроны (строго по путям)
+    // Электроны
     p.electrons.forEach((pos, i) => {
-        if (isRunning) {
-            // Применяем нормализованный шаг
-            p.electrons[i] = (pos + currentI * 0.0004 + 1) % 1;
-        }
-        const pt = getPos(p.electrons[i], cx, cy);
+        if (isRunning) p.electrons[i] = (pos + currentI * 0.0004 + 1) % 1;
+        const pt = getPos(p.electrons[i], cx, cy, S, R_arc);
         ctx.fillStyle = resFactor > 0.85 ? '#FFF' : COLOR_BLUE;
-        if(resFactor > 0.85) { ctx.shadowBlur = 8; ctx.shadowColor = "#FFF"; }
-        ctx.beginPath(); ctx.arc(pt.x, pt.y, 5, 0, Math.PI*2); ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, 5 * elementScale, 0, Math.PI*2); ctx.fill();
     });
 
-    // Компоненты (L, C, R, ИСТ)
+    // Элементы цепи
     ctx.fillStyle = '#050505';
     // L (Верх)
-    ctx.fillRect(cx-60, cy-S/2-25, 120, 50);
-    ctx.strokeStyle = COLOR_GOLD; ctx.lineWidth = 4;
-    ctx.beginPath(); for(let i=0; i<5; i++) ctx.arc(cx-40+i*20, cy-S/2, 14, 0, Math.PI*2); ctx.stroke();
+    ctx.fillRect(cx - 50*elementScale, cy - S/2 - 25*elementScale, 100*elementScale, 50*elementScale);
+    ctx.strokeStyle = COLOR_GOLD; ctx.lineWidth = 4 * elementScale;
+    ctx.beginPath(); for(let i=0; i<5; i++) ctx.arc(cx - 32*elementScale + i*16*elementScale, cy - S/2, 12 * elementScale, 0, Math.PI*2); ctx.stroke();
     // C (Право)
-    const gap = 25 - (p.c / 10) * 21;
-    ctx.fillRect(cx+S/2-30, cy-50, 60, 100);
-    ctx.strokeStyle = COLOR_BLUE; ctx.lineWidth = 8;
-    ctx.beginPath(); 
-    ctx.moveTo(cx+S/2 - gap/2, cy-40); ctx.lineTo(cx+S/2 - gap/2, cy+40);
-    ctx.moveTo(cx+S/2 + gap/2, cy-40); ctx.lineTo(cx+S/2 + gap/2, cy+40); ctx.stroke();
+    const gap = (25 - (p.c / 10) * 21) * elementScale;
+    ctx.fillRect(cx + S/2 - 30*elementScale, cy - 50*elementScale, 60*elementScale, 100*elementScale);
+    ctx.strokeStyle = COLOR_BLUE; ctx.lineWidth = 8 * elementScale;
+    ctx.beginPath(); ctx.moveTo(cx+S/2 - gap/2, cy-40*elementScale); ctx.lineTo(cx+S/2 - gap/2, cy+40*elementScale);
+    ctx.moveTo(cx+S/2 + gap/2, cy-40*elementScale); ctx.lineTo(cx+S/2 + gap/2, cy+40*elementScale); ctx.stroke();
     // R (Низ)
-    ctx.fillRect(cx-50, cy+S/2-25, 100, 50);
-    ctx.strokeStyle = '#FF4444'; ctx.lineWidth = 4; ctx.strokeRect(cx-40, cy+S/2-15, 80, 30);
+    ctx.fillRect(cx - 50*elementScale, cy + S/2 - 25*elementScale, 100*elementScale, 50*elementScale);
+    ctx.strokeStyle = '#FF4444'; ctx.strokeRect(cx - 40*elementScale, cy + S/2 - 15*elementScale, 80*elementScale, 30*elementScale);
     // ИСТ (Лево)
-    ctx.beginPath(); ctx.arc(cx-S/2, cy, 35, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx - S/2, cy, 35 * elementScale, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#FFF'; ctx.stroke();
-    ctx.beginPath(); for(let x=-20; x<=20; x++) ctx.lineTo(cx-S/2+x, cy+Math.sin(x*0.15 + p.t*5)*12); ctx.stroke();
+    ctx.beginPath(); for(let x=-20; x<=20; x++) ctx.lineTo(cx-S/2 + x*elementScale, cy + Math.sin(x*0.15 + p.t*5)*12*elementScale); ctx.stroke();
 
-    // 2. РАДИО
-    const rx = canvas.width * 0.8, ry = cy, rw = 180, rh = 300;
-    ctx.fillStyle = '#151515'; ctx.beginPath(); ctx.roundRect(rx-rw/2, ry-rh/2, rw, rh, 20); ctx.fill();
+    // 2. ПОЛНОСТЬЮ ВОССТАНОВЛЕННЫЙ ПРИЕМНИК (Справа)
+    const rx = w * 0.78, ry = cy, rw = 180 * elementScale, rh = 320 * elementScale;
+    ctx.fillStyle = '#151515'; ctx.beginPath(); ctx.roundRect(rx-rw/2, ry-rh/2, rw, rh, 20*elementScale); ctx.fill();
     ctx.strokeStyle = '#333'; ctx.lineWidth = 4; ctx.stroke();
-    ctx.fillStyle = '#000'; ctx.fillRect(rx-70, ry-125, 140, 170);
-    // Шкала делений
-    for(let i=0; i<=100; i++) {
-        const y = ry - 125 + (i/100)*170;
-        const major = i % 10 === 0;
-        ctx.strokeStyle = major ? '#666' : '#333'; ctx.beginPath();
-        ctx.moveTo(rx-70, y); ctx.lineTo(rx - 70 + (major?25:12), y); ctx.stroke();
-    }
-    const targetY = ry - 125 + (w0/10)*170;
-    ctx.strokeStyle = 'rgba(212,175,55,0.4)'; ctx.lineWidth = 10;
-    ctx.beginPath(); ctx.moveTo(rx-70, targetY); ctx.lineTo(rx+70, targetY); ctx.stroke();
-    const pointerY = ry - 125 + (p.w/10)*170;
-    ctx.strokeStyle = resFactor > 0.85 ? '#FFF' : '#FF3333'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(rx-85, pointerY); ctx.lineTo(rx+55, pointerY); ctx.stroke();
 
-    // 3. ГРАФИК (ОСЦИЛЛОГРАФ)
-    const gy = canvas.height - 110;
-    const viewScale = Math.min(1.0, 90 / (I0 + 1));
-    const finalAmp = I0 * viewScale * 1.8;
+    // Шкала
+    const scaleTop = ry - rh/2 + 20*elementScale;
+    const scaleHeight = rh * 0.55;
+    ctx.fillStyle = '#000'; ctx.fillRect(rx - rw/2 + 15*elementScale, scaleTop, rw - 30*elementScale, scaleHeight);
+    
+    // Деления шкалы
+    for(let i=0; i<=100; i++) {
+        const y = scaleTop + (i/100) * scaleHeight;
+        const major = i % 10 === 0;
+        ctx.strokeStyle = major ? '#666' : '#222';
+        ctx.lineWidth = major ? 2 : 1;
+        ctx.beginPath(); ctx.moveTo(rx - rw/2 + 15*elementScale, y); ctx.lineTo(rx - rw/2 + (major?35:25)*elementScale, y); ctx.stroke();
+    }
+    
+    // Станция и Указатель
+    const targetY = scaleTop + (w0/10) * scaleHeight;
+    ctx.strokeStyle = 'rgba(212,175,55,0.4)'; ctx.lineWidth = 10 * elementScale;
+    ctx.beginPath(); ctx.moveTo(rx-rw/2+15*elementScale, targetY); ctx.lineTo(rx+rw/2-15*elementScale, targetY); ctx.stroke();
+
+    const pointerY = scaleTop + (p.w/10) * scaleHeight;
+    ctx.strokeStyle = resFactor > 0.85 ? '#FFF' : '#FF3333'; ctx.lineWidth = 4 * elementScale;
+    ctx.beginPath(); ctx.moveTo(rx-rw/2+5*elementScale, pointerY); ctx.lineTo(rx+rw/2-25*elementScale, pointerY); ctx.stroke();
+    ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.arc(rx+rw/2-25*elementScale, pointerY, 6*elementScale, 0, Math.PI*2); ctx.fill();
+
+    // Динамик с шумами
+    const spR = 40 * elementScale;
+    const spY = scaleTop + scaleHeight + 50 * elementScale;
+    ctx.fillStyle = '#080808'; ctx.beginPath(); ctx.arc(rx, spY, spR, 0, Math.PI*2); ctx.fill();
+    if (resFactor < 0.85) {
+        for(let i=0; i<30; i++) {
+            ctx.fillStyle = Math.random() > 0.5 ? '#FFF' : '#555';
+            ctx.fillRect(rx - 25*elementScale + Math.random()*50*elementScale, spY - 20*elementScale + Math.random()*40*elementScale, 2, 2);
+        }
+    } else {
+        ctx.strokeStyle = COLOR_GOLD; ctx.lineWidth = 3 * elementScale;
+        ctx.beginPath(); for(let i=0; i<3; i++) ctx.arc(rx, spY, (15+i*10)*elementScale + Math.sin(p.t*15)*5*elementScale, -0.6, 0.6); ctx.stroke();
+    }
+
+    // 3. ОСЦИЛЛОГРАФ (Нижняя зона)
+    const viewScale = Math.min(1.0, 95 / (I0 + 1));
+    const finalAmp = I0 * viewScale * (h * 0.002);
     ctx.beginPath(); ctx.lineWidth = resFactor > 0.85 ? 6 : 3;
     ctx.strokeStyle = resFactor > 0.85 ? COLOR_GOLD : '#222';
     if(resFactor > 0.85) { ctx.shadowBlur = 15; ctx.shadowColor = COLOR_GOLD; }
-    for(let x=0; x < canvas.width; x++) {
-        const ang = (x - canvas.width/2)*0.02*p.w + p.t*p.w;
-        ctx.lineTo(x, gy + Math.sin(ang) * finalAmp);
+    for(let x=0; x < w; x++) {
+        const ang = (x - w/2)*0.02*p.w + p.t*p.w;
+        ctx.lineTo(x, graphY + Math.sin(ang) * finalAmp);
     }
     ctx.stroke(); ctx.shadowBlur = 0;
-    // Маркер на графике
-    ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.arc(canvas.width/2, gy + Math.sin(p.t*p.w)*finalAmp, 6, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.arc(w/2, graphY + Math.sin(p.t*p.w)*finalAmp, 6, 0, Math.PI*2); ctx.fill();
 
     requestAnimationFrame(draw);
 }
