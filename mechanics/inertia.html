@@ -8,7 +8,6 @@
  html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #05070f; font-family: -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; touch-action: none; position: fixed; }
  #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
  
- /* Нижняя плашка управления жестко зафиксирована внизу */
  .ui-panel { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; background: rgba(11, 17, 32, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 24px; padding: 16px 20px; box-sizing: border-box; z-index: 10; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); color: #fff; }
  .ui-title { font-size: 16px; font-weight: 700; margin: 0 0 4px 0; text-align: center; color: #38bdf8; letter-spacing: -0.3px; }
  .ui-subtitle { font-size: 11px; color: #94a3b8; margin: 0 0 12px 0; text-align: center; line-height: 1.4; }
@@ -21,7 +20,6 @@
  .btn-kick { width: 100%; background: #38bdf8; color: #05070f; border: none; padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.1s; -webkit-tap-highlight-color: transparent; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3); }
  .btn-kick:active { background: #0ea5e9; transform: scale(0.98); }
  
- /* Верхние плашки статистики стали еще контрастнее */
  .stats-overlay { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; display: flex; justify-content: space-between; gap: 12px; z-index: 10; pointer-events: none; }
  .stat-box { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 16px; flex: 1; text-align: center; backdrop-filter: blur(10px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
  .stat-box.tennis { border-left: 4px solid #a3e635; box-shadow: inset 5px 0 10px -5px rgba(163,230,53,0.3); }
@@ -56,7 +54,7 @@
  <span>Сила толчка (Ньютоны)</span>
  <span id="forceVal">150 Н</span>
  </div>
- <input type="range" id="forceSlider" min="50" max="400" step = "10" value="150">
+ <input type="range" id="forceSlider" min="50" max="400" step="10" value="150">
  </div>
  <button class="btn-kick" id="kickBtn">ТОЛКНУТЬ СИЛОЙ ЩЕЛЧКА!</button>
  </div>
@@ -70,22 +68,21 @@
  let width = canvas.width = window.innerWidth;
  let height = canvas.height = window.innerHeight;
 
- // НАСТРОЙКА ВИЗУАЛЬНОГО РАЗДЕЛЕНИЯ СЛОЕВ (Чтобы пульт ничего не перекрывал)
- // На смартфонах fov = 300 (отодвигаем камеру дальше), responsiveOffsetY увеличиваем, приподнимая симуляцию вверх
- let dynamicFov = width < height ? 300 : 460; 
+ // ПРИБЛИЖАЕМ КАМЕРУ ДЛЯ УВЕЛИЧЕНИЯ ОБЪЕКТОВ
+ let dynamicFov = width < height ? 320 : 480; 
  let responsiveOffsetY = width < height ? (height * 0.15) : (height * 0.02);
 
  window.addEventListener('resize', () => {
  width = canvas.width = window.innerWidth;
  height = canvas.height = window.innerHeight;
- dynamicFov = width < height ? 300 : 460;
+ dynamicFov = width < height ? 320 : 480;
  responsiveOffsetY = width < height ? (height * 0.15) : (height * 0.02);
  });
 
- // Физические тела: ТЕПЕРЬ ОНИ СТАЛИ КРУПНЫМИ И ОДИНАКОВЫМИ ВИЗУАЛЬНО (radius: 5.5)
+ // РАДИУС УВЕЛИЧЕН В 5 РАЗ (с 5.5 до 27.5). Шары станут по-настоящему огромными!
  const balls = {
- tennis: { x: -20, y: 11, z: 0, vx: 0, radius: 5.5, mass: 0.05, color: '#a3e635', label: 'Теннисный мяч' },
- iron: { x: -20, y: -9, z: 0, vx: 0, radius: 5.5, mass: 50.0, color: '#e2e8f0', label: 'Чугунное ядро' }
+ tennis: { x: -20, y: 11, z: 0, vx: 0, radius: 27.5, mass: 0.05, color: '#a3e635', label: 'Теннисный мяч' },
+ iron: { x: -20, y: -9, z: 0, vx: 0, radius: 27.5, mass: 50.0, color: '#e2e8f0', label: 'Чугунное ядро' }
  };
 
  let kickForce = 150;
@@ -221,7 +218,7 @@
  // 3. ОТРИСОВКА КРУПНЫХ ОБЪЕКТОВ ОДИНАКОВОГО ВИЗУАЛЬНОГО РАЗМЕРА
  // Рендерим Теннисный мяч
  let t2d = project(balls.tennis.x, balls.tennis.y, balls.tennis.z);
- let tRadius = balls.tennis.radius * (t2d.scale / 8);
+ let tRadius = balls.tennis.radius * (t2d.scale / 40); // Скорректирован коэффициент под гигантский радиус
  
  // Объемный сочный градиент для мяча
  ctx.beginPath();
@@ -236,7 +233,7 @@
 
  // Рендерим Чугунное ядро
  let i2d = project(balls.iron.x, balls.iron.y, balls.iron.z);
- let iRadius = balls.iron.radius * (i2d.scale / 8);
+ let iRadius = balls.iron.radius * (i2d.scale / 40);
 
  // Объемный металлический градиент для ядра
  ctx.beginPath();
@@ -249,12 +246,12 @@
  ctx.fillStyle = iGrad;
  ctx.fill();
 
- // Контрастные текстовые подписи над шарами
+ // Контрастные текстовые подписи над шарами (смещены выше, чтобы не заходить на огромные сферы)
  ctx.fillStyle = '#ffffff';
- ctx.font = 'bold 13px sans-serif';
+ ctx.font = 'bold 14px sans-serif';
  ctx.textAlign = 'center';
- ctx.fillText(balls.tennis.label, t2d.x, t2d.y - tRadius - 10);
- ctx.fillText(balls.iron.label, i2d.x, i2d.y - iRadius - 10);
+ ctx.fillText(balls.tennis.label, t2d.x, t2d.y - tRadius - 12);
+ ctx.fillText(balls.iron.label, i2d.x, i2d.y - iRadius - 12);
  }
 
  animate();
