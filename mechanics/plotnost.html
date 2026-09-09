@@ -491,16 +491,16 @@
             ctx.font = 'bold 16px Inter';
             ctx.fillStyle = '#3b82f6';
             ctx.textAlign = 'center';
-            ctx.fillText('ПОРОЛОН', leftCubeX, centerY + bottomOffset);
+            ctx.fillText('ПОРОЛОН', leftCubeX, centerY + bottomOffset - 125);
             
             ctx.fillStyle = '#f97316';
-            ctx.fillText('ЖЕЛЕЗО', rightCubeX, centerY + bottomOffset);
+            ctx.fillText('ЖЕЛЕЗО', rightCubeX, centerY + bottomOffset - 125);
             
             // Draw density indicators
             ctx.font = '14px Inter';
             ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Низкая плотность', leftCubeX, centerY + bottomOffset + 25);
-            ctx.fillText('Высокая плотность', rightCubeX, centerY + bottomOffset + 25);
+            ctx.fillText('Низкая плотность', leftCubeX, centerY + bottomOffset - 100);
+            ctx.fillText('Высокая плотность', rightCubeX, centerY + bottomOffset - 100);
             
             requestAnimationFrame(animate);
         }
