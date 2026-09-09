@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Закон Гука: Сила Упругости</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        .simulation-area {
+            flex-grow: 1;
+            position: relative;
+            background: linear-gradient(to bottom, #1e293b 0%, #0f172a 100%);
+            cursor: grab;
+            overflow: hidden;
+        }
+        
+        .simulation-area:active {
+            cursor: grabbing;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 420px;
+            background-color: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            z-index: 20;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 5px;
+            outline: none;
+            margin-top: 10px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .info-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .highlight-k { color: #a78bfa; } /* Violet */
+        .highlight-x { color: #38bdf8; } /* Sky Blue */
+        .highlight-f { color: #fbbf24; } /* Amber */
+
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .sidebar { 
+                width: 100%; 
+                height: 50%; 
+                border-left: none; 
+                border-top: 1px solid rgba(255, 255, 255, 0.1); 
+                padding: 1rem; 
+                gap: 1rem; 
+            }
+            .simulation-area { height: 50%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- Left Side: Simulation Canvas -->
+    <div class="simulation-area" id="simContainer">
+        <canvas id="simCanvas"></canvas>
+        
+        <!-- Overlay Title -->
+        <div class="absolute top-6 left-0 w-full text-center pointer-events-none select-none z-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-white drop-shadow-lg tracking-tight">
+                Закон Гука
+            </h1>
+            <p class="text-slate-300 text-sm mt-2 max-w-lg mx-auto opacity-90 px-4 bg-black/20 rounded-full py-1 backdrop-blur-sm inline-block">
+                Потяните груз мышкой вниз и отпустите. Наблюдайте за колебаниями и графиком силы.
+            </p>
+        </div>
+    </div>
+
+    <!-- Right Side: Controls Sidebar -->
+    <div class="sidebar">
+        
+        <div class="hidden md:block mb-2">
+            <h2 class="text-xl font-bold text-white">Параметры пружины</h2>
+            <p class="text-xs text-slate-400">Изменяйте жесткость и нагрузку</p>
+        </div>
+
+        <!-- Control: Stiffness (k) -->
+        <div class="control-group">
+            <div class="flex justify-between items-end mb-2">
+                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Жесткость пружины (k)</label>
+                <span id="k-val" class="text-sm font-mono highlight-k font-bold">20 Н/м</span>
+            </div>
+            <input type="range" min="5" max="100" value="20" id="k-slider">
+            <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-medium">
+                <span>Мягкая</span>
+                <span>Жесткая</span>
+            </div>
+        </div>
+
+        <!-- Control: Mass (m) -->
+        <div class="control-group">
+            <div class="flex justify-between items-end mb-2">
+                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Масса груза (m)</label>
+                <span id="mass-val" class="text-sm font-mono highlight-x font-bold">2 кг</span>
+            </div>
+            <input type="range" min="0.5" max="10" step="0.1" value="2" id="mass-slider">
+            <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-medium">
+                <span>Легкий</span>
+                <span>Тяжелый</span>
+            </div>
+        </div>
+
+        <!-- Live Data Display -->
+        <div class="info-card mt-2">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <span class="text-slate-400 block text-xs uppercase mb-1">Удлинение ($\Delta x$)</span>
+                    <span id="disp-dx" class="text-2xl font-mono highlight-x font-bold">0.0</span>
+                    <span class="text-xs text-slate-500">м</span>
+                </div>
+                <div class="border-l border-slate-700 pl-4">
+                    <span class="text-slate-400 block text-xs uppercase mb-1">Сила упругости ($F_{упр}$)</span>
+                    <span id="disp-fel" class="text-2xl font-mono highlight-f font-bold">0.0</span>
+                    <span class="text-xs text-slate-500">Н</span>
+                </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-700 text-center">
+                <span class="text-xs text-slate-400 uppercase tracking-widest">Формула</span>
+                <div class="text-lg font-bold text-white mt-1">$F_{упр} = k \cdot \Delta x$</div>
+            </div>
+        </div>
+
+        <!-- Educational Context -->
+        <div class="bg-violet-900/20 rounded-xl p-4 border border-violet-500/30 mt-auto">
+            <h3 class="text-sm font-bold text-violet-300 mb-2">💡 Суть закона</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Сила упругости возникает при деформации тела и стремится вернуть его в исходное состояние. Она прямо пропорциональна величине деформации (удлинению). Чем сильнее растянули — тем сильнее пружина тянет обратно.
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- Configuration & State ---
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('simContainer');
+    
+    // Physics Constants
+    const PIXELS_PER_METER = 100; // Scale: 100px = 1 meter
+    const G = 9.8; 
+    
+    // Simulation State
+    const state = {
+        k: 20, // N/m (Stiffness)
+        mass: 2, // kg
+        
+        // Spring Properties
+        naturalLength: 150, // pixels (rest length)
+        anchorY: 100, // Y position of ceiling anchor
+        
+        // Object Properties
+        radius: 30, 
+        x: 0, 
+        y: 0, // Current Y position of mass center
+        vy: 0,
+        
+        // Interaction
+        isDragging: false,
+        dragOffsetX: 0,
+        dragOffsetY: 0,
+        
+        // Graph Data
+        graphHistory: [] // Stores {dx, f} points
+    };
+
+    // DOM Elements
+    const elKSlider = document.getElementById('k-slider');
+    const elMassSlider = document.getElementById('mass-slider');
+    const elKVal = document.getElementById('k-val');
+    const elMassVal = document.getElementById('mass-val');
+    const elDispDx = document.getElementById('disp-dx');
+    const elDispFel = document.getElementById('disp-fel');
+
+    // --- Initialization ---
+    function resize() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        
+        if (state.x === 0) {
+            state.x = canvas.width / 2;
+            // Start at equilibrium for current mass/k
+            const equilibriumExtension = (state.mass * G) / state.k;
+            state.y = state.anchorY + state.naturalLength + (equilibriumExtension * PIXELS_PER_METER);
+        }
+    }
+    
+    window.addEventListener('resize', resize);
+    setTimeout(resize, 50);
+
+    // --- Physics Engine ---
+    function updatePhysics() {
+        if (state.isDragging) {
+            // While dragging, calculate static values
+            const dxPixels = state.y - state.anchorY - state.naturalLength;
+            const dxMeters = Math.max(0, dxPixels / PIXELS_PER_METER);
+            const fElastic = state.k * dxMeters;
+            
+            updateUI(dxMeters, fElastic);
+            return;
+        }
+
+        // Forces acting on the mass:
+        // 1. Gravity (Down): Fg = m * g
+        const forceGravity = state.mass * G * PIXELS_PER_METER; // scaled to pixels
+        
+        // 2. Elastic Force (Up): Fe = k * delta_x
+        const currentLengthPixels = state.y - state.anchorY;
+        const extensionPixels = currentLengthPixels - state.naturalLength;
+        
+        let forceElasticPixels = 0;
+        if (extensionPixels > 0) {
+            const extensionMeters = extensionPixels / PIXELS_PER_METER;
+            forceElasticPixels = state.k * extensionMeters * PIXELS_PER_METER;
+        }
+        
+        // Net Force (Down is positive Y)
+        const netForce = forceGravity - forceElasticPixels;
+        
+        // Acceleration (F=ma -> a=F/m)
+        const acceleration = netForce / state.mass; 
+        
+        // Update Velocity
+        state.vy += acceleration * 0.016; // dt ~ 16ms
+        state.vy *= 0.98; // Damping (air resistance/internal friction) to stop oscillation eventually
+        
+        // Update Position
+        state.y += state.vy;
+
+        // Safety bounds (prevent flying off screen infinitely)
+        if (state.y < state.anchorY + state.radius) {
+            state.y = state.anchorY + state.radius;
+            state.vy = 0;
+        }
+
+        // Calculate Values for UI
+        const dxMeters = Math.max(0, extensionPixels / PIXELS_PER_METER);
+        const fElasticNewtons = state.k * dxMeters;
+
+        updateUI(dxMeters, fElasticNewtons);
+    }
+
+    function updateUI(dx, f) {
+        elDispDx.textContent = dx.toFixed(2);
+        elDispFel.textContent = f.toFixed(1);
+        
+        // Add point to graph history (throttle slightly or just add every frame)
+        // To keep graph clean, we only add if it's significantly different or just keep last N points?
+        // Let's just keep a running list of unique-ish points to draw the line F=kx
+    }
+
+    // --- Rendering ---
+    function drawSpring(ctx, startX, startY, endX, endY, coils, width) {
+        const len = Math.sqrt((endX-startX)**2 + (endY-startY)**2);
+        const angle = Math.atan2(endY-startY, endX-startX);
+        
+        ctx.save();
+        ctx.translate(startX, startY);
+        ctx.rotate(angle);
+        
+        ctx.beginPath();
+        ctx.strokeStyle = '#cbd5e1'; // Slate 300
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        
+        // Draw zig-zag
+        // Start with straight bit
+        ctx.moveTo(0, 0);
+        ctx.lineTo(10, 0);
+        
+        const coilLen = (len - 20) / coils;
+        for(let i=0; i<coils; i++) {
+            const xStart = 10 + i * coilLen;
+            const xEnd = 10 + (i+1) * coilLen;
+            const midX = (xStart + xEnd) / 2;
+            
+            ctx.lineTo(midX, -width);
+            ctx.lineTo(xEnd, width);
+        }
+        
+        // End straight bit
+        ctx.lineTo(len, 0);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+
+    function drawArrow(ctx, startX, startY, length, color, label, direction = 'down') {
+        if (length < 5) return;
+        
+        const endY = direction === 'down' ? startY + length : startY - length;
+        const headLen = 12;
+        
+        // Line
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(startX, endY);
+        ctx.stroke();
+        
+        // Arrow Head
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.moveTo(startX, endY);
+        if (direction === 'down') {
+            ctx.lineTo(startX - headLen/2, endY - headLen);
+            ctx.lineTo(startX + headLen/2, endY - headLen);
+        } else {
+            ctx.lineTo(startX - headLen/2, endY + headLen);
+            ctx.lineTo(startX + headLen/2, endY + headLen);
+        }
+        ctx.fill();
+        
+        // Label Background
+        const textWidth = ctx.measureText(label).width;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+        ctx.fillRect(startX + 15, (startY + endY)/2 - 12, textWidth + 12, 24);
+
+        // Label Text
+        ctx.fillStyle = color;
+        ctx.font = "bold 14px Inter";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, startX + 20, (startY + endY) / 2);
+    }
+
+    function drawGraph(ctx, width, height) {
+        // Graph Area Definition
+        const gx = width - 220;
+        const gy = 50;
+        const gw = 180;
+        const gh = 180;
+        
+        // Background
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(gx, gy, gw, gh, 8);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Title
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = "10px Inter";
+        ctx.textAlign = "center";
+        ctx.fillText("ГРАФИК F(Δx)", gx + gw/2, gy + 15);
+        
+        // Axes
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // Y axis (Force)
+        ctx.moveTo(gx + 30, gy + 25);
+        ctx.lineTo(gx + 30, gy + gh - 20);
+        // X axis (Extension)
+        ctx.lineTo(gx + gw - 10, gy + gh - 20);
+        ctx.stroke();
+        
+        // Labels
+        ctx.fillStyle = '#64748b';
+        ctx.font = "9px Inter";
+        ctx.textAlign = "right";
+        ctx.fillText("F (Н)", gx + 25, gy + 35);
+        ctx.textAlign = "center";
+        ctx.fillText("Δx (м)", gx + gw - 20, gy + gh - 5);
+        
+        // Plot Theoretical Line (F = kx)
+        // Max X on graph = 1.0m (arbitrary max for visualization)
+        const maxX = 1.0; 
+        const maxY = 100; // Max Force N
+        
+        // Scale factors inside graph
+        const scaleX = (gw - 40) / maxX;
+        const scaleY = (gh - 45) / maxY;
+        
+        ctx.beginPath();
+        ctx.strokeStyle = '#a78bfa'; // Violet line
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.moveTo(gx + 30, gy + gh - 20); // Origin
+        // Draw line to max K * max X
+        const fAtMaxX = state.k * maxX;
+        const plotY = (gy + gh - 20) - (fAtMaxX * scaleY);
+        const plotX = (gx + 30) + (maxX * scaleX);
+        
+        // Clamp to graph bounds
+        const endY = Math.max(gy + 25, plotY);
+        const endX = Math.min(gx + gw - 10, plotX);
+        
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Plot Current Point
+        const currentDx = Math.max(0, (state.y - state.anchorY - state.naturalLength) / PIXELS_PER_METER);
+        const currentF = state.k * currentDx;
+        
+        const px = (gx + 30) + (currentDx * scaleX);
+        const py = (gy + gh - 20) - (currentF * scaleY);
+        
+        // Dot
+        ctx.beginPath();
+        ctx.fillStyle = '#fbbf24'; // Amber dot
+        ctx.arc(px, py, 5, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Crosshair lines
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px, gy + gh - 20); // Down to X axis
+        ctx.moveTo(px, py);
+        ctx.lineTo(gx + 30, py); // Left to Y axis
+        ctx.stroke();
+    }
+
+    function drawRuler(ctx, x, topY, bottomY) {
+        const rulerX = x + 60;
+        const height = bottomY - topY;
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(rulerX, topY, 30, height);
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(rulerX, topY);
+        ctx.lineTo(rulerX, bottomY);
+        ctx.moveTo(rulerX + 30, topY);
+        ctx.lineTo(rulerX + 30, bottomY);
+        ctx.stroke();
+        
+        // Ticks every 10cm (0.1m = 10px)
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = "9px monospace";
+        ctx.textAlign = "left";
+        
+        for(let i=0; i<=height/10; i++) {
+            const y = topY + i*10;
+            const isMajor = i % 10 === 0;
+            const tickLen = isMajor ? 10 : 5;
+            
+            ctx.beginPath();
+            ctx.moveTo(rulerX, y);
+            ctx.lineTo(rulerX + tickLen, y);
+            ctx.moveTo(rulerX + 30, y);
+            ctx.lineTo(rulerX + 30 - tickLen, y);
+            ctx.stroke();
+            
+            if (isMajor) {
+                ctx.fillText((i/10).toFixed(1) + "м", rulerX + 12, y + 3);
+            }
+        }
+    }
+
+    function draw() {
+        // Clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const cx = state.x;
+        
+        // 1. Draw Ceiling Anchor
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(cx - 40, state.anchorY - 10, 80, 10);
+        
+        // 2. Draw Ruler (Background reference)
+        drawRuler(ctx, cx, state.anchorY, canvas.height);
+
+        // 3. Draw Spring
+        // Connects anchor to top of mass
+        drawSpring(ctx, cx, state.anchorY, cx, state.y - state.radius, 15, 15);
+        
+        // 4. Draw Object (Mass)
+        ctx.save();
+        ctx.translate(cx, state.y);
+        
+        // Box Gradient
+        const grad = ctx.createLinearGradient(-state.radius, -state.radius, state.radius, state.radius);
+        grad.addColorStop(0, '#38bdf8'); // Sky Light
+        grad.addColorStop(1, '#0284c7'); // Sky Dark
+        
+        ctx.beginPath();
+        ctx.rect(-state.radius, -state.radius, state.radius*2, state.radius*2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.strokeStyle = '#bae6fd';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Mass Label
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${state.radius * 0.8}px Inter`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(state.mass + "кг", 0, 0);
+        
+        ctx.restore();
+
+        // 5. Draw Vectors
+        
+        // Gravity Vector (Red, Down) - From Center of Mass
+        const fGravLen = (state.mass * G) * 5; // Scale for visibility
+        drawArrow(ctx, cx - state.radius - 20, state.y, fGravLen, '#ef4444', `mg`, 'down');
+        
+        // Elastic Force Vector (Violet, Up) - From Top of Mass (attachment point)
+        // Only exists if stretched
+        const extension = state.y - state.anchorY - state.naturalLength;
+        if (extension > 0) {
+            const fElasticLen = (state.k * (extension/PIXELS_PER_METER)) * 5;
+            drawArrow(ctx, cx + state.radius + 20, state.y - state.radius, fElasticLen, '#a78bfa', `Fупр`, 'up');
+        }
+
+        // 6. Draw Graph Overlay
+        drawGraph(ctx, canvas.width, canvas.height);
+
+        requestAnimationFrame(() => {
+            updatePhysics();
+            draw();
+        });
+    }
+
+    // --- Interaction Handlers ---
+    
+    elKSlider.addEventListener('input', (e) => {
+        state.k = parseFloat(e.target.value);
+        elKVal.textContent = state.k + " Н/м";
+    });
+
+    elMassSlider.addEventListener('input', (e) => {
+        state.mass = parseFloat(e.target.value);
+        elMassVal.textContent = state.mass + " кг";
+        // Adjust visual size slightly
+        state.radius = 25 + (state.mass / 10) * 15;
+    });
+
+    function getPointerPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function onDown(e) {
+        const pos = getPointerPos(e);
+        // Check collision with box
+        if (pos.x >= state.x - state.radius && pos.x <= state.x + state.radius &&
+            pos.y >= state.y - state.radius && pos.y <= state.y + state.radius) {
+            state.isDragging = true;
+            state.dragOffsetX = pos.x - state.x;
+            state.dragOffsetY = pos.y - state.y;
+            state.vy = 0;
+            canvas.style.cursor = 'grabbing';
+        }
+    }
+
+    function onMove(e) {
+        if (state.isDragging) {
+            const pos = getPointerPos(e);
+            state.x = pos.x - state.dragOffsetX;
+            state.y = pos.y - state.dragOffsetY;
+            
+            // Keep within horizontal bounds
+            if (state.x < state.radius + 50) state.x = state.radius + 50; // Avoid ruler
+            if (state.x > canvas.width - state.radius - 220) state.x = canvas.width - state.radius - 220; // Avoid graph
+            
+            // Limit vertical drag (don't push through ceiling)
+            if (state.y < state.anchorY + state.naturalLength + state.radius) {
+                state.y = state.anchorY + state.naturalLength + state.radius;
+            }
+        }
+    }
+
+    function onUp() {
+        state.isDragging = false;
+        canvas.style.cursor = 'grab';
+    }
+
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    
+    canvas.addEventListener('touchstart', (e) => { onDown(e); e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchmove', (e) => { onMove(e); e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchend', onUp);
+
+    draw();
+</script>
+</body>
+</html>
