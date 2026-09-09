@@ -24,7 +24,7 @@
  .stat-box { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 16px; flex: 1; text-align: center; backdrop-filter: blur(10px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
  .stat-box.tennis { border-left: 4px solid #a3e635; box-shadow: inset 5px 0 10px -5px rgba(163,230,53,0.3); }
  .stat-box.iron { border-left: 4px solid #cbd5e1; box-shadow: inset 5px 0 10px -5px rgba(203,213,225,0.3); }
- .stat-name { font-size: 11px; color: #414F63; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+ .stat-name { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
  .stat-val { font-size: 13px; font-weight: 700; color: #fff; margin-top: 3px; }
  .stat-speed { font-size: 13px; font-weight: 700; color: #38bdf8; margin-top: 1px; }
  </style>
@@ -247,7 +247,7 @@
  ctx.fill();
 
  // Контрастные текстовые подписи над шарами (смещены выше, чтобы не заходить на огромные сферы)
- ctx.fillStyle = '#ffffff';
+ ctx.fillStyle = '#090333';
  ctx.font = 'bold 14px sans-serif';
  ctx.textAlign = 'center';
  ctx.fillText(balls.tennis.label, t2d.x, t2d.y - tRadius - 12);
