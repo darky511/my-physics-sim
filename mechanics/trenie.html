@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сила Трения: Интерактивная Симуляция</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        .simulation-area {
+            flex-grow: 1;
+            position: relative;
+            background: linear-gradient(to bottom, #1e293b 0%, #0f172a 100%);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 400px;
+            background-color: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            z-index: 20;
+        }
+
+        /* Custom Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 5px;
+            outline: none;
+            margin-top: 15px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            border: 2px solid white;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Mode Buttons */
+        .mode-btn {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mode-btn:hover {
+            background: #334155;
+            color: white;
+        }
+
+        .mode-btn.active {
+            background: #2563eb; /* Blue 600 */
+            border-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .mode-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        .info-box {
+            background: rgba(15, 23, 42, 0.6);
+            border-left: 4px solid #fbbf24;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .vector-label {
+            position: absolute;
+            font-weight: bold;
+            font-size: 14px;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .sidebar { 
+                width: 100%; 
+                height: 50%; 
+                border-left: none; 
+                border-top: 1px solid rgba(255, 255, 255, 0.1); 
+                padding: 1rem; 
+                gap: 1rem; 
+            }
+            .simulation-area { height: 50%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- Left Side: Simulation Canvas -->
+    <div class="simulation-area" id="simContainer">
+        <canvas id="simCanvas"></canvas>
+        
+        <!-- Overlay Title -->
+        <div class="absolute top-6 left-0 w-full text-center pointer-events-none select-none z-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-white drop-shadow-lg tracking-tight">
+                Виды Трения
+            </h1>
+            <p class="text-slate-300 text-sm mt-2 max-w-lg mx-auto opacity-90 px-4 bg-black/20 rounded-full py-1 backdrop-blur-sm inline-block">
+                Увеличивайте силу тяги, чтобы преодолеть сцепление микро-зубьев.
+            </p>
+        </div>
+    </div>
+
+    <!-- Right Side: Controls Sidebar -->
+    <div class="sidebar">
+        
+        <div class="hidden md:block mb-2">
+            <h2 class="text-xl font-bold text-white">Управление</h2>
+            <p class="text-xs text-slate-400">Выберите режим и приложите силу</p>
+        </div>
+
+        <!-- Mode Selection -->
+        <div class="grid grid-cols-1 gap-2">
+            <button id="btn-static" class="mode-btn active" onclick="setMode('static')">
+                <div class="mode-icon">🧱</div>
+                <div>
+                    <div class="text-sm font-bold">Трение Покоя</div>
+                    <div class="text-[10px] opacity-70">Зубья сцеплены намертво</div>
+                </div>
+            </button>
+            
+            <button id="btn-sliding" class="mode-btn" onclick="setMode('sliding')">
+                <div class="mode-icon"></div>
+                <div>
+                    <div class="text-sm font-bold">Трение Скольжения</div>
+                    <div class="text-[10px] opacity-70">Зубья ломаются при движении</div>
+                </div>
+            </button>
+
+            <button id="btn-rolling" class="mode-btn" onclick="setMode('rolling')">
+                <div class="mode-icon">🛞</div>
+                <div>
+                    <div class="text-sm font-bold">Трение Качения</div>
+                    <div class="text-[10px] opacity-70">Колеса устраняют сцепление</div>
+                </div>
+            </button>
+        </div>
+
+        <!-- Force Slider -->
+        <div class="control-group mt-4">
+            <div class="flex justify-between items-end mb-2">
+                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Сила Тяги ($F_{тяж}$)</label>
+                <span id="force-val" class="text-sm font-mono text-blue-400 font-bold">0 Н</span>
+            </div>
+            <input type="range" min="0" max="100" value="0" id="force-slider">
+            <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-medium">
+                <span>Нет тяги</span>
+                <span>Максимум</span>
+            </div>
+        </div>
+
+        <!-- Live Data Display -->
+        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs text-slate-400 uppercase">Статус объекта</span>
+                <span id="status-badge" class="px-2 py-1 rounded text-xs font-bold bg-red-900/50 text-red-400 border border-red-500/30">ПОКОЙ</span>
+            </div>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Сила трения ($F_{тр}$):</span>
+                    <span id="friction-display" class="font-mono text-orange-400 font-bold">0 Н</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Скорость:</span>
+                    <span id="velocity-display" class="font-mono text-green-400 font-bold">0 м/с</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Educational Context -->
+        <div class="info-box mt-auto">
+            <p id="edu-text" class="text-slate-300">
+                <strong class="text-white">Трение покоя:</strong> Micro-зубья поверхности стола и коробки сцепились. Чтобы сдвинуть коробку, нужно приложить силу больше максимальной силы трения покоя.
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- Configuration & State ---
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('simContainer');
+    
+    // Physics Constants
+    const PIXELS_PER_METER = 50; 
+    
+    // Simulation State
+    const state = {
+        mode: 'static', // 'static', 'sliding', 'rolling'
+        appliedForce: 0, // Newtons
+        
+        // Object Properties
+        mass: 10, // kg
+        x: 0, 
+        y: 0,
+        vx: 0,
+        width: 120,
+        height: 80,
+        
+        // Friction Coefficients (Simulated logic)
+        muStatic: 0.6,  // High friction for static
+        muKinetic: 0.4, // Lower for sliding
+        muRolling: 0.05,// Very low for rolling
+        
+        // Visuals
+        surfaceY: 0,
+        teethOffset: 0, // For animation of breaking teeth
+        wheelRotation: 0
+    };
+
+    // DOM Elements
+    const elForceSlider = document.getElementById('force-slider');
+    const elForceVal = document.getElementById('force-val');
+    const elFrictionDisplay = document.getElementById('friction-display');
+    const elVelocityDisplay = document.getElementById('velocity-display');
+    const elStatusBadge = document.getElementById('status-badge');
+    const elEduText = document.getElementById('edu-text');
+    
+    const btns = {
+        static: document.getElementById('btn-static'),
+        sliding: document.getElementById('btn-sliding'),
+        rolling: document.getElementById('btn-rolling')
+    };
+
+    // --- Initialization ---
+    function resize() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        state.surfaceY = canvas.height * 0.7;
+        
+        if (state.x === 0) {
+            state.x = canvas.width / 2 - state.width / 2;
+            state.y = state.surfaceY - state.height;
+        }
+    }
+    
+    window.addEventListener('resize', resize);
+    setTimeout(resize, 50);
+
+    // --- Logic ---
+    function setMode(mode) {
+        state.mode = mode;
+        state.vx = 0; // Reset velocity on mode change
+        
+        // Update UI Buttons
+        Object.values(btns).forEach(b => b.classList.remove('active'));
+        btns[mode].classList.add('active');
+        
+        // Update Text
+        updateEducationText();
+    }
+
+    function updateEducationText() {
+        let text = "";
+        let status = "";
+        let statusColor = "";
+
+        if (state.mode === 'static') {
+            text = "<strong class='text-white'>Трение покоя:</strong> Micro-зубья поверхности стола и коробки сцепились намертво. Они держат коробку на месте, пока может. Сила трения равна силе тяги, но направлена в противоположную сторону.";
+            status = "ПОКОЙ";
+            statusColor = "bg-red-900/50 text-red-400 border-red-500/30";
+        } else if (state.mode === 'sliding') {
+            text = "<strong class='text-white'>Трение скольжения:</strong> Зубья начали со свистом ломаться друг о друга. Сила трения тут чуть меньше, чем в пике покоя. Коробка движется с рывками.";
+            status = "СКОЛЬЖЕНИЕ";
+            statusColor = "bg-orange-900/50 text-orange-400 border-orange-500/30";
+        } else if (state.mode === 'rolling') {
+            text = "<strong class='text-white'>Трение качения:</strong> Мы подложили круглые карандаши (колеса). Зубья больше не трутся со скрипом, они просто перешагивают друг через друга. Это самое маленькое трение!";
+            status = "КАЧЕНИЕ";
+            statusColor = "bg-green-900/50 text-green-400 border-green-500/30";
+        }
+        
+        elEduText.innerHTML = text;
+        elStatusBadge.textContent = status;
+        elStatusBadge.className = `px-2 py-1 rounded text-xs font-bold border ${statusColor}`;
+    }
+
+    function updatePhysics() {
+        // Calculate Max Friction Forces
+        const normalForce = state.mass * 9.8; // N
+        
+        let maxFriction = 0;
+        let currentFriction = 0;
+        let isMoving = false;
+
+        if (state.mode === 'static') {
+            maxFriction = normalForce * state.muStatic;
+            // Static logic: Friction matches applied force until break point
+            if (state.appliedForce <= maxFriction) {
+                currentFriction = state.appliedForce;
+                state.vx = 0;
+                isMoving = false;
+            } else {
+                // Breakaway (transition to kinetic visually, though physics says it accelerates)
+                currentFriction = normalForce * state.muKinetic; 
+                state.vx += (state.appliedForce - currentFriction) / state.mass * 0.016;
+                isMoving = true;
+            }
+        } 
+        else if (state.mode === 'sliding') {
+            maxFriction = normalForce * state.muKinetic;
+            currentFriction = maxFriction; // Constant kinetic friction
+            if (state.appliedForce > 0) {
+                state.vx += (state.appliedForce - currentFriction) / state.mass * 0.016;
+                isMoving = true;
+            } else {
+                // Decelerate if no pull
+                if (state.vx > 0) state.vx -= (currentFriction / state.mass) * 0.016;
+                if (state.vx < 0) state.vx = 0;
+                isMoving = state.vx > 0.1;
+            }
+        } 
+        else if (state.mode === 'rolling') {
+            maxFriction = normalForce * state.muRolling;
+            currentFriction = maxFriction;
+            if (state.appliedForce > 0) {
+                state.vx += (state.appliedForce - currentFriction) / state.mass * 0.016;
+                isMoving = true;
+            } else {
+                 // Very slow deceleration
+                 if (state.vx > 0) state.vx -= (currentFriction / state.mass) * 0.016;
+                 if (state.vx < 0) state.vx = 0;
+                 isMoving = state.vx > 0.05;
+            }
+        }
+
+        // Damping / Limits
+        state.vx *= 0.98; // Air resistance
+        if (state.vx < 0.01) state.vx = 0;
+        
+        // Move Object
+        state.x += state.vx * PIXELS_PER_METER * 0.016;
+        
+        // Wrap around screen for continuous demo
+        if (state.x > canvas.width) state.x = -state.width;
+
+        // Animation offsets
+        if (isMoving) {
+            state.teethOffset += state.vx * 2;
+            state.wheelRotation += state.vx * 0.1;
+        }
+
+        // Update UI Numbers
+        elForceVal.textContent = state.appliedForce.toFixed(0) + " Н";
+        elFrictionDisplay.textContent = currentFriction.toFixed(1) + " Н";
+        elVelocityDisplay.textContent = (state.vx * 10).toFixed(1) + " м/с"; // Fake scale
+    }
+
+    // --- Rendering ---
+    function drawTeeth(ctx, x, y, width, height, isTop, offset, color) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        
+        const toothW = 10;
+        const toothH = 6;
+        const count = Math.ceil(width / toothW);
+        
+        ctx.moveTo(x, y);
+        
+        for (let i = 0; i < count; i++) {
+            let tx = x + i * toothW;
+            // Add some jitter based on offset to simulate breaking/wear
+            let jitter = (Math.sin(offset + i) * 2); 
+            
+            if (isTop) {
+                // Teeth pointing down
+                ctx.lineTo(tx + toothW/2, y + toothH + jitter);
+                ctx.lineTo(tx + toothW, y);
+            } else {
+                // Teeth pointing up
+                ctx.lineTo(tx + toothW/2, y - toothH - jitter);
+                ctx.lineTo(tx + toothW, y);
+            }
+        }
+        
+        ctx.lineTo(x + width, y);
+        ctx.lineTo(x + width, y + (isTop ? height : -height));
+        ctx.lineTo(x, y + (isTop ? height : -height));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function drawArrow(ctx, startX, startY, length, color, label, direction = 'right') {
+        if (Math.abs(length) < 5) return;
+        
+        const endX = direction === 'right' ? startX + length : startX - length;
+        const headLen = 10;
+        
+        // Line
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, startY);
+        ctx.stroke();
+        
+        // Arrow Head
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.moveTo(endX, startY);
+        if (direction === 'right') {
+            ctx.lineTo(endX - headLen, startY - headLen/2);
+            ctx.lineTo(endX - headLen, startY + headLen/2);
+        } else {
+            ctx.lineTo(endX + headLen, startY - headLen/2);
+            ctx.lineTo(endX + headLen, startY + headLen/2);
+        }
+        ctx.fill();
+        
+        // Label
+        ctx.fillStyle = color;
+        ctx.font = "bold 14px Inter";
+        ctx.textAlign = "center";
+        ctx.fillText(label, direction === 'right' ? endX + 20 : endX - 20, startY + 5);
+    }
+
+    function draw() {
+        // Clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const cx = state.x;
+        const cy = state.y;
+        
+        // 1. Draw Surface (Floor)
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(0, state.surfaceY, canvas.width, canvas.height - state.surfaceY);
+        
+        // Floor Top Line
+        ctx.beginPath();
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 4;
+        ctx.moveTo(0, state.surfaceY);
+        ctx.lineTo(canvas.width, state.surfaceY);
+        ctx.stroke();
+
+        // 2. Draw Wheels (if Rolling mode)
+        if (state.mode === 'rolling') {
+            const wheelRadius = 15;
+            const wheelY = state.surfaceY - wheelRadius;
+            
+            // Wheel 1
+            ctx.save();
+            ctx.translate(cx + 30, wheelY);
+            ctx.rotate(state.wheelRotation);
+            ctx.beginPath();
+            ctx.arc(0, 0, wheelRadius, 0, Math.PI*2);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            // Spokes
+            ctx.beginPath();
+            ctx.moveTo(-wheelRadius+4, 0); ctx.lineTo(wheelRadius-4, 0);
+            ctx.moveTo(0, -wheelRadius+4); ctx.lineTo(0, wheelRadius-4);
+            ctx.stroke();
+            ctx.restore();
+
+            // Wheel 2
+            ctx.save();
+            ctx.translate(cx + state.width - 30, wheelY);
+            ctx.rotate(state.wheelRotation);
+            ctx.beginPath();
+            ctx.arc(0, 0, wheelRadius, 0, Math.PI*2);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-wheelRadius+4, 0); ctx.lineTo(wheelRadius-4, 0);
+            ctx.moveTo(0, -wheelRadius+4); ctx.lineTo(0, wheelRadius-4);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // 3. Draw Box Body
+        ctx.fillStyle = '#d97706'; // Amber 600
+        ctx.strokeStyle = '#fbbf24'; // Amber 400
+        ctx.lineWidth = 2;
+        
+        // Adjust Y if rolling (lifted by wheels)
+        const boxY = state.mode === 'rolling' ? cy - 15 : cy;
+        
+        ctx.fillRect(cx, boxY, state.width, state.height);
+        ctx.strokeRect(cx, boxY, state.width, state.height);
+        
+        // Label on box
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.font = "bold 20px Inter";
+        ctx.textAlign = "center";
+        ctx.fillText("m", cx + state.width/2, boxY + state.height/2 + 7);
+
+        // 4. Draw Micro-Teeth (Visualizing Friction)
+        // Only draw teeth if NOT rolling (or if rolling, show them separated)
+        if (state.mode !== 'rolling') {
+            // Box Teeth (Bottom)
+            drawTeeth(ctx, cx, boxY + state.height, state.width, 10, true, state.teethOffset, '#b45309');
+            
+            // Floor Teeth (Top) - Intermeshed
+            // Offset floor teeth slightly to look interlocked when static
+            const floorTeethOffset = state.mode === 'static' ? state.teethOffset + 5 : state.teethOffset;
+            drawTeeth(ctx, cx - 10, state.surfaceY, state.width + 20, 10, false, floorTeethOffset, '#475569');
+        } else {
+            // If rolling, show flat bottom and flat floor to indicate no interlocking
+            ctx.fillStyle = '#b45309';
+            ctx.fillRect(cx, boxY + state.height - 2, state.width, 2);
+        }
+
+        // 5. Draw Vectors
+        
+        // Applied Force (Blue, Right) - From Center of Box
+        const pullY = boxY + state.height / 2;
+        if (state.appliedForce > 0) {
+            drawArrow(ctx, cx + state.width, pullY, state.appliedForce * 1.5, '#3b82f6', 'F тяги', 'right');
+        }
+        
+        // Friction Force (Orange, Left) - From Bottom Contact Point
+        // Magnitude depends on mode and movement
+        let frictionMag = 0;
+        if (state.mode === 'static') frictionMag = Math.min(state.appliedForce, state.mass * 9.8 * state.muStatic);
+        else if (state.mode === 'sliding') frictionMag = state.mass * 9.8 * state.muKinetic;
+        else if (state.mode === 'rolling') frictionMag = state.mass * 9.8 * state.muRolling;
+        
+        // Only draw friction if there's resistance (either moving or being pulled)
+        if (frictionMag > 0.1 || state.appliedForce > 0) {
+             // Cap visual length so it doesn't get huge
+             const visLen = Math.min(frictionMag * 1.5, 150);
+             drawArrow(ctx, cx + state.width/2, state.surfaceY, visLen, '#f97316', 'F тр', 'left');
+        }
+
+        requestAnimationFrame(() => {
+            updatePhysics();
+            draw();
+        });
+    }
+
+    // --- Interaction Handlers ---
+    
+    elForceSlider.addEventListener('input', (e) => {
+        state.appliedForce = parseFloat(e.target.value);
+    });
+
+    // Start Loop
+    draw();
+
+</script>
+</body>
+</html>
