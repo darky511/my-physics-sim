@@ -25,7 +25,7 @@
  .stat-box.tennis { border-left: 4px solid #a3e635; box-shadow: inset 5px 0 10px -5px rgba(163,230,53,0.3); }
  .stat-box.iron { border-left: 4px solid #cbd5e1; box-shadow: inset 5px 0 10px -5px rgba(203,213,225,0.3); }
  .stat-name { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
- .stat-val { font-size: 13px; font-weight: 700; color: #fff; margin-top: 3px; }
+ .stat-val { font-size: 13px; font-weight: 700; color: #131313; margin-top: 3px; }
  .stat-speed { font-size: 13px; font-weight: 700; color: #38bdf8; margin-top: 1px; }
  </style>
 </head>
@@ -85,7 +85,7 @@
  iron: { x: -20, y: -9, z: 0, vx: 0, radius: 100, mass: 50.0, color: '#e2e8f0', label: 'Чугунное ядро' }
  };
 
- let kickForce = 10;
+ let kickForce = 150;
  let stars = [];
  for(let i=0; i<80; i++) {
  stars.push({ x: (Math.random()-0.5)*160, y: (Math.random()-0.5)*120, z: (Math.random()-0.5)*100 });
