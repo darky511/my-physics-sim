@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сила Тяжести и Вес Тела</title>
+    <title>Сила Тяжести vs Вес Тела</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -81,6 +81,28 @@
             transform: scale(1.2);
         }
 
+        .toggle-btn {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #cbd5e1;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .toggle-btn.active {
+            background: #10b981; /* Emerald */
+            border-color: #059669;
+            color: white;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
         .info-card {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -89,8 +111,8 @@
         }
 
         .highlight-mass { color: #60a5fa; } /* Blue */
-        .highlight-weight { color: #fbbf24; } /* Amber/Yellow */
         .highlight-gravity { color: #c084fc; } /* Purple */
+        .highlight-weight { color: #fbbf24; } /* Amber/Yellow */
 
         @media (max-width: 1024px) {
             .app-container { flex-direction: column; }
@@ -117,10 +139,10 @@
         <!-- Overlay Title -->
         <div class="absolute top-6 left-0 w-full text-center pointer-events-none select-none z-10">
             <h1 class="text-3xl md:text-4xl font-bold text-white drop-shadow-lg tracking-tight">
-                Масса vs Вес
+                Сила Тяжести vs Вес
             </h1>
             <p class="text-slate-300 text-sm mt-2 max-w-lg mx-auto opacity-90 px-4 bg-black/20 rounded-full py-1 backdrop-blur-sm inline-block">
-                Поднимите груз на динамометре. Сравните показания весов на разных планетах.
+                Перетаскивайте тело. Уберите опору, чтобы увидеть разницу между силой притяжения и весом.
             </p>
         </div>
     </div>
@@ -136,7 +158,7 @@
         <!-- Control: Mass -->
         <div class="control-group">
             <div class="flex justify-between items-end mb-2">
-                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Масса груза (m)</label>
+                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Масса тела (m)</label>
                 <span id="mass-val" class="text-sm font-mono highlight-mass font-bold">5 кг</span>
             </div>
             <input type="range" min="1" max="50" value="5" id="mass-slider">
@@ -149,7 +171,7 @@
         <!-- Control: Planet/Gravity -->
         <div class="control-group">
             <div class="flex justify-between items-end mb-2">
-                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Гравитация планеты (g)</label>
+                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Гравитация (g)</label>
                 <span id="gravity-val" class="text-sm font-mono highlight-gravity font-bold">9.8 м/с²</span>
             </div>
             <input type="range" min="1.6" max="24.8" step="0.1" value="9.8" id="gravity-slider">
@@ -160,35 +182,41 @@
             </div>
         </div>
 
+        <!-- Toggle Support -->
+        <button id="support-toggle" class="toggle-btn active w-full">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line></svg>
+            <span id="support-text">Опора включена</span>
+        </button>
+
         <!-- Live Data Display -->
         <div class="info-card mt-2">
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <span class="text-slate-400 block text-xs uppercase mb-1">Масса (m)</span>
-                    <span id="disp-mass" class="text-2xl font-mono highlight-mass font-bold">5.0</span>
-                    <span class="text-xs text-slate-500">кг</span>
-                    <p class="text-[10px] text-slate-500 mt-1">Количество вещества. Не меняется.</p>
+                    <span class="text-slate-400 block text-xs uppercase mb-1">Сила Тяжести ($F_{тяж}$)</span>
+                    <span id="disp-gravity" class="text-2xl font-mono text-red-400 font-bold">49.0</span>
+                    <span class="text-xs text-slate-500">Н</span>
+                    <p class="text-[10px] text-slate-500 mt-1">Действует ВСЕГДА</p>
                 </div>
                 <div class="border-l border-slate-700 pl-4">
-                    <span class="text-slate-400 block text-xs uppercase mb-1">Вес (P)</span>
+                    <span class="text-slate-400 block text-xs uppercase mb-1">Вес тела ($P$)</span>
                     <span id="disp-weight" class="text-2xl font-mono highlight-weight font-bold">49.0</span>
                     <span class="text-xs text-slate-500">Н</span>
-                    <p class="text-[10px] text-slate-500 mt-1">Сила давления на подвес.</p>
+                    <p class="text-[10px] text-slate-500 mt-1">Только при наличии опоры</p>
                 </div>
             </div>
         </div>
 
         <!-- Educational Context -->
         <div class="bg-blue-900/20 rounded-xl p-4 border border-blue-500/30 mt-auto">
-            <h3 class="text-sm font-bold text-blue-300 mb-2">💡 Главное отличие</h3>
+            <h3 class="text-sm font-bold text-blue-300 mb-2">💡 В чем разница?</h3>
             <ul class="text-xs text-slate-300 space-y-2 leading-relaxed">
                 <li class="flex items-start gap-2">
-                    <span class="highlight-mass font-bold">• Масса</span>
-                    <span>— это мера инертности тела. Она одинакова везде во Вселенной.</span>
+                    <span class="text-red-400 font-bold">• Сила тяжести</span>
+                    <span>— это притяжение Земли. Она тянет тело вниз, даже если оно летит в воздухе.</span>
                 </li>
                 <li class="flex items-start gap-2">
                     <span class="highlight-weight font-bold">• Вес</span>
-                    <span>— это сила, возникающая из-за притяжения планеты. На Луне ваш вес будет в 6 раз меньше, хотя масса останется прежней!</span>
+                    <span>— это сила, с которой тело давит на опору или растягивает подвес. Если убрать опору (свободное падение), вес становится равен нулю!</span>
                 </li>
             </ul>
         </div>
@@ -216,10 +244,9 @@
         y: 0,
         vy: 0,
         
-        // Spring/Dynamometer properties
-        springTopY: 100, // Fixed point at top
-        springRestLength: 100,
-        springK: 200, // Spring constant (stiffness)
+        // Support Platform
+        hasSupport: true,
+        supportY: 0, // Y position of platform top
         
         // Interaction
         isDragging: false,
@@ -234,8 +261,10 @@
     const elGravitySlider = document.getElementById('gravity-slider');
     const elMassVal = document.getElementById('mass-val');
     const elGravityVal = document.getElementById('gravity-val');
-    const elDispMass = document.getElementById('disp-mass');
+    const elDispGravity = document.getElementById('disp-gravity');
     const elDispWeight = document.getElementById('disp-weight');
+    const btnSupport = document.getElementById('support-toggle');
+    const txtSupport = document.getElementById('support-text');
 
     // --- Initialization ---
     function resize() {
@@ -243,12 +272,12 @@
         canvas.height = container.clientHeight;
         state.floorY = canvas.height - 60; 
         
+        // Set support height relative to floor
+        state.supportY = state.floorY - 150; 
+        
         if (state.x === 0) {
             state.x = canvas.width / 2;
-            // Start hanging in equilibrium roughly
-            const weightForce = state.mass * state.gravity;
-            const extension = (weightForce * PIXELS_PER_METER) / state.springK; 
-            state.y = state.springTopY + state.springRestLength + extension + state.radius;
+            state.y = state.supportY - state.radius;
         }
     }
     
@@ -258,9 +287,14 @@
     // --- Physics Engine ---
     function updatePhysics() {
         if (state.isDragging) {
-            // While dragging, calculate "Virtual Weight" based on current G and Mass
-            // even if the spring isn't stretching naturally
-            updateUI(state.mass * state.gravity);
+            // While dragging, calculate forces based on current params
+            const fGrav = state.mass * state.gravity;
+            // Weight exists only if touching support or floor
+            const isTouching = (state.y + state.radius >= state.supportY - 2 && state.hasSupport) || 
+                               (state.y + state.radius >= state.floorY - 2);
+            const weight = isTouching ? fGrav : 0;
+            
+            updateUI(fGrav, weight);
             return;
         }
 
@@ -268,74 +302,80 @@
         // 1. Gravity (Down): Fg = m * g
         const forceGravity = state.mass * state.gravity * PIXELS_PER_METER; // scaled to pixels
         
-        // 2. Spring Force (Up): Fs = k * delta_x
-        const currentSpringLen = state.y - state.springTopY;
-        const extension = currentSpringLen - state.springRestLength;
-        const forceSpring = state.springK * extension;
+        let normalForce = 0; // Upward force from support/floor
         
-        // Net Force
-        const netForce = forceGravity - forceSpring;
-        
-        // Acceleration (F=ma -> a=F/m)
-        // Note: We use mass directly here. Heavier objects accelerate slower for same net force? 
-        // Actually in this spring system, equilibrium depends on mass.
-        const acceleration = netForce / state.mass; 
-        
-        // Update Velocity
-        state.vy += acceleration * 0.016;
-        state.vy *= 0.95; // Damping (air resistance + internal friction)
-        
-        // Update Position
-        state.y += state.vy;
-
-        // Floor Collision (if spring breaks or gravity is huge)
-        if (state.y + state.radius > state.floorY) {
+        // Check collision with Support
+        if (state.hasSupport && state.y + state.radius >= state.supportY) {
+            state.y = state.supportY - state.radius;
+            normalForce = forceGravity; // Equilibrium
+            state.vy = 0;
+        }
+        // Check collision with Floor (if no support or fell off)
+        else if (state.y + state.radius >= state.floorY) {
             state.y = state.floorY - state.radius;
-            state.vy = -state.vy * 0.5;
-            if(Math.abs(state.vy) < 5) state.vy = 0;
+            normalForce = forceGravity;
+            state.vy = 0;
+        }
+        else {
+            // Free fall
+            state.vy += (state.gravity * PIXELS_PER_METER) * 0.016;
+            state.vy *= 0.99; // Air resistance
+            state.y += state.vy;
         }
 
-        // Calculate Weight (Force exerted on spring)
-        // In equilibrium or dynamic motion, the tension in the spring represents the "apparent weight"
-        // For this sim, we show the Tension force as Weight P = k * delta_x
-        const currentWeight = state.springK * extension / PIXELS_PER_METER; // Convert back to Newtons
-        
-        updateUI(currentWeight);
+        // Calculate Weight (Normal Force)
+        // In this static/quasi-static sim, Weight P = Normal Force N
+        const weightNewtons = normalForce / PIXELS_PER_METER;
+        const gravityNewtons = state.mass * state.gravity;
+
+        updateUI(gravityNewtons, weightNewtons);
     }
 
-    function updateUI(weightNewtons) {
-        elDispMass.textContent = state.mass.toFixed(1);
-        // Show weight with 1 decimal place
-        elDispWeight.textContent = Math.max(0, weightNewtons).toFixed(1);
+    function updateUI(gravityN, weightN) {
+        elDispGravity.textContent = gravityN.toFixed(1);
+        elDispWeight.textContent = weightN.toFixed(1);
     }
 
     // --- Rendering ---
-    function drawSpring(ctx, startX, startY, endX, endY, coils, width) {
-        const len = Math.sqrt((endX-startX)**2 + (endY-startY)**2);
-        const angle = Math.atan2(endY-startY, endX-startX);
+    function drawArrow(ctx, startX, startY, length, color, label, direction = 'down') {
+        if (length < 5) return;
         
-        ctx.save();
-        ctx.translate(startX, startY);
-        ctx.rotate(angle);
+        const endY = direction === 'down' ? startY + length : startY - length;
+        const headLen = 12;
         
+        // Line
         ctx.beginPath();
-        ctx.strokeStyle = '#94a3b8'; // Slate 400
-        ctx.lineWidth = 3;
-        ctx.lineJoin = 'round';
-        
-        // Draw zig-zag
-        const coilWidth = len / (coils * 2);
-        ctx.moveTo(0, 0);
-        
-        for(let i=0; i<coils*2; i++) {
-            const x = (i+1) * coilWidth;
-            const y = (i % 2 === 0) ? -width : width;
-            ctx.lineTo(x, y);
-        }
-        ctx.lineTo(len, 0);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(startX, endY);
         ctx.stroke();
         
-        ctx.restore();
+        // Arrow Head
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.moveTo(startX, endY);
+        if (direction === 'down') {
+            ctx.lineTo(startX - headLen/2, endY - headLen);
+            ctx.lineTo(startX + headLen/2, endY - headLen);
+        } else {
+            ctx.lineTo(startX - headLen/2, endY + headLen);
+            ctx.lineTo(startX + headLen/2, endY + headLen);
+        }
+        ctx.fill();
+        
+        // Label Background
+        const textWidth = ctx.measureText(label).width;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+        ctx.fillRect(startX + 15, (startY + endY)/2 - 12, textWidth + 12, 24);
+
+        // Label Text
+        ctx.fillStyle = color;
+        ctx.font = "bold 14px Inter";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, startX + 20, (startY + endY) / 2);
     }
 
     function draw() {
@@ -344,59 +384,37 @@
         
         const cx = state.x;
         
-        // 1. Draw Ceiling Mount
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(cx - 40, state.springTopY - 10, 80, 10);
-        
-        // 2. Draw Spring
-        drawSpring(ctx, cx, state.springTopY, cx, state.y - state.radius, 12, 15);
-        
-        // 3. Draw Dynamometer Body (Abstract representation around spring top)
-        ctx.fillStyle = 'rgba(30, 41, 59, 0.8)';
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 2;
-        const meterH = 60;
-        const meterW = 50;
-        const meterY = state.springTopY + 10;
-        
-        // Meter Box
-        ctx.beginPath();
-        ctx.roundRect(cx - meterW/2, meterY, meterW, meterH, 5);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Scale markings inside meter
-        ctx.fillStyle = '#cbd5e1';
-        ctx.font = '10px monospace';
-        ctx.textAlign = 'right';
-        for(let i=0; i<=5; i++) {
-            const y = meterY + 10 + (i * 8);
-            ctx.fillText(i*10, cx + meterW/2 - 5, y + 3);
-            ctx.beginPath();
-            ctx.moveTo(cx + meterW/2 - 2, y);
-            ctx.lineTo(cx + meterW/2 - 8, y);
-            ctx.stroke();
+        // 1. Draw Support Platform (if enabled)
+        if (state.hasSupport) {
+            // Pillar
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(cx - 10, state.supportY, 20, state.floorY - state.supportY);
+            
+            // Top Plate
+            ctx.fillStyle = '#94a3b8';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 10;
+            ctx.fillRect(cx - 60, state.supportY - 10, 120, 10);
+            ctx.shadowBlur = 0;
+            
+            // Label
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = "12px Inter";
+            ctx.textAlign = "center";
+            ctx.fillText("ОПОРА", cx, state.supportY + 30);
         }
-        
-        // Indicator Needle (Visual only, moves with extension)
-        const extension = (state.y - state.radius) - (state.springTopY + state.springRestLength);
-        // Map extension to needle position visually
-        const needleY = meterY + 15 + Math.min(40, Math.max(0, extension * 0.5));
-        
-        ctx.beginPath();
-        ctx.strokeStyle = '#ef4444'; // Red needle
-        ctx.lineWidth = 2;
-        ctx.moveTo(cx, meterY + 5);
-        ctx.lineTo(cx, needleY);
-        ctx.stroke();
-        
-        // Label "N" on meter
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = 'bold 10px Inter';
-        ctx.textAlign = 'center';
-        ctx.fillText("N", cx, meterY + meterH - 5);
 
-        // 4. Draw Object (Ball)
+        // 2. Draw Floor
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(0, state.floorY, canvas.width, canvas.height - state.floorY);
+        ctx.beginPath();
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 4;
+        ctx.moveTo(0, state.floorY);
+        ctx.lineTo(canvas.width, state.floorY);
+        ctx.stroke();
+
+        // 3. Draw Object (Ball)
         ctx.save();
         ctx.translate(cx, state.y);
         
@@ -422,33 +440,21 @@
         
         ctx.restore();
 
-        // 5. Draw Gravity Vector (Ghost arrow showing potential force)
-        // Only draw if not resting on floor to avoid clutter
-        if (state.y + state.radius < state.floorY - 5) {
-            const forceMagnitude = state.mass * state.gravity;
-            const arrowLen = forceMagnitude * 2; 
-            
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)'; // Faint red
-            ctx.lineWidth = 4;
-            ctx.setLineDash([5, 5]);
-            ctx.moveTo(cx + state.radius + 10, state.y);
-            ctx.lineTo(cx + state.radius + 10, state.y + arrowLen);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
-            // Arrow head
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
-            ctx.beginPath();
-            ctx.moveTo(cx + state.radius + 10, state.y + arrowLen);
-            ctx.lineTo(cx + state.radius + 5, state.y + arrowLen - 8);
-            ctx.lineTo(cx + state.radius + 15, state.y + arrowLen - 8);
-            ctx.fill();
-            
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.6)';
-            ctx.font = "12px Inter";
-            ctx.textAlign = "left";
-            ctx.fillText("mg", cx + state.radius + 20, state.y + arrowLen/2);
+        // 4. Draw Vectors
+        
+        // Gravity Vector (Red, Down) - ALWAYS PRESENT
+        const fGravLen = (state.mass * state.gravity) * 2.5; 
+        drawArrow(ctx, cx - 20, state.y, fGravLen, '#ef4444', `Fтяж`, 'down');
+        
+        // Weight Vector (Yellow, Up from contact point) - ONLY IF TOUCHING SUPPORT/FLOOR
+        const isTouchingSupport = state.hasSupport && Math.abs((state.y + state.radius) - state.supportY) < 2;
+        const isTouchingFloor = !state.hasSupport && Math.abs((state.y + state.radius) - state.floorY) < 2;
+        
+        if (isTouchingSupport || isTouchingFloor) {
+            const contactY = isTouchingSupport ? state.supportY : state.floorY;
+            const weightLen = (state.mass * state.gravity) * 2.5;
+            // Draw arrow starting from contact point going UP into the object
+            drawArrow(ctx, cx + 20, contactY, weightLen, '#fbbf24', `P (Вес)`, 'up');
         }
 
         requestAnimationFrame(() => {
@@ -468,6 +474,23 @@
     elGravitySlider.addEventListener('input', (e) => {
         state.gravity = parseFloat(e.target.value);
         elGravityVal.textContent = state.gravity + " м/с²";
+    });
+
+    btnSupport.addEventListener('click', () => {
+        state.hasSupport = !state.hasSupport;
+        
+        if (state.hasSupport) {
+            btnSupport.classList.add('active');
+            txtSupport.textContent = "Опора включена";
+            // Snap to support if close
+            if (Math.abs(state.y + state.radius - state.supportY) < 50) {
+                state.y = state.supportY - state.radius;
+                state.vy = 0;
+            }
+        } else {
+            btnSupport.classList.remove('active');
+            txtSupport.textContent = "Опора убрана (Свободное падение)";
+        }
     });
 
     function getPointerPos(e) {
@@ -501,9 +524,6 @@
             // Keep within bounds
             if (state.x < state.radius) state.x = state.radius;
             if (state.x > canvas.width - state.radius) state.x = canvas.width - state.radius;
-            if (state.y < state.springTopY + state.springRestLength + state.radius) {
-                state.y = state.springTopY + state.springRestLength + state.radius;
-            }
         }
     }
 
