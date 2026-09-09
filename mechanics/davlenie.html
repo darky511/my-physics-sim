@@ -15,6 +15,7 @@
             overflow: hidden;
             height: 100vh;
             width: 100vw;
+            user-select: none; /* Prevent text selection while dragging */
         }
 
         .app-container { display: flex; height: 100%; width: 100%; }
@@ -26,7 +27,9 @@
             overflow: hidden;
         }
 
-        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+        canvas { display: block; width: 100%; height: 100%; cursor: default; }
+        canvas.grabbing { cursor: grabbing; }
+        canvas.pointer { cursor: pointer; }
 
         .sidebar {
             width: 420px;
@@ -123,7 +126,7 @@
                 <div><div class="text-sm font-bold">Твердые тела</div><div class="text-[10px] opacity-70">Зависимость от площади опоры</div></div>
             </button>
             <button id="btn-liquid" class="mode-btn" onclick="setMode('liquid')">
-                <span class="text-xl"></span>
+                <span class="text-xl">💧</span>
                 <div><div class="text-sm font-bold">Жидкости (Паскаль)</div><div class="text-[10px] opacity-70">Передача давления во все стороны</div></div>
             </button>
             <button id="btn-gas" class="mode-btn" onclick="setMode('gas')">
@@ -167,6 +170,10 @@
     const pressureVal = document.getElementById('pressure-val');
     const modeDesc = document.getElementById('mode-desc');
 
+    // Global layout variables for mouse interaction
+    let globalCx = 0;
+    let globalCy = 0;
+
     let state = {
         mode: 'solid', // solid, liquid, gas
         time: 0,
@@ -190,10 +197,15 @@
     function resize() {
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
+        globalCx = canvas.width / 2;
+        globalCy = canvas.height / 2;
+        
         initParticles();
-        // Reset sensor Y to middle of tank if needed
+        
+        // Reset sensor Y to a good starting point in the tank
         if(state.mode === 'liquid') {
-            state.sensorY = canvas.height/2 + 50;
+            const tankTop = globalCy - 200 + 50;
+            state.sensorY = tankTop + 150;
         }
     }
     window.addEventListener('resize', resize);
@@ -223,7 +235,8 @@
         
         // Re-init specific states
         if(mode === 'liquid') {
-            state.sensorY = canvas.height/2 + 50;
+            const tankTop = globalCy - 200 + 50;
+            state.sensorY = tankTop + 150;
         }
     }
 
@@ -243,8 +256,8 @@
             `;
         } else if (state.mode === 'liquid') {
             controlsArea.innerHTML = `
-                <div class="text-[10px] text-slate-500 mt-2 bg-slate-800/50 p-2 rounded">
-                     💡 Перемещайте желтый датчик мышкой по экрану, чтобы измерить давление на разной глубине.
+                <div class="text-[10px] text-slate-500 mt-2 bg-slate-800/50 p-2 rounded border border-slate-700">
+                     💡 <strong>Перетаскивайте желтый датчик</strong> мышкой вверх или вниз внутри резервуара, чтобы измерить давление на разной глубине.
                 </div>
             `;
         } else if (state.mode === 'gas') {
@@ -316,8 +329,8 @@
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2;
+        const cx = globalCx;
+        const cy = globalCy;
 
         if (state.mode === 'solid') {
             // Draw Ground
@@ -329,7 +342,7 @@
             const P = F / state.area;
             pressureVal.innerText = Math.round(P) + " Па";
             
-            // Visual Size depends on Area (inverse visual logic for demo: smaller area = smaller base)
+            // Visual Size depends on Area
             const baseW = 50 + (state.area * 40); 
             const baseH = 60;
             const boxX = cx - baseW/2;
@@ -345,9 +358,9 @@
             // Force Arrow (Gravity)
             drawArrow(ctx, cx, boxY - 20, state.mass * 3, '#ef4444', 'F тяж');
             
-            // Pressure Arrows (Underneath) - showing force distributed over area
+            // Pressure Arrows (Underneath)
             const arrowCount = Math.max(1, Math.floor(baseW / 20));
-            const arrowLen = Math.min(50, P / 100); // Scale for visuals
+            const arrowLen = Math.min(50, P / 100); 
             
             for(let i=0; i<arrowCount; i++) {
                 const ax = boxX + (baseW/(arrowCount+1)) * (i+1);
@@ -384,9 +397,9 @@
             ctx.stroke();
             
             // Sensor Logic
-            // Clamp sensor to tank bounds
             if (!state.sensorY) state.sensorY = tankY + 100;
-            state.sensorY = Math.max(tankY, Math.min(tankY + tankH, state.sensorY));
+            // Clamp sensor to tank bounds
+            state.sensorY = Math.max(tankY + 15, Math.min(tankY + tankH - 15, state.sensorY));
             
             const h_pixels = state.sensorY - tankY;
             const h_meters = h_pixels / 50; // 50px = 1m scale
@@ -395,16 +408,17 @@
             pressureVal.innerText = Math.round(P) + " Па";
             
             // Draw Sensor
+            ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
+            ctx.shadowBlur = 15;
             ctx.fillStyle = '#fbbf24';
-            ctx.shadowColor = 'rgba(251, 191, 36, 0.5)';
-            ctx.shadowBlur = 10;
             ctx.beginPath();
-            ctx.arc(cx, state.sensorY, 12, 0, Math.PI*2);
+            ctx.arc(cx, state.sensorY, 14, 0, Math.PI*2);
             ctx.fill();
             ctx.shadowBlur = 0;
             
+            // Inner detail of sensor
             ctx.fillStyle = '#000';
-            ctx.font = "bold 10px Inter";
+            ctx.font = "bold 11px Inter";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText("P", cx, state.sensorY);
@@ -414,18 +428,22 @@
             ctx.setLineDash([4,4]);
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(cx + 30, tankY);
-            ctx.lineTo(cx + 30, state.sensorY);
+            ctx.moveTo(cx + 35, tankY);
+            ctx.lineTo(cx + 35, state.sensorY);
             ctx.stroke();
             ctx.setLineDash([]);
             
-            // Depth Label
+            // Depth Label background for readability
+            const labelText = `h = ${h_meters.toFixed(1)} м`;
+            const textWidth = ctx.measureText(labelText).width;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+            ctx.fillRect(cx + 45, (tankY + state.sensorY)/2 - 10, textWidth + 10, 20);
+            
             ctx.fillStyle = 'white';
             ctx.textAlign = "left";
-            ctx.fillText(`h = ${h_meters.toFixed(1)} м`, cx + 40, (tankY + state.sensorY)/2);
+            ctx.fillText(labelText, cx + 50, (tankY + state.sensorY)/2 + 4);
 
             // Pascal Arrows (Omnidirectional pressure visualization)
-            // The deeper you go, the longer the arrows
             const arrLen = Math.min(60, P / 200); 
             
             // Draw arrows pointing OUT from sensor in 4 directions
@@ -462,10 +480,8 @@
             ctx.strokeRect(bx, by, boxS, boxS);
             
             // Particles physics
-            const speedMult = Math.sqrt(state.temp / 300); // Speed proportional to sqrt(T)
+            const speedMult = Math.sqrt(state.temp / 300); 
             ctx.fillStyle = '#a78bfa';
-            
-            let wallHits = 0;
             
             state.particles.forEach(p => {
                 // Move
@@ -475,13 +491,10 @@
                 // Bounce off walls
                 if(p.x < bx + p.r || p.x > bx + boxS - p.r) { 
                     p.vx *= -1; 
-                    wallHits++; 
-                    // Clamp to prevent sticking
                     p.x = Math.max(bx+p.r, Math.min(bx+boxS-p.r, p.x));
                 }
                 if(p.y < by + p.r || p.y > by + boxS - p.r) { 
                     p.vy *= -1; 
-                    wallHits++;
                     p.y = Math.max(by+p.r, Math.min(by+boxS-p.r, p.y));
                 }
                 
@@ -492,25 +505,23 @@
             });
             
             // Approximate Pressure calculation for display
-            // P is proportional to N * T / V
             const P = (state.particles.length * state.temp * 0.8) / (boxS*boxS/10000); 
             pressureVal.innerText = Math.round(P) + " Па";
             
-            // Visualizing pressure on walls (small ticks or arrows)
-            // We draw arrows pushing OUT from the center of each wall
+            // Visualizing pressure on walls
             const arrL = Math.min(40, P / 150);
             
             // Top Wall Arrow (Up)
             drawArrow(ctx, cx, by, -arrL, '#fbbf24', '');
             // Bottom Wall Arrow (Down)
             drawArrow(ctx, cx, by+boxS, arrL, '#fbbf24', '');
-            // Left Wall Arrow (Left) - rotated
+            // Left Wall Arrow (Left)
             ctx.save();
             ctx.translate(bx, cy);
             ctx.rotate(-Math.PI/2);
             drawArrow(ctx, 0, 0, arrL, '#fbbf24', '');
             ctx.restore();
-            // Right Wall Arrow (Right) - rotated
+            // Right Wall Arrow (Right)
             ctx.save();
             ctx.translate(bx+boxS, cy);
             ctx.rotate(Math.PI/2);
@@ -521,40 +532,70 @@
         requestAnimationFrame(draw);
     }
 
-    // Mouse interaction for Liquid mode (dragging sensor)
+    // --- Mouse Interaction for Liquid Mode ---
     let isDraggingSensor = false;
     
-    canvas.addEventListener('mousedown', (e) => {
-        if(state.mode === 'liquid') {
-            const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left;
-            const my = e.clientY - rect.top;
-            
-            // Check distance to sensor
-            const dx = mx - cx; // cx is global, need current frame cx
-            // Actually, let's just check Y distance since X is fixed center
-            if (Math.abs(my - state.sensorY) < 30) {
-                isDraggingSensor = true;
-            }
-        }
-    });
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
 
-    canvas.addEventListener('mousemove', (e) => {
-        if(isDraggingSensor && state.mode === 'liquid') {
-            const rect = canvas.getBoundingClientRect();
-            const y = e.clientY - rect.top;
-            const tankTop = canvas.height/2 - 200 + 50;
+    function handleStart(e) {
+        if(state.mode !== 'liquid') return;
+        
+        const pos = getMousePos(e);
+        // Check distance to sensor (radius 14 + padding 10)
+        const dist = Math.sqrt((pos.x - globalCx)**2 + (pos.y - state.sensorY)**2);
+        
+        if (dist < 30) {
+            isDraggingSensor = true;
+            canvas.classList.add('grabbing');
+            if(e.cancelable) e.preventDefault();
+        }
+    }
+
+    function handleMove(e) {
+        if(state.mode !== 'liquid') {
+            // Change cursor if hovering over sensor
+            const pos = getMousePos(e);
+            const dist = Math.sqrt((pos.x - globalCx)**2 + (pos.y - state.sensorY)**2);
+            if (dist < 30) canvas.classList.add('pointer');
+            else canvas.classList.remove('pointer');
+            return;
+        }
+
+        if(isDraggingSensor) {
+            const pos = getMousePos(e);
+            
+            // Constrain Y movement to tank bounds
+            const tankTop = globalCy - 200 + 50;
             const tankBot = tankTop + 400;
             
-            if(y > tankTop && y < tankBot) {
-                state.sensorY = y;
+            if(pos.y > tankTop && pos.y < tankBot) {
+                state.sensorY = pos.y;
             }
+            if(e.cancelable) e.preventDefault();
         }
-    });
+    }
 
-    window.addEventListener('mouseup', () => {
+    function handleEnd() {
         isDraggingSensor = false;
-    });
+        canvas.classList.remove('grabbing');
+    }
+
+    // Event Listeners
+    canvas.addEventListener('mousedown', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    
+    canvas.addEventListener('touchstart', handleStart, {passive: false});
+    window.addEventListener('touchmove', handleMove, {passive: false});
+    window.addEventListener('touchend', handleEnd);
 
     // Start
     setTimeout(() => {
