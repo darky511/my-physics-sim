@@ -12,13 +12,16 @@
             font-family: 'Inter', sans-serif;
             background-color: #0f172a;
             color: white;
-            overflow-x: hidden;
+            overflow: hidden; /* Prevent scrolling */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         canvas {
             display: block;
             width: 100%;
-            height: 60vh;
+            height: 100%;
             cursor: grab;
         }
 
@@ -30,8 +33,9 @@
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
+            padding: 15px 20px;
+            margin-top: auto; /* Push to bottom if needed, but we'll use absolute positioning */
+            z-index: 10;
         }
 
         input[type="range"] {
@@ -57,60 +61,123 @@
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Overlay layout for single screen fit */
+        .overlay-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Let clicks pass through to canvas */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .interactive-area {
+            pointer-events: auto; /* Re-enable clicks for controls */
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .controls-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+        }
+
+        .cards-wrapper {
+            display: flex;
+            gap: 20px;
+            max-width: 600px;
+        }
+
+        .slider-wrapper {
+            width: 300px;
+        }
+
+        @media (max-width: 768px) {
+            .controls-section {
+                flex-direction: column;
+                align-items: center;
+            }
+            .cards-wrapper {
+                flex-direction: column;
+                width: 100%;
+            }
+            .slider-wrapper {
+                width: 100%;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-start p-4">
-    <header class="text-center mb-6 mt-4">
-        <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Плотность на молекулярном уровне
-        </h1>
-        <p class="text-gray-300 mt-2 max-w-2xl mx-auto">
-            Два куба имеют абсолютно одинаковый объем. Но в железе атомы упакованы тесно, а в поролоне — зафиксированы на огромном расстоянии друг от друга.
-        </p>
-    </header>
-
-    <div id="canvas-container" class="w-full max-w-5xl relative rounded-xl overflow-hidden shadow-2xl border border-gray-700 bg-slate-900">
+<body>
+    <!-- Canvas Background -->
+    <div id="canvas-container" class="absolute inset-0 bg-slate-900 z-0">
         <canvas id="densityCanvas"></canvas>
     </div>
 
-    <div class="w-full max-w-5xl mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="info-card">
-            <h2 class="text-xl font-semibold mb-3 text-blue-300">Поролон (Твердое тело)</h2>
-            <div class="flex items-center mb-2">
-                <span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-                <span>Плотность: <span class="font-bold text-red-400">НИЗКАЯ</span></span>
-            </div>
-            <p class="text-gray-300 text-sm">
-                Редкие атомы и поры. Молекулы расположены далеко друг от друга, создавая легкую структуру с большим количеством пустого пространства.
+    <!-- UI Overlay -->
+    <div class="overlay-container">
+        <!-- Header -->
+        <div class="header-section">
+            <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                Плотность на молекулярном уровне
+            </h1>
+            <p class="text-gray-300 mt-1 text-sm md:text-base max-w-2xl mx-auto opacity-90">
+                Два куба имеют абсолютно одинаковый объем. Но в железе атомы упакованы тесно, а в поролоне — зафиксированы на огромном расстоянии друг от друга.
             </p>
         </div>
 
-        <div class="info-card">
-            <h2 class="text-xl font-semibold mb-3 text-orange-300">Железо (Металл)</h2>
-            <div class="flex items-center mb-2">
-                <span class="inline-block w-3 h-3 rounded-full bg-orange-500 mr-2"></span>
-                <span>Плотность: <span class="font-bold text-green-400">ВЫСОКАЯ</span></span>
-            </div>
-            <p class="text-gray-300 text-sm">
-                Плотно втиснуты. Атомы упакованы очень тесно, почти без промежутков, что создает тяжелый и прочный материал.
-            </p>
-        </div>
-    </div>
+        <!-- Bottom Controls -->
+        <div class="controls-section interactive-area pb-4">
+            <!-- Info Cards -->
+            <div class="cards-wrapper flex-1">
+                <div class="info-card flex-1">
+                    <h2 class="text-lg font-semibold mb-2 text-blue-300">Поролон</h2>
+                    <div class="flex items-center mb-2">
+                        <span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+                        <span class="text-sm">Плотность: <span class="font-bold text-red-400">НИЗКАЯ</span></span>
+                    </div>
+                    <p class="text-gray-300 text-xs leading-relaxed">
+                        Редкие атомы и поры. Молекулы расположены далеко друг от друга, создавая легкую структуру с большим количеством пустого пространства.
+                    </p>
+                </div>
 
-    <div class="w-full max-w-5xl slider-container">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium">Температура (Дрожание молекул)</h3>
-            <span id="temp-value" class="bg-blue-900 px-3 py-1 rounded-full text-sm">Обычная</span>
-        </div>
-        <input type="range" min="0" max="100" value="30" id="temperature-slider">
-        <div class="flex justify-between text-xs text-gray-400 mt-2">
-            <span>Холодно</span>
-            <span>Обычная</span>
-            <span>Горячо</span>
+                <div class="info-card flex-1">
+                    <h2 class="text-lg font-semibold mb-2 text-orange-300">Железо</h2>
+                    <div class="flex items-center mb-2">
+                        <span class="inline-block w-3 h-3 rounded-full bg-orange-500 mr-2"></span>
+                        <span class="text-sm">Плотность: <span class="font-bold text-green-400">ВЫСОКАЯ</span></span>
+                    </div>
+                    <p class="text-gray-300 text-xs leading-relaxed">
+                        Плотно втиснуты. Атомы упакованы очень тесно, почти без промежутков, что создает тяжелый и прочный материал.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Slider -->
+            <div class="slider-wrapper slider-container">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-medium">Температура</h3>
+                    <span id="temp-value" class="bg-blue-900 px-2 py-0.5 rounded-full text-xs">Обычная</span>
+                </div>
+                <input type="range" min="0" max="100" value="30" id="temperature-slider">
+                <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+                    <span>Холодно</span>
+                    <span>Горячо</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -121,11 +188,10 @@
         const tempSlider = document.getElementById('temperature-slider');
         const tempValue = document.getElementById('temp-value');
 
-        // Set canvas size
+        // Set canvas size to full window
         function resizeCanvas() {
-            const container = document.getElementById('canvas-container');
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
 
         window.addEventListener('resize', resizeCanvas);
@@ -279,13 +345,13 @@
             // Update label
             if (temperature < 20) {
                 tempValue.textContent = 'Холодно';
-                tempValue.className = 'bg-blue-900 px-3 py-1 rounded-full text-sm';
+                tempValue.className = 'bg-blue-900 px-2 py-0.5 rounded-full text-xs';
             } else if (temperature < 70) {
                 tempValue.textContent = 'Обычная';
-                tempValue.className = 'bg-blue-800 px-3 py-1 rounded-full text-sm';
+                tempValue.className = 'bg-blue-800 px-2 py-0.5 rounded-full text-xs';
             } else {
                 tempValue.textContent = 'Горячо';
-                tempValue.className = 'bg-red-900 px-3 py-1 rounded-full text-sm';
+                tempValue.className = 'bg-red-900 px-2 py-0.5 rounded-full text-xs';
             }
         });
 
@@ -374,14 +440,7 @@
             rotationY += (targetRotationY - rotationY) * 0.1;
             
             const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            
-            // Draw background gradient
-            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(canvas.width, canvas.height)/2);
-            gradient.addColorStop(0, '#1e293b');
-            gradient.addColorStop(1, '#0f172a');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const centerY = canvas.height / 2 - 40; // Shift up slightly to accommodate labels
             
             // Draw cubes side by side
             const cubeSpacing = 320;
@@ -425,20 +484,23 @@
                 item.molecule.draw(ctx, item.cx, item.cy);
             });
             
-            // Draw labels
+            // Draw labels BELOW the cubes
+            // We calculate the projected bottom of the cube to place text below it
+            const bottomOffset = cubeSize/2 + 40; // Distance below center
+            
             ctx.font = 'bold 16px Inter';
             ctx.fillStyle = '#3b82f6';
             ctx.textAlign = 'center';
-            ctx.fillText('ПОРОЛОН', leftCubeX, centerY + cubeSize/2 + 30);
+            ctx.fillText('ПОРОЛОН', leftCubeX, centerY + bottomOffset);
             
             ctx.fillStyle = '#f97316';
-            ctx.fillText('ЖЕЛЕЗО', rightCubeX, centerY + cubeSize/2 + 30);
+            ctx.fillText('ЖЕЛЕЗО', rightCubeX, centerY + bottomOffset);
             
             // Draw density indicators
             ctx.font = '14px Inter';
             ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Низкая плотность', leftCubeX, centerY + cubeSize/2 + 50);
-            ctx.fillText('Высокая плотность', rightCubeX, centerY + cubeSize/2 + 50);
+            ctx.fillText('Низкая плотность', leftCubeX, centerY + bottomOffset + 25);
+            ctx.fillText('Высокая плотность', rightCubeX, centerY + bottomOffset + 25);
             
             requestAnimationFrame(animate);
         }
