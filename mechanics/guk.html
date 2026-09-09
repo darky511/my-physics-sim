@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Закон Гука: Сила Упругости</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Подключение MathJax для красивых формул -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         
@@ -105,18 +117,6 @@
             .simulation-area { height: 50%; }
         }
     </style>
-    <!-- Подключение MathJax для красивых формул -->
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
-    <!-- Настройка разделителей (чтобы работали одиночные $) -->
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            }
-        };
 </head>
 <body>
 
@@ -180,14 +180,15 @@
                     <span class="text-xs text-slate-500">м</span>
                 </div>
                 <div class="border-l border-slate-700 pl-4">
-                    <span class="text-slate-400 block text-xs uppercase mb-1">Сила упругости ($F_{упр}$)</span>
+                    <span class="text-slate-400 block text-xs uppercase mb-1">Сила упругости ($F_{\text{упр}}$)</span>
                     <span id="disp-fel" class="text-2xl font-mono highlight-f font-bold">0.0</span>
                     <span class="text-xs text-slate-500">Н</span>
                 </div>
             </div>
+            
+            <!-- Исправленная формула с MathJax -->
             <div class="mt-3 pt-3 border-t border-slate-700 text-center">
                 <span class="text-xs text-slate-400 uppercase tracking-widest">Формула</span>
-                <!-- Исправленный LaTeX код -->
                 <div class="text-xl font-bold text-white mt-2">
                     $$F_{\text{упр}} = k \cdot \Delta x$$
                 </div>
@@ -234,9 +235,6 @@
         isDragging: false,
         dragOffsetX: 0,
         dragOffsetY: 0,
-        
-        // Graph Data
-        graphHistory: [] // Stores {dx, f} points
     };
 
     // DOM Elements
@@ -318,10 +316,6 @@
     function updateUI(dx, f) {
         elDispDx.textContent = dx.toFixed(2);
         elDispFel.textContent = f.toFixed(1);
-        
-        // Add point to graph history (throttle slightly or just add every frame)
-        // To keep graph clean, we only add if it's significantly different or just keep last N points?
-        // Let's just keep a running list of unique-ish points to draw the line F=kx
     }
 
     // --- Rendering ---
