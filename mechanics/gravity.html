@@ -443,18 +443,21 @@
         // 4. Draw Vectors
         
         // Gravity Vector (Red, Down) - ALWAYS PRESENT
+        // Starts from Center of Mass
         const fGravLen = (state.mass * state.gravity) * 2.5; 
         drawArrow(ctx, cx - 20, state.y, fGravLen, '#ef4444', `Fтяж`, 'down');
         
-        // Weight Vector (Yellow, Up from contact point) - ONLY IF TOUCHING SUPPORT/FLOOR
+        // Weight Vector (Yellow, DOWN) - ONLY IF TOUCHING SUPPORT/FLOOR
+        // Starts from Contact Point and goes DOWN into the support
         const isTouchingSupport = state.hasSupport && Math.abs((state.y + state.radius) - state.supportY) < 2;
         const isTouchingFloor = !state.hasSupport && Math.abs((state.y + state.radius) - state.floorY) < 2;
         
         if (isTouchingSupport || isTouchingFloor) {
             const contactY = isTouchingSupport ? state.supportY : state.floorY;
             const weightLen = (state.mass * state.gravity) * 2.5;
-            // Draw arrow starting from contact point going UP into the object
-            drawArrow(ctx, cx + 20, contactY, weightLen, '#fbbf24', `P (Вес)`, 'up');
+            
+            // Draw arrow starting from contact point going DOWN
+            drawArrow(ctx, cx + 20, contactY, weightLen, '#fbbf24', `P (Вес)`, 'down');
         }
 
         requestAnimationFrame(() => {
