@@ -79,10 +79,10 @@
  responsiveOffsetY = width < height ? (height * 0.15) : (height * 0.02);
  });
 
- // РАДИУС УВЕЛИЧЕН В 5 РАЗ (с 5.5 до 27.5). Шары станут по-настоящему огромными!
+ // РАДИУС УВЕЛИЧЕН (с 5.5 до 100). Шары станут по-настоящему огромными!
  const balls = {
- tennis: { x: -20, y: 11, z: 0, vx: 0, radius: 80, mass: 0.05, color: '#a3e635', label: 'Теннисный мяч' },
- iron: { x: -20, y: -9, z: 0, vx: 0, radius: 80, mass: 50.0, color: '#e2e8f0', label: 'Чугунное ядро' }
+ tennis: { x: -20, y: 11, z: 0, vx: 0, radius: 100, mass: 0.05, color: '#a3e635', label: 'Теннисный мяч' },
+ iron: { x: -20, y: -9, z: 0, vx: 0, radius: 100, mass: 50.0, color: '#e2e8f0', label: 'Чугунное ядро' }
  };
 
  let kickForce = 150;
@@ -167,7 +167,7 @@
  updatePhysics();
 
  // Глубокий темный космос
- ctx.fillStyle = '#05070f';
+ ctx.fillStyle = '#C0C8EA';
  ctx.fillRect(0, 0, width, height);
 
  // 1. ЗВЕЗДНЫЙ ФОН
