@@ -3,511 +3,557 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сила Архимеда: Интерактивная Симуляция</title>
+    <title>Закон Архимеда: Интерактивная Симуляция</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.19/index.css');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
+            background-color: #0f172a; /* Slate 900 */
             color: white;
             overflow: hidden;
             height: 100vh;
+            width: 100vw;
+        }
+
+        /* Layout Container */
+        .app-container {
             display: flex;
-            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Canvas Area */
+        .simulation-area {
+            flex-grow: 1;
+            position: relative;
+            background: linear-gradient(to bottom, #1e293b 0%, #0f172a 100%);
+            cursor: grab;
+        }
+        
+        .simulation-area:active {
+            cursor: grabbing;
         }
 
         canvas {
             display: block;
             width: 100%;
             height: 100%;
-            cursor: grab;
         }
 
-        canvas:active {
-            cursor: grabbing;
+        /* Sidebar Controls */
+        .sidebar {
+            width: 380px;
+            background-color: rgba(30, 41, 59, 0.95); /* Slate 800 with opacity */
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            overflow-y: auto;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            z-index: 20;
         }
 
-        .ui-panel {
-            background: rgba(30, 41, 59, 0.85);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
+        /* Custom Range Slider Styling */
         input[type="range"] {
+            -webkit-appearance: none;
             width: 100%;
             height: 6px;
-            border-radius: 3px;
-            background: #475569;
+            background: #334155;
+            border-radius: 5px;
             outline: none;
-            -webkit-appearance: none;
+            margin-top: 10px;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             background: #3b82f6;
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
         }
 
         input[type="range"]::-webkit-slider-thumb:hover {
             transform: scale(1.2);
+            background: #60a5fa;
         }
 
-        .vector-arrow {
-            position: absolute;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            font-size: 14px;
-            transition: all 0.1s linear;
+        /* Status Card */
+        .status-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
         }
 
-        .arrow-up { color: #4ade80; } /* Green for buoyancy */
-        .arrow-down { color: #f87171; } /* Red for gravity */
-        
+        /* Formula Box */
         .formula-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
             font-family: monospace;
-            background: rgba(0,0,0,0.3);
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 0.9rem;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 1024px) {
+            .app-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: 40%;
+                border-left: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 1rem;
+                gap: 1rem;
+            }
+            .simulation-area {
+                height: 60%;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Canvas Background -->
-    <div id="canvas-container" class="absolute inset-0 bg-slate-900 z-0">
-        <canvas id="simCanvas"></canvas>
-    </div>
 
-    <!-- UI Overlay -->
-    <div class="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-4 md:p-8">
+<div class="app-container">
+    
+    <!-- Left Side: Simulation Canvas -->
+    <div class="simulation-area" id="simContainer">
+        <canvas id="simCanvas"></canvas>
         
-        <!-- Header -->
-        <div class="text-center pointer-events-auto mb-4">
-            <h1 class="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-lg">
+        <!-- Overlay Title (Absolute positioned over canvas) -->
+        <div class="absolute top-6 left-0 w-full text-center pointer-events-none">
+            <h1 class="text-3xl md:text-4xl font-bold text-blue-400 drop-shadow-lg tracking-tight">
                 Закон Архимеда
             </h1>
-            <p class="text-gray-300 text-sm md:text-base mt-1 max-w-xl mx-auto opacity-90">
+            <p class="text-slate-300 text-sm mt-2 max-w-lg mx-auto opacity-80">
                 Перетаскивайте куб мышкой. Изменяйте плотность тела и жидкости, чтобы увидеть, когда оно всплывет или утонет.
             </p>
         </div>
-
-        <!-- Bottom Controls Area -->
-        <div class="flex flex-col md:flex-row gap-4 items-end justify-center w-full pointer-events-auto">
-            
-            <!-- Control Panel -->
-            <div class="ui-panel w-full md:w-96 space-y-4">
-                <!-- Object Density Slider -->
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <label class="text-xs font-semibold text-gray-300 uppercase tracking-wider">Плотность тела (ρ<sub>тела</sub>)</label>
-                        <span id="obj-density-val" class="text-xs font-mono text-blue-400">500 кг/м³</span>
-                    </div>
-                    <input type="range" min="100" max="2000" value="500" id="obj-density-slider">
-                    <div class="flex justify-between text-[10px] text-gray-500 mt-1">
-                        <span>Дерево</span>
-                        <span>Железо</span>
-                    </div>
-                </div>
-
-                <!-- Liquid Density Slider -->
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <label class="text-xs font-semibold text-gray-300 uppercase tracking-wider">Плотность жидкости (ρ<sub>жидк</sub>)</label>
-                        <span id="liq-density-val" class="text-xs font-mono text-cyan-400">1000 кг/м³</span>
-                    </div>
-                    <input type="range" min="500" max="1500" value="1000" id="liq-density-slider">
-                    <div class="flex justify-between text-[10px] text-gray-500 mt-1">
-                        <span>Масло</span>
-                        <span>Вода</span>
-                    </div>
-                </div>
-
-                <!-- Formula Display -->
-                <div class="formula-box border-l-4 border-blue-500">
-                    <div class="text-gray-400 text-xs mb-1">Формула силы Архимеда:</div>
-                    <div class="text-white font-bold">F<sub>A</sub> = ρ<sub>жидк</sub> · g · V<sub>погр</sub></div>
-                    <div class="mt-2 text-xs text-gray-300 flex justify-between">
-                        <span>F<sub>тяж</sub>: <span id="force-gravity" class="text-red-400">0 Н</span></span>
-                        <span>F<sub>Арх</sub>: <span id="force-buoyancy" class="text-green-400">0 Н</span></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Legend / Status -->
-            <div class="ui-panel w-full md:w-64 flex flex-col gap-2">
-                <h3 class="text-sm font-bold text-gray-200 border-b border-gray-600 pb-2 mb-1">Статус объекта</h3>
-                <div class="flex items-center gap-3">
-                    <div id="status-icon" class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-lg">🪵</div>
-                    <div>
-                        <div id="status-text" class="font-bold text-blue-300">Плавает</div>
-                        <div id="status-desc" class="text-xs text-gray-400">Плотность тела меньше плотности жидкости</div>
-                    </div>
-                </div>
-                <div class="mt-2 text-[10px] text-gray-500 leading-tight">
-                    💡 Если F<sub>Арх</sub> > F<sub>тяж</sub>, тело всплывает.<br>
-                    Если F<sub>Арх</sub> < F<sub>тяж</sub>, тело тонет.
-                </div>
-            </div>
-
-        </div>
     </div>
 
-    <script>
-        // --- Configuration & State ---
-        const canvas = document.getElementById('simCanvas');
-        const ctx = canvas.getContext('2d');
+    <!-- Right Side: Controls Sidebar -->
+    <div class="sidebar">
         
-        // Physics Constants
-        const G = 9.8; // Gravity m/s^2 (scaled visually)
-        const SCALE_FACTOR = 0.05; // Visual scaling for forces
+        <!-- Header for Sidebar (Visible on mobile mostly, or just structure) -->
+        <div class="hidden md:block">
+            <h2 class="text-xl font-bold text-white mb-1">Параметры</h2>
+            <p class="text-xs text-slate-400">Настройте физические свойства системы</p>
+        </div>
+
+        <!-- Control: Object Density -->
+        <div class="control-group">
+            <div class="flex justify-between items-end mb-2">
+                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Плотность тела (ρ<sub>тела</sub>)</label>
+                <span id="obj-density-val" class="text-sm font-mono text-blue-400 font-bold">500 кг/м³</span>
+            </div>
+            <input type="range" min="100" max="2500" value="500" id="obj-density-slider">
+            <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-medium">
+                <span>Дерево (Легкое)</span>
+                <span>Железо (Тяжелое)</span>
+            </div>
+        </div>
+
+        <!-- Control: Liquid Density -->
+        <div class="control-group">
+            <div class="flex justify-between items-end mb-2">
+                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Плотность жидкости (ρ<sub>жидк</sub>)</label>
+                <span id="liq-density-val" class="text-sm font-mono text-cyan-400 font-bold">1000 кг/м³</span>
+            </div>
+            <input type="range" min="500" max="1500" value="1000" id="liq-density-slider">
+            <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-medium">
+                <span>Масло</span>
+                <span>Вода</span>
+            </div>
+        </div>
+
+        <!-- Formula Display -->
+        <div class="formula-box">
+            <div class="text-slate-400 text-xs mb-2 uppercase tracking-wide">Формула силы Архимеда:</div>
+            <div class="text-white text-lg font-bold mb-3">F<sub>A</sub> = ρ<sub>жидк</sub> · g · V<sub>погр</sub></div>
+            
+            <div class="grid grid-cols-2 gap-4 text-sm border-t border-slate-700 pt-3">
+                <div>
+                    <span class="text-slate-400 block text-xs">Сила тяжести (mg):</span>
+                    <span id="force-gravity" class="text-red-400 font-mono font-bold">0.0 Н</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-slate-400 block text-xs">Сила Архимеда (Fa):</span>
+                    <span id="force-buoyancy" class="text-green-400 font-mono font-bold">0.0 Н</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="status-card mt-auto">
+            <h3 class="text-sm font-bold text-slate-300 mb-3 border-b border-slate-700 pb-2">Статус объекта</h3>
+            <div class="flex items-center gap-4">
+                <div id="status-icon" class="w-10 h-10 rounded-full bg-blue-900/50 border border-blue-500 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    🪵
+                </div>
+                <div>
+                    <div id="status-text" class="font-bold text-blue-400 text-lg leading-tight">Плавает</div>
+                    <div id="status-desc" class="text-xs text-slate-400 mt-1">Плотность тела меньше плотности жидкости</div>
+                </div>
+            </div>
+            <div class="mt-4 text-[11px] text-slate-500 leading-relaxed bg-slate-900/50 p-2 rounded">
+                💡 <strong>Правило:</strong> Если F<sub>Арх</sub> > F<sub>тяж</sub>, тело всплывает.<br>
+                Если F<sub>Арх</sub> < F<sub>тяж</sub>, тело тонет.
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- Configuration & State ---
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('simContainer');
+    
+    // Physics Constants
+    const G = 9.8; // Gravity m/s^2
+    const PIXELS_PER_METER = 50; // Scale: 50px = 1 meter
+    
+    // Simulation State
+    const state = {
+        objDensity: 500, // kg/m^3
+        liqDensity: 1000, // kg/m^3
+        objVolume: 1, // m^3 (Arbitrary unit for calculation simplicity)
         
-        // Simulation State
-        const state = {
-            objDensity: 500, // kg/m^3
-            liqDensity: 1000, // kg/m^3
-            objVolume: 1, // m^3 (arbitrary unit for simulation)
+        // Object Dimensions (Visual)
+        width: 120, // pixels
+        height: 120, // pixels
+        
+        // Object Position & Physics
+        x: 0, 
+        y: 0,
+        vx: 0,
+        vy: 0,
+        
+        // Interaction
+        isDragging: false,
+        dragOffsetX: 0,
+        dragOffsetY: 0,
+        
+        // Environment
+        liquidLevel: 0, // Y coordinate of liquid surface
+        tankBottom: 0
+    };
+
+    // DOM Elements
+    const elObjDensity = document.getElementById('obj-density-slider');
+    const elLiqDensity = document.getElementById('liq-density-slider');
+    const elObjDensityVal = document.getElementById('obj-density-val');
+    const elLiqDensityVal = document.getElementById('liq-density-val');
+    const elForceGravity = document.getElementById('force-gravity');
+    const elForceBuoyancy = document.getElementById('force-buoyancy');
+    const elStatusText = document.getElementById('status-text');
+    const elStatusDesc = document.getElementById('status-desc');
+    const elStatusIcon = document.getElementById('status-icon');
+
+    // --- Initialization ---
+    function resize() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        
+        state.tankBottom = canvas.height - 50; // Floor padding
+        state.liquidLevel = canvas.height * 0.45; // Liquid starts at 45% from top
+        
+        // Center object initially if not dragging and first load
+        if (state.x === 0) {
+            state.x = canvas.width / 2 - state.width / 2;
+            state.y = state.liquidLevel - state.height * 1.5;
+        }
+    }
+    
+    window.addEventListener('resize', resize);
+    // Initial call needs a slight delay to ensure container is rendered
+    setTimeout(resize, 50);
+
+    // --- Physics Engine ---
+    function updatePhysics() {
+        if (state.isDragging) return;
+
+        // Calculate Forces
+        // 1. Gravity (Always acts downwards)
+        // F = m * g = (density * volume) * g
+        // Note: We treat 'volume' as 1m3 for simplicity in numbers, but scale visuals.
+        const mass = state.objDensity * state.objVolume; 
+        const forceGravity = mass * G; 
+
+        // 2. Buoyancy (Acts upwards only when submerged)
+        let submergedVolumeRatio = 0;
+        const objBottom = state.y + state.height;
+        
+        // Check intersection with liquid
+        if (objBottom > state.liquidLevel) {
+            const submergedPixels = Math.min(objBottom, state.tankBottom) - state.liquidLevel;
+            // Clamp submerged height to object height
+            const validSubmergedPixels = Math.max(0, Math.min(submergedPixels, state.height));
             
-            // Object Position & Physics
-            x: 0, 
-            y: 0,
-            vx: 0,
-            vy: 0,
-            width: 100, // pixels
-            height: 100, // pixels
-            
-            // Interaction
-            isDragging: false,
-            dragOffsetX: 0,
-            dragOffsetY: 0,
-            
-            // Environment
-            liquidLevel: 0, // Y coordinate of liquid surface
-            containerWidth: 0,
-            containerHeight: 0
+            // Calculate ratio of submerged volume (assuming uniform cross-section)
+            submergedVolumeRatio = validSubmergedPixels / state.height;
+        }
+
+        const forceBuoyancy = state.liqDensity * (state.objVolume * submergedVolumeRatio) * G;
+
+        // Net Force (Down is positive Y)
+        const netForce = forceGravity - forceBuoyancy;
+        
+        // Acceleration (F = ma => a = F/m)
+        // Multiplier adjusts visual speed
+        const acceleration = (netForce / mass) * PIXELS_PER_METER; 
+        
+        // Apply to velocity
+        state.vy += acceleration * 0.016; // Assuming ~60fps
+        state.vy *= 0.96; // Damping/Drag (Fluid resistance)
+
+        // Update Position
+        state.y += state.vy;
+
+        // Boundary Checks
+        // Floor
+        if (state.y + state.height > state.tankBottom) {
+            state.y = state.tankBottom - state.height;
+            state.vy = -state.vy * 0.3; // Small bounce
+            if (Math.abs(state.vy) < 0.5) state.vy = 0; // Stop jitter
+        }
+        // Ceiling
+        if (state.y < 0) {
+            state.y = 0;
+            state.vy = 0;
+        }
+
+        // Update UI Values
+        updateUI(forceGravity, forceBuoyancy, submergedVolumeRatio > 0.01);
+    }
+
+    function updateUI(fGrav, fBuoy, isSubmerged) {
+        elForceGravity.textContent = fGrav.toFixed(1) + " Н";
+        elForceBuoyancy.textContent = isSubmerged ? fBuoy.toFixed(1) + " Н" : "0 Н";
+        
+        // Determine Status Text & Color
+        const rhoObj = parseInt(elObjDensity.value);
+        const rhoLiq = parseInt(elLiqDensity.value);
+        
+        if (rhoObj < rhoLiq) {
+            elStatusText.textContent = "Плавает / Всплывает";
+            elStatusText.className = "font-bold text-green-400 text-lg leading-tight";
+            elStatusDesc.textContent = "Плотность тела меньше плотности жидкости";
+            elStatusIcon.textContent = "🪵";
+            elStatusIcon.className = "w-10 h-10 rounded-full bg-green-900/30 border border-green-500 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(74,222,128,0.3)]";
+        } else if (rhoObj > rhoLiq) {
+            elStatusText.textContent = "Тонет";
+            elStatusText.className = "font-bold text-red-400 text-lg leading-tight";
+            elStatusDesc.textContent = "Плотность тела больше плотности жидкости";
+            elStatusIcon.textContent = "⚓";
+            elStatusIcon.className = "w-10 h-10 rounded-full bg-red-900/30 border border-red-500 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(248,113,113,0.3)]";
+        } else {
+            elStatusText.textContent = "Невесомость";
+            elStatusText.className = "font-bold text-yellow-400 text-lg leading-tight";
+            elStatusDesc.textContent = "Плотности равны, тело висит в толще";
+            elStatusIcon.textContent = "🌑";
+            elStatusIcon.className = "w-10 h-10 rounded-full bg-yellow-900/30 border border-yellow-500 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(250,204,21,0.3)]";
+        }
+    }
+
+    // --- Rendering ---
+    function drawArrow(ctx, fromX, fromY, length, color, label, direction) {
+        if (length < 5) return; // Don't draw tiny arrows
+        
+        const headLen = 12;
+        const endX = fromX;
+        const endY = direction === 'up' ? fromY - length : fromY + length;
+        
+        // Line
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        
+        // Arrow Head
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.moveTo(endX, endY);
+        if (direction === 'up') {
+            ctx.lineTo(endX - headLen/2, endY + headLen);
+            ctx.lineTo(endX + headLen/2, endY + headLen);
+        } else {
+            ctx.lineTo(endX - headLen/2, endY - headLen);
+            ctx.lineTo(endX + headLen/2, endY - headLen);
+        }
+        ctx.fill();
+        
+        // Label Background (for readability)
+        const textWidth = ctx.measureText(label).width;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+        ctx.fillRect(fromX + 15, (fromY + endY)/2 - 10, textWidth + 10, 20);
+
+        // Label Text
+        ctx.fillStyle = color;
+        ctx.font = "bold 14px Inter";
+        ctx.textAlign = "left";
+        ctx.fillText(label, fromX + 20, (fromY + endY) / 2 + 5);
+    }
+
+    function draw() {
+        // Clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 1. Draw Tank Background (Air part)
+        // Already handled by CSS gradient, but we can add subtle grid lines if needed.
+        
+        // 2. Draw Liquid
+        const grad = ctx.createLinearGradient(0, state.liquidLevel, 0, canvas.height);
+        grad.addColorStop(0, 'rgba(6, 182, 212, 0.5)'); // Cyan transparent
+        grad.addColorStop(1, 'rgba(8, 145, 178, 0.9)'); // Darker cyan
+        
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, state.liquidLevel, canvas.width, canvas.height - state.liquidLevel);
+        
+        // Liquid Surface Line (Shimmering effect)
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(165, 243, 252, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.moveTo(0, state.liquidLevel);
+        ctx.lineTo(canvas.width, state.liquidLevel);
+        ctx.stroke();
+
+        // 3. Draw Object
+        ctx.save();
+        ctx.translate(state.x, state.y);
+        
+        // Object Body Color based on density
+        let bodyColor = '#cbd5e1'; // Default light grey
+        if (state.objDensity < 800) bodyColor = '#d4a373'; // Wood
+        else if (state.objDensity > 1500) bodyColor = '#64748b'; // Metal
+        
+        // Shadow
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetY = 10;
+        
+        ctx.fillStyle = bodyColor;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        
+        // Draw Cube
+        ctx.fillRect(0, 0, state.width, state.height);
+        ctx.strokeRect(0, 0, state.width, state.height);
+        
+        // Reset Shadow for text
+        ctx.shadowColor = 'transparent';
+        
+        // Mass Label inside cube
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.font = "bold 24px Inter";
+        ctx.textAlign = "center";
+        ctx.fillText("m", state.width/2, state.height/2 + 8);
+        
+        ctx.restore();
+
+        // 4. Draw Force Vectors
+        const cx = state.x + state.width / 2;
+        const cy = state.y + state.height / 2;
+        
+        // Gravity Vector (Red, Down)
+        // Scale length visually
+        const gravLen = (state.objDensity * state.objVolume * G) * 0.08;
+        drawArrow(ctx, cx - 30, cy, Math.min(gravLen, 200), '#f87171', 'mg', 'down');
+        
+        // Buoyancy Vector (Green, Up) - Only if submerged
+        const objBottom = state.y + state.height;
+        if (objBottom > state.liquidLevel) {
+            const submergedHeight = Math.min(objBottom, state.tankBottom) - state.liquidLevel;
+            const subRatio = Math.max(0, Math.min(submergedHeight, state.height)) / state.height;
+            const buoyLen = (state.liqDensity * (state.objVolume * subRatio) * G) * 0.08;
+            drawArrow(ctx, cx + 30, cy, Math.min(buoyLen, 200), '#4ade80', 'Fa', 'up');
+        }
+
+        requestAnimationFrame(() => {
+            updatePhysics();
+            draw();
+        });
+    }
+
+    // --- Interaction Handlers ---
+    
+    // Sliders
+    elObjDensity.addEventListener('input', (e) => {
+        state.objDensity = parseInt(e.target.value);
+        elObjDensityVal.textContent = state.objDensity + " кг/м³";
+    });
+
+    elLiqDensity.addEventListener('input', (e) => {
+        state.liqDensity = parseInt(e.target.value);
+        elLiqDensityVal.textContent = state.liqDensity + " кг/м³";
+    });
+
+    // Mouse/Touch Dragging Logic
+    function getPointerPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
         };
+    }
 
-        // DOM Elements
-        const elObjDensity = document.getElementById('obj-density-slider');
-        const elLiqDensity = document.getElementById('liq-density-slider');
-        const elObjDensityVal = document.getElementById('obj-density-val');
-        const elLiqDensityVal = document.getElementById('liq-density-val');
-        const elForceGravity = document.getElementById('force-gravity');
-        const elForceBuoyancy = document.getElementById('force-buoyancy');
-        const elStatusText = document.getElementById('status-text');
-        const elStatusDesc = document.getElementById('status-desc');
-        const elStatusIcon = document.getElementById('status-icon');
-
-        // --- Initialization ---
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            state.containerWidth = canvas.width;
-            state.containerHeight = canvas.height;
-            state.liquidLevel = canvas.height * 0.4; // Liquid starts at 40% from top
-            
-            // Center object initially if not dragging
-            if (!state.isDragging && state.x === 0) {
-                state.x = canvas.width / 2;
-                state.y = state.liquidLevel - state.height * 1.5;
-            }
+    function onDown(e) {
+        const pos = getPointerPos(e);
+        // Check collision with object
+        if (pos.x >= state.x && pos.x <= state.x + state.width &&
+            pos.y >= state.y && pos.y <= state.y + state.height) {
+            state.isDragging = true;
+            state.dragOffsetX = pos.x - state.x;
+            state.dragOffsetY = pos.y - state.y;
+            state.vx = 0;
+            state.vy = 0;
+            canvas.style.cursor = 'grabbing';
         }
-        window.addEventListener('resize', resize);
-        resize();
+    }
 
-        // --- Physics Engine ---
-        function updatePhysics() {
-            if (state.isDragging) return;
-
-            // Calculate Forces
-            // 1. Gravity (Always acts downwards)
-            // F = m * g = (density * volume) * g
-            const mass = state.objDensity * state.objVolume;
-            const forceGravity = mass * G; 
-
-            // 2. Buoyancy (Acts upwards only when submerged)
-            let submergedVolume = 0;
-            const objBottom = state.y + state.height;
-            const objTop = state.y;
-            
-            // Check intersection with liquid
-            if (objBottom > state.liquidLevel) {
-                const submergedHeight = Math.min(objBottom, state.containerHeight) - state.liquidLevel;
-                // Clamp submerged height to object height
-                const validSubmergedHeight = Math.max(0, Math.min(submergedHeight, state.height));
-                
-                // Calculate ratio of submerged volume (assuming uniform cross-section)
-                const subRatio = validSubmergedHeight / state.height;
-                submergedVolume = state.objVolume * subRatio;
-            }
-
-            const forceBuoyancy = state.liqDensity * submergedVolume * G;
-
-            // Net Force
-            // Down is positive Y in canvas coords
-            const netForce = forceGravity - forceBuoyancy;
-            
-            // Acceleration (F = ma => a = F/m)
-            // We add a damping factor to simulate fluid resistance and prevent infinite oscillation
-            const acceleration = (netForce / mass) * 50; // Multiplier for visual speed
-            
-            // Apply to velocity
-            state.vy += acceleration * 0.016; // Assuming ~60fps
-            state.vy *= 0.95; // Damping/Drag
-
-            // Update Position
-            state.y += state.vy;
-
-            // Boundary Checks
-            // Floor
-            if (state.y + state.height > state.containerHeight - 20) {
-                state.y = state.containerHeight - 20 - state.height;
-                state.vy = 0;
-            }
-            // Ceiling (optional, but good for UX)
-            if (state.y < 20) {
-                state.y = 20;
-                state.vy = 0;
-            }
-
-            // Update UI Values
-            updateUI(forceGravity, forceBuoyancy, submergedVolume > 0);
-        }
-
-        function updateUI(fGrav, fBuoy, isSubmerged) {
-            elForceGravity.textContent = fGrav.toFixed(1) + " Н";
-            elForceBuoyancy.textContent = isSubmerged ? fBuoy.toFixed(1) + " Н" : "0 Н";
-            
-            // Determine Status
-            const rhoObj = parseInt(elObjDensity.value);
-            const rhoLiq = parseInt(elLiqDensity.value);
-            
-            if (rhoObj < rhoLiq) {
-                elStatusText.textContent = "Плавает / Всплывает";
-                elStatusText.className = "font-bold text-green-400";
-                elStatusDesc.textContent = "Плотность тела меньше плотности жидкости";
-                elStatusIcon.textContent = "🪵";
-                elStatusIcon.className = "w-8 h-8 rounded-full bg-green-900/50 border border-green-500 flex items-center justify-center text-lg";
-            } else if (rhoObj > rhoLiq) {
-                elStatusText.textContent = "Тонет";
-                elStatusText.className = "font-bold text-red-400";
-                elStatusDesc.textContent = "Плотность тела больше плотности жидкости";
-                elStatusIcon.textContent = "⚓";
-                elStatusIcon.className = "w-8 h-8 rounded-full bg-red-900/50 border border-red-500 flex items-center justify-center text-lg";
-            } else {
-                elStatusText.textContent = "Невесомость в жидкости";
-                elStatusText.className = "font-bold text-yellow-400";
-                elStatusDesc.textContent = "Плотности равны, тело висит в толще";
-                elStatusIcon.textContent = "🌑";
-                elStatusIcon.className = "w-8 h-8 rounded-full bg-yellow-900/50 border border-yellow-500 flex items-center justify-center text-lg";
-            }
-        }
-
-        // --- Rendering ---
-        function drawArrow(ctx, fromX, fromY, length, color, label, direction) {
-            if (length < 5) return; // Don't draw tiny arrows
-            
-            const headLen = 10;
-            const endX = fromX;
-            const endY = direction === 'up' ? fromY - length : fromY + length;
-            
-            ctx.beginPath();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 4;
-            ctx.lineCap = 'round';
-            ctx.moveTo(fromX, fromY);
-            ctx.lineTo(endX, endY);
-            ctx.stroke();
-            
-            // Arrow head
-            ctx.beginPath();
-            ctx.fillStyle = color;
-            ctx.moveTo(endX, endY);
-            if (direction === 'up') {
-                ctx.lineTo(endX - headLen/2, endY + headLen);
-                ctx.lineTo(endX + headLen/2, endY + headLen);
-            } else {
-                ctx.lineTo(endX - headLen/2, endY - headLen);
-                ctx.lineTo(endX + headLen/2, endY - headLen);
-            }
-            ctx.fill();
-            
-            // Label
-            ctx.fillStyle = color;
-            ctx.font = "bold 14px Inter";
-            ctx.textAlign = "center";
-            ctx.fillText(label, fromX + 25, (fromY + endY) / 2);
-        }
-
-        function draw() {
-            // Clear
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 1. Draw Container/Tank Background
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(canvas.width * 0.1, 0, canvas.width * 0.8, canvas.height);
-            
-            // Tank Walls
-            ctx.strokeStyle = '#475569';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(canvas.width * 0.1, 0);
-            ctx.lineTo(canvas.width * 0.1, canvas.height);
-            ctx.lineTo(canvas.width * 0.9, canvas.height);
-            ctx.lineTo(canvas.width * 0.9, 0);
-            ctx.stroke();
-
-            // 2. Draw Liquid
-            // Gradient for water depth effect
-            const grad = ctx.createLinearGradient(0, state.liquidLevel, 0, canvas.height);
-            grad.addColorStop(0, 'rgba(6, 182, 212, 0.4)'); // Cyan transparent
-            grad.addColorStop(1, 'rgba(8, 145, 178, 0.8)'); // Darker cyan
-            
-            ctx.fillStyle = grad;
-            ctx.fillRect(canvas.width * 0.1 + 2, state.liquidLevel, canvas.width * 0.8 - 4, canvas.height - state.liquidLevel);
-            
-            // Liquid Surface Line
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(103, 232, 249, 0.8)';
-            ctx.lineWidth = 2;
-            ctx.moveTo(canvas.width * 0.1, state.liquidLevel);
-            ctx.lineTo(canvas.width * 0.9, state.liquidLevel);
-            ctx.stroke();
-
-            // 3. Draw Object
-            ctx.save();
-            ctx.translate(state.x, state.y);
-            
-            // Object Body
-            ctx.fillStyle = state.objDensity > state.liqDensity ? '#94a3b8' : '#cbd5e1'; // Greyish
-            if (state.objDensity < 800) ctx.fillStyle = '#d4a373'; // Wood color if light
-            if (state.objDensity > 1500) ctx.fillStyle = '#64748b'; // Metal color if heavy
-            
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 10;
-            ctx.fillRect(0, 0, state.width, state.height);
-            ctx.strokeRect(0, 0, state.width, state.height);
-            
-            // Object Label
-            ctx.fillStyle = '#0f172a';
-            ctx.font = "12px Inter";
-            ctx.textAlign = "center";
-            ctx.shadowBlur = 0;
-            ctx.fillText("m", state.width/2, state.height/2 + 4);
-            
-            ctx.restore();
-
-            // 4. Draw Force Vectors
-            // Center of object
-            const cx = state.x + state.width / 2;
-            const cy = state.y + state.height / 2;
-            
-            // Gravity Vector (Red, Down)
-            // Scale length based on magnitude relative to a baseline
-            const gravLen = (state.objDensity * state.objVolume * G) * SCALE_FACTOR;
-            drawArrow(ctx, cx - 20, cy, Math.min(gravLen, 150), '#f87171', 'mg', 'down');
-            
-            // Buoyancy Vector (Green, Up) - Only if submerged
-            const objBottom = state.y + state.height;
-            if (objBottom > state.liquidLevel) {
-                const submergedHeight = Math.min(objBottom, state.containerHeight) - state.liquidLevel;
-                const subRatio = Math.max(0, Math.min(submergedHeight, state.height)) / state.height;
-                const buoyLen = (state.liqDensity * (state.objVolume * subRatio) * G) * SCALE_FACTOR;
-                drawArrow(ctx, cx + 20, cy, Math.min(buoyLen, 150), '#4ade80', 'Fa', 'up');
-            }
-
-            requestAnimationFrame(() => {
-                updatePhysics();
-                draw();
-            });
-        }
-
-        // --- Interaction Handlers ---
-        
-        // Sliders
-        elObjDensity.addEventListener('input', (e) => {
-            state.objDensity = parseInt(e.target.value);
-            elObjDensityVal.textContent = state.objDensity + " кг/м³";
-        });
-
-        elLiqDensity.addEventListener('input', (e) => {
-            state.liqDensity = parseInt(e.target.value);
-            elLiqDensityVal.textContent = state.liqDensity + " кг/м³";
-        });
-
-        // Mouse/Touch Dragging
-        function getPointerPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
-        function onDown(e) {
+    function onMove(e) {
+        if (state.isDragging) {
             const pos = getPointerPos(e);
-            // Check if click is inside object
-            if (pos.x >= state.x && pos.x <= state.x + state.width &&
-                pos.y >= state.y && pos.y <= state.y + state.height) {
-                state.isDragging = true;
-                state.dragOffsetX = pos.x - state.x;
-                state.dragOffsetY = pos.y - state.y;
-                state.vx = 0;
-                state.vy = 0;
-                canvas.style.cursor = 'grabbing';
-            }
+            state.x = pos.x - state.dragOffsetX;
+            state.y = pos.y - state.dragOffsetY;
+            
+            // Keep within horizontal bounds
+            if (state.x < 0) state.x = 0;
+            if (state.x + state.width > canvas.width) state.x = canvas.width - state.width;
         }
+    }
 
-        function onMove(e) {
-            if (state.isDragging) {
-                const pos = getPointerPos(e);
-                state.x = pos.x - state.dragOffsetX;
-                state.y = pos.y - state.dragOffsetY;
-                
-                // Keep within tank bounds horizontally
-                const minX = canvas.width * 0.1 + state.width/2;
-                const maxX = canvas.width * 0.9 - state.width/2;
-                // Simple clamp logic for X (centered)
-                // Actually, let's just keep the object fully inside the tank walls
-                if (state.x < canvas.width * 0.1) state.x = canvas.width * 0.1;
-                if (state.x + state.width > canvas.width * 0.9) state.x = canvas.width * 0.9 - state.width;
-            }
-        }
+    function onUp() {
+        state.isDragging = false;
+        canvas.style.cursor = 'grab';
+    }
 
-        function onUp() {
-            state.isDragging = false;
-            canvas.style.cursor = 'grab';
-        }
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    
+    canvas.addEventListener('touchstart', (e) => { onDown(e); e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchmove', (e) => { onMove(e); e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchend', onUp);
 
-        canvas.addEventListener('mousedown', onDown);
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
-        
-        canvas.addEventListener('touchstart', (e) => { onDown(e); e.preventDefault(); }, {passive: false});
-        window.addEventListener('touchmove', (e) => { onMove(e); e.preventDefault(); }, {passive: false});
-        window.addEventListener('touchend', onUp);
+    // Start Loop
+    draw();
 
-        // Start Loop
-        draw();
-
-    </script>
+</script>
 </body>
 </html>
