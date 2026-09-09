@@ -1,275 +1,472 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
- <title>Что такое плотность? Молекулярный уровень 3D</title>
- <style>
- html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; touch-action: none; position: fixed; }
- #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
- 
- .ui-panel { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); width: 88%; max-width: 380px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 20px; padding: 12px 16px; box-sizing: border-box; z-index: 10; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); color: #1e293b; }
- .ui-title { font-size: 14px; font-weight: 700; margin: 0 0 2px 0; text-align: center; color: #0f172a; }
- .ui-subtitle { font-size: 10px; color: #64748b; margin: 0 0 10px 0; text-align: center; line-height: 1.3; }
- 
- .slider-container { display: flex; flex-direction: column; gap: 2px; }
- .slider-label { display: flex; justify-content: space-between; font-size: 10px; color: #334155; font-weight: 600; }
- input[type=range] { -webkit-appearance: none; width: 100%; background: rgba(0,0,0,0.1); height: 5px; border-radius: 3px; outline: none; }
- input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #0284c7; cursor: pointer; box-shadow: 0 2px 6px rgba(2,132,199,0.4); }
- 
- .stats-overlay { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 480px; display: flex; justify-content: space-between; gap: 10px; z-index: 10; pointer-events: none; }
- .stat-box { background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(148, 163, 184, 0.2); padding: 8px; border-radius: 14px; flex: 1; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
- .stat-box.low { border-left: 4px solid #0284c7; }
- .stat-box.high { border-left: 4px solid #e11d48; }
- .stat-name { font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; }
- .stat-val { font-size: 12px; font-weight: 700; color: #0f172a; margin-top: 1px; }
- .stat-desc { font-size: 10px; color: #0284c7; margin-top: 1px; }
- .stat-box.high .stat-desc { color: #e11d48; }
- </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Плотность на молекулярном уровне: 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.19/index.css');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 60vh;
+        }
+
+        .molecule-label {
+            position: absolute;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            transform: translate(-50%, -150%);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .visible {
+            opacity: 1 !important;
+        }
+
+        .slider-container {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #475569;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+
+        .info-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center justify-start p-4">
+    <header class="text-center mb-6 mt-4">
+        <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            Плотность на молекулярном уровне
+        </h1>
+        <p class="text-gray-300 mt-2 max-w-2xl mx-auto">
+            Сравнение упаковки атомов в поролоне и железе при одинаковом объеме
+        </p>
+    </header>
 
- <div class="stats-overlay">
- <div class="stat-box low">
- <div class="stat-name">Поролон (Твердое тело)</div>
- <div class="stat-val">Плотность: НИЗКАЯ</div>
- <div class="stat-desc">Редкие атомы и поры</div>
- </div>
- <div class="stat-box high">
- <div class="stat-name">Железо (Металл)</div>
- <div class="stat-val">Плотность: ВЫСОКАЯ</div>
- <div class="stat-desc">Плотно втиснуты</div>
- </div>
- </div>
+    <div id="canvas-container" class="w-full max-w-5xl relative rounded-xl overflow-hidden shadow-2xl border border-gray-700">
+        <canvas id="densityCanvas"></canvas>
+        <div id="labels-container"></div>
+    </div>
 
- <div id="canvas-container"></div>
+    <div class="w-full max-w-5xl mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="info-card">
+            <h2 class="text-xl font-semibold mb-3 text-blue-300">Поролон (Твердое тело)</h2>
+            <div class="flex items-center mb-2">
+                <span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+                <span>Плотность: <span class="font-bold text-red-400">НИЗКАЯ</span></span>
+            </div>
+            <p class="text-gray-300 text-sm">
+                Редкие атомы и поры. Молекулы расположены далеко друг от друга, создавая легкую структуру с большим количеством пустого пространства.
+            </p>
+        </div>
 
- <div class="ui-panel">
- <div class="ui-title">Плотность на уровне молекул</div>
- <div class="ui-subtitle" id="experimentDesc">Два куба имеют абсолютно одинаковый объем. Но в железе атомы упакованы тесно, а в поролоне — зафиксированы на огромном расстоянии друг от друга.</div>
- <div class="slider-container">
- <div class="slider-label">
- <span>Температура (Дрожание молекул)</span>
- <span id="heatVal">Обычная</span>
- </div>
- <input type="range" id="heatSlider" min="1" max="4" step="0.1" value="1">
- </div>
- </div>
+        <div class="info-card">
+            <h2 class="text-xl font-semibold mb-3 text-orange-300">Железо (Металл)</h2>
+            <div class="flex items-center mb-2">
+                <span class="inline-block w-3 h-3 rounded-full bg-orange-500 mr-2"></span>
+                <span>Плотность: <span class="font-bold text-green-400">ВЫСОКАЯ</span></span>
+            </div>
+            <p class="text-gray-300 text-sm">
+                Плотно втиснуты. Атомы упакованы очень тесно, почти без промежутков, что создает тяжелый и прочный материал.
+            </p>
+        </div>
+    </div>
 
- <script>
- const container = document.getElementById('canvas-container');
- const canvas = document.createElement('canvas');
- container.appendChild(canvas);
- const ctx = canvas.getContext('2d');
- 
- let width = canvas.width = window.innerWidth;
- let height = canvas.height = window.innerHeight;
+    <div class="w-full max-w-5xl slider-container">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium">Температура (Дрожание молекул)</h3>
+            <span id="temp-value" class="bg-blue-900 px-3 py-1 rounded-full text-sm">Обычная</span>
+        </div>
+        <input type="range" min="0" max="100" value="30" id="temperature-slider">
+        <div class="flex justify-between text-xs text-gray-400 mt-2">
+            <span>Холодно</span>
+            <span>Обычная</span>
+            <span>Горячо</span>
+        </div>
+    </div>
 
- let dynamicFov = width < height ? 320 : 450; 
- let responsiveOffsetY = width < height ? (height * 0.12) : (height * 0.02);
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('densityCanvas');
+        const ctx = canvas.getContext('2d');
+        const labelsContainer = document.getElementById('labels-container');
+        const tempSlider = document.getElementById('temperature-slider');
+        const tempValue = document.getElementById('temp-value');
 
- window.addEventListener('resize', () => {
- width = canvas.width = window.innerWidth;
- height = canvas.height = window.innerHeight;
- dynamicFov = width < height ? 320 : 450;
- responsiveOffsetY = width < height ? (height * 0.12) : (height * 0.02);
- });
+        // Set canvas size
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
 
- let heatMultiplier = 1.0;
- let angleY = -0.4;
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
- // Молекулы Поролона теперь ЖЕСТКО ЗАФИКСИРОВАНЫ в пространстве. Их мало, и расстояние между ними огромное.
- const lowDensityMolecules = [];
- for(let x=-1; x<=1; x++) {
-     for(let y=-1; y<=1; y++) {
-         for(let z=-1; z<=1; z++) {
-             lowDensityMolecules.push({
-                 bx: x * 6.0, by: y * 6.0 + 12, bz: z * 6.0, // Базовые стабильные координаты в верхнем кубе
-                 x: 0, y: 0, z: 0
-             });
-         }
-     }
- }
+        // Molecule classes
+        class Molecule {
+            constructor(x, y, z, type) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.type = type; // 'foam' or 'iron'
+                this.baseX = x;
+                this.baseY = y;
+                this.baseZ = z;
+                this.radius = type === 'foam' ? 8 : 10;
+                this.color = type === 'foam' ? '#3b82f6' : '#f97316';
+                this.vibration = 0;
+            }
 
- // Молекулы Железа (Очень плотная кристаллическая структура)
- const highDensityMolecules = [];
- for(let x=-2; x<=2; x++) {
-     for(let y=-2; y<=2; y++) {
-         for(let z=-2; z<=2; z++) {
-             highDensityMolecules.push({
-                 bx: x * 3.3, by: y * 3.3 - 9, bz: z * 3.3, // Базовые стабильные координаты в нижнем кубе
-                 x: 0, y: 0, z: 0
-             });
-         }
-     }
- }
+            update(temperature) {
+                // Calculate vibration based on temperature
+                this.vibration = temperature * 0.05;
+                
+                // Apply random vibration
+                this.x = this.baseX + (Math.random() - 0.5) * this.vibration;
+                this.y = this.baseY + (Math.random() - 0.5) * this.vibration;
+                this.z = this.baseZ + (Math.random() - 0.5) * this.vibration;
+            }
 
- const slider = document.getElementById('heatSlider');
- const heatVal = document.getElementById('heatVal');
+            draw(ctx, centerX, centerY) {
+                // Simple 3D projection
+                const scale = 300 / (300 + this.z);
+                const screenX = centerX + this.x * scale;
+                const screenY = centerY + this.y * scale;
+                const screenRadius = this.radius * scale;
 
- slider.addEventListener('input', (e) => {
- heatMultiplier = parseFloat(e.target.value);
- if (heatMultiplier < 1.5) heatVal.innerText = "Обычная";
- else if (heatMultiplier >= 1.5 && heatMultiplier < 3.0) heatVal.innerText = "Тепло (Дрожание)";
- else heatVal.innerText = "Горячо (Плотность падает!)";
- });
+                // Draw molecule
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, screenRadius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                
+                // Add highlight
+                ctx.beginPath();
+                ctx.arc(screenX - screenRadius*0.3, screenY - screenRadius*0.3, screenRadius*0.3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fill();
+            }
+        }
 
- document.addEventListener('touchmove', (e) => {
- if (e.target.id === 'heatSlider') return;
- e.preventDefault();
- }, { passive: false });
+        // Create molecules for foam and iron
+        const foamMolecules = [];
+        const ironMolecules = [];
+        const cubeSize = 120;
 
- function project(x, y, z) {
- let cosY = Math.cos(angleY);
- let sinY = Math.sin(angleY);
- let xRot = x * cosY - z * sinY;
- let zRot = x * sinY + z * cosY;
+        // Generate foam molecules (sparse)
+        for (let i = 0; i < 30; i++) {
+            const x = (Math.random() - 0.5) * cubeSize;
+            const y = (Math.random() - 0.5) * cubeSize;
+            const z = (Math.random() - 0.5) * cubeSize;
+            foamMolecules.push(new Molecule(x, y, z, 'foam'));
+        }
 
- let cameraDist = 65;
- let denominator = zRot + cameraDist;
- if (denominator <= 0) denominator = 1;
- let scale = dynamicFov / denominator;
- return {
- x: width / 2 + xRot * scale,
- y: height / 2 - y * scale - responsiveOffsetY,
- scale: scale,
- zRot: zRot
- };
- }
- // ИСПРАВЛЕННАЯ ФУНКЦИЯ С ЧЕСТНЫМИ СВЯЗЯМИ ДЛЯ СТРОИТЕЛЬСТВА 3D-КУБА
- function drawCube(centerY, size, color) {
-     let h = size / 2;
-     // 8 вершин трехмерного куба
-     let vertices = [
-         {x: -h, y: centerY - h, z: -h}, // 0
-         {x: h, y: centerY - h, z: -h},  // 1
-         {x: h, y: centerY + h, z: -h},  // 2
-         {x: -h, y: centerY + h, z: -h}, // 3
-         {x: -h, y: centerY - h, z: h},  // 4
-         {x: h, y: centerY - h, z: h},   // 5
-         {x: h, y: centerY + h, z: h},   // 6
-         {x: -h, y: centerY + h, z: h}   // 7
-     ];
+        // Generate iron molecules (dense)
+        const spacing = 15;
+        for (let x = -cubeSize/2; x <= cubeSize/2; x += spacing) {
+            for (let y = -cubeSize/2; y <= cubeSize/2; y += spacing) {
+                for (let z = -cubeSize/2; z <= cubeSize/2; z += spacing) {
+                    if (Math.random() > 0.2) { // Not completely full but very dense
+                        ironMolecules.push(new Molecule(x, y, z, 'iron'));
+                    }
+                }
+            }
+        }
 
-     let p = vertices.map(v => project(v.x, v.y, v.z));
+        // Camera rotation
+        let rotationX = 0;
+        let rotationY = 0;
+        let targetRotationX = 0.3;
+        let targetRotationY = 0.5;
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
 
-     // Жесткая карта ребер (12 линий, связывающих все вершины в объеме)
-     let edges = [, [1, 2], [2, 3], [3, 0], // задняя грань, [5, 6], [6, 7], [7, 4], // передняя грань, [1, 5], [2, 6], [3, 7]  // соединительные боковые ребра
-     ];
+        // Mouse events for rotation
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        });
 
-     ctx.lineWidth = 1.8;
-     ctx.strokeStyle = color;
-     
-     edges.forEach(edge => {
-         ctx.beginPath();
-         ctx.moveTo(p[edge[0]].x, p[edge[0]].y);
-         ctx.lineTo(p[edge[1]].x, p[edge[1]].y);
-         ctx.stroke();
-     });
- }
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - lastMouseX;
+                const deltaY = e.clientY - lastMouseY;
+                
+                targetRotationY += deltaX * 0.01;
+                targetRotationX += deltaY * 0.01;
+                
+                // Limit vertical rotation
+                targetRotationX = Math.max(-Math.PI/2, Math.min(Math.PI/2, targetRotationX));
+                
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            }
+        });
 
- // ЦИКЛ СИНХРОНИЗАЦИИ И АНИМАЦИИ ТВЕРДЫХ ТЕЛ
- function animate() {
-     requestAnimationFrame(animate);
-     
-     // Медленное вращение сцены вокруг оси Y для демонстрации 3D-объема
-     angleY += 0.003;
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
 
-     // Сброс холста на светлый фон
-     ctx.fillStyle = '#f1f5f9';
-     ctx.fillRect(0, 0, width, height);
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            lastMouseX = e.touches[0].clientX;
+            lastMouseY = e.touches[0].clientY;
+            e.preventDefault();
+        });
 
-     // 1. ОТРЕСОВКА ВЕРХНЕГО КУБА (ПОРОЛОН)
-     drawCube(12, 17, 'rgba(2, 132, 199, 0.35)');
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                const deltaX = e.touches[0].clientX - lastMouseX;
+                const deltaY = e.touches[0].clientY - lastMouseY;
+                
+                targetRotationY += deltaX * 0.01;
+                targetRotationX += deltaY * 0.01;
+                
+                // Limit vertical rotation
+                targetRotationX = Math.max(-Math.PI/2, Math.min(Math.PI/2, targetRotationX));
+                
+                lastMouseX = e.touches[0].clientX;
+                lastMouseY = e.touches[0].clientY;
+            }
+            e.preventDefault();
+        });
 
-     // Рассчитываем дрожание зафиксированных атомов поролона (низкая плотность)
-     lowDensityMolecules.forEach(m => {
-         let jitter = 0.12 * heatMultiplier;
-         m.x = m.bx + (Math.random() - 0.5) * jitter;
-         m.y = m.by + (Math.random() - 0.5) * jitter;
-         m.z = m.bz + (Math.random() - 0.5) * jitter;
-     });
+        window.addEventListener('touchend', () => {
+            isDragging = false;
+        });
 
-     // Проекция и сортировка по глубине для атомов поролона
-     let projectedFoam = lowDensityMolecules.map(m => {
-         return { p: project(m.x, m.y, m.z), zRot: project(m.x, m.y, m.z).zRot };
-     });
-     projectedFoam.sort((a, b) => b.zRot - a.zRot);
+        // Temperature control
+        let temperature = 30;
+        tempSlider.addEventListener('input', () => {
+            temperature = parseInt(tempSlider.value);
+            
+            // Update label
+            if (temperature < 20) {
+                tempValue.textContent = 'Холодно';
+                tempValue.className = 'bg-blue-900 px-3 py-1 rounded-full text-sm';
+            } else if (temperature < 70) {
+                tempValue.textContent = 'Обычная';
+                tempValue.className = 'bg-blue-800 px-3 py-1 rounded-full text-sm';
+            } else {
+                tempValue.textContent = 'Горячо';
+                tempValue.className = 'bg-red-900 px-3 py-1 rounded-full text-sm';
+            }
+        });
 
-     projectedFoam.forEach(item => {
-         let p2d = item.p;
-         let rad = 5.0 * (p2d.scale / 8);
+        // Draw cube edges
+        function drawCubeEdges(ctx, centerX, centerY, size, color) {
+            const halfSize = size / 2;
+            
+            // Define cube vertices
+            const vertices = [
+                [-halfSize, -halfSize, -halfSize],
+                [halfSize, -halfSize, -halfSize],
+                [halfSize, halfSize, -halfSize],
+                [-halfSize, halfSize, -halfSize],
+                [-halfSize, -halfSize, halfSize],
+                [halfSize, -halfSize, halfSize],
+                [halfSize, halfSize, halfSize],
+                [-halfSize, halfSize, halfSize]
+            ];
+            
+            // Rotate vertices
+            const rotatedVertices = vertices.map(v => {
+                // Rotate around Y axis
+                let x = v[0] * Math.cos(rotationY) - v[2] * Math.sin(rotationY);
+                let z = v[0] * Math.sin(rotationY) + v[2] * Math.cos(rotationY);
+                let y = v[1];
+                
+                // Rotate around X axis
+                let newY = y * Math.cos(rotationX) - z * Math.sin(rotationX);
+                let newZ = y * Math.sin(rotationX) + z * Math.cos(rotationX);
+                
+                return [x, newY, newZ];
+            });
+            
+            // Project to 2D
+            const projectedVertices = rotatedVertices.map(v => {
+                const scale = 300 / (300 + v[2]);
+                return [
+                    centerX + v[0] * scale,
+                    centerY + v[1] * scale,
+                    v[2]
+                ];
+            });
+            
+            // Draw edges
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            
+            // Front face
+            ctx.beginPath();
+            ctx.moveTo(projectedVertices[0][0], projectedVertices[0][1]);
+            ctx.lineTo(projectedVertices[1][0], projectedVertices[1][1]);
+            ctx.lineTo(projectedVertices[2][0], projectedVertices[2][1]);
+            ctx.lineTo(projectedVertices[3][0], projectedVertices[3][1]);
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Back face
+            ctx.beginPath();
+            ctx.moveTo(projectedVertices[4][0], projectedVertices[4][1]);
+            ctx.lineTo(projectedVertices[5][0], projectedVertices[5][1]);
+            ctx.lineTo(projectedVertices[6][0], projectedVertices[6][1]);
+            ctx.lineTo(projectedVertices[7][0], projectedVertices[7][1]);
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Connecting edges
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(projectedVertices[i][0], projectedVertices[i][1]);
+                ctx.lineTo(projectedVertices[i+4][0], projectedVertices[i+4][1]);
+                ctx.stroke();
+            }
+        }
 
-         ctx.beginPath();
-         ctx.arc(p2d.x, p2d.y, rad, 0, Math.PI * 2);
-         let grad = ctx.createRadialGradient(p2d.x - rad*0.3, p2d.y - rad*0.3, rad*0.05, p2d.x, p2d.y, rad);
-         grad.addColorStop(0, '#e0f2fe');
-         grad.addColorStop(0.3, '#38bdf8');
-         grad.addColorStop(1, '#0369a1');
-         ctx.fillStyle = grad;
-         ctx.fill();
-     });
+        // Main animation loop
+        function animate() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Smooth camera rotation
+            rotationX += (targetRotationX - rotationX) * 0.1;
+            rotationY += (targetRotationY - rotationY) * 0.1;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Draw background gradient
+            const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(canvas.width, canvas.height)/2);
+            gradient.addColorStop(0, '#1e293b');
+            gradient.addColorStop(1, '#0f172a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw title in canvas
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 24px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('Сравнение плотности материалов', centerX, 40);
+            
+            // Draw cubes side by side
+            const cubeSpacing = 300;
+            const leftCubeX = centerX - cubeSpacing/2;
+            const rightCubeX = centerX + cubeSpacing/2;
+            
+            // Draw foam cube
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
+            ctx.strokeStyle = '#3b82f6';
+            drawCubeEdges(ctx, leftCubeX, centerY, cubeSize, '#3b82f6');
+            
+            // Draw iron cube
+            ctx.fillStyle = 'rgba(249, 115, 22, 0.1)';
+            ctx.strokeStyle = '#f97316';
+            drawCubeEdges(ctx, rightCubeX, centerY, cubeSize, '#f97316');
+            
+            // Update and draw foam molecules
+            foamMolecules.forEach(molecule => {
+                molecule.update(temperature);
+                
+                // Rotate molecule position
+                let x = molecule.x * Math.cos(rotationY) - molecule.z * Math.sin(rotationY);
+                let z = molecule.x * Math.sin(rotationY) + molecule.z * Math.cos(rotationY);
+                let y = molecule.y;
+                
+                let newY = y * Math.cos(rotationX) - z * Math.sin(rotationX);
+                let newZ = y * Math.sin(rotationX) + z * Math.cos(rotationX);
+                
+                molecule.x = x;
+                molecule.y = newY;
+                molecule.z = newZ;
+                
+                molecule.draw(ctx, leftCubeX, centerY);
+            });
+            
+            // Update and draw iron molecules
+            ironMolecules.forEach(molecule => {
+                molecule.update(temperature);
+                
+                // Rotate molecule position
+                let x = molecule.x * Math.cos(rotationY) - molecule.z * Math.sin(rotationY);
+                let z = molecule.x * Math.sin(rotationY) + molecule.z * Math.cos(rotationY);
+                let y = molecule.y;
+                
+                let newY = y * Math.cos(rotationX) - z * Math.sin(rotationX);
+                let newZ = y * Math.sin(rotationX) + z * Math.cos(rotationX);
+                
+                molecule.x = x;
+                molecule.y = newY;
+                molecule.z = newZ;
+                
+                molecule.draw(ctx, rightCubeX, centerY);
+            });
+            
+            // Draw labels
+            ctx.font = '16px Inter';
+            ctx.fillStyle = '#3b82f6';
+            ctx.textAlign = 'center';
+            ctx.fillText('ПОРОЛОН', leftCubeX, centerY + cubeSize/2 + 30);
+            
+            ctx.fillStyle = '#f97316';
+            ctx.fillText('ЖЕЛЕЗО', rightCubeX, centerY + cubeSize/2 + 30);
+            
+            // Draw density indicators
+            ctx.font = '14px Inter';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Низкая плотность', leftCubeX, centerY + cubeSize/2 + 50);
+            ctx.fillText('Высокая плотность', rightCubeX, centerY + cubeSize/2 + 50);
+            
+            requestAnimationFrame(animate);
+        }
 
-     // 2. ОТРИСОВКА НИЖНЕГО КУБА (ЖЕЛЕЗО)
-     drawCube(-9, 17, 'rgba(225, 29, 72, 0.35)');
-
-     // Рассчитываем дрожание плотных атомов железа (высокая плотность)
-     highDensityMolecules.forEach(m => {
-         let jitter = 0.12 * heatMultiplier;
-         m.x = m.bx + (Math.random() - 0.5) * jitter;
-         m.y = m.by + (Math.random() - 0.5) * jitter;
-         m.z = m.bz + (Math.random() - 0.5) * jitter;
-     });
-
-     // Проекция и сортировка по глубине для атомов железа
-     let projectedIron = highDensityMolecules.map(m => {
-         return { p: project(m.x, m.y, m.z), zRot: project(m.x, m.y, m.z).zRot };
-     });
-     projectedIron.sort((a, b) => b.zRot - a.zRot);
-
-     projectedIron.forEach(item => {
-         let p2d = item.p;
-         let rad = 3.8 * (p2d.scale / 8);
-
-         ctx.beginPath();
-         ctx.arc(p2d.x, p2d.y, rad, 0, Math.PI * 2);
-         let grad = ctx.createRadialGradient(p2d.x - rad*0.3, p2d.y - rad*0.3, rad*0.05, p2d.x, p2d.y, rad);
-         
-         if (heatMultiplier < 2.0) {
-             grad.addColorStop(0, '#ffe4e6');
-             grad.addColorStop(0.3, '#f43f5e');
-             grad.addColorStop(1, '#9f1239');
-         } else {
-             grad.addColorStop(0, '#fef08a');
-             grad.addColorStop(0.3, '#f97316');
-             grad.addColorStop(1, '#7c2d12');
-         }
-         ctx.fillStyle = grad;
-         ctx.fill();
-     });
-
-     // СТАТИЧНЫЕ БОКОВЫЕ ПОДПИСИ (Зафиксированы на экране слева, не крутятся)
-     ctx.font = 'bold 15px sans-serif';
-     ctx.textAlign = 'left'; // Выравнивание по левому краю для аккуратности
-
-     // Вычисляем фиксированную базовую координату X (отступаем 25-40 пикселей от левого края экрана)
-     let fixedX = width * 0.12; 
-     if (width > 600) fixedX = width / 2 - 160; // Центрирование на широких ПК экранах
-
-     // Получаем текущую высоту центров кубов через проекцию, чтобы текст всегда стоял ровно напротив них
-     let heightTopCube = project(0, 12, 0).y;
-     let heightBottomCube = project(0, -9, 0).y;
-
-     // Текст для верхнего куба (Поролон)
-     ctx.fillStyle = '#0284c7';
-     ctx.fillText("ПОРОЛОН", fixedX, heightTopCube + 5);
-
-     // Текст для нижнего куба (Железо)
-     ctx.fillStyle = '#e11d48';
-     ctx.fillText("ЖЕЛЕЗО", fixedX, heightBottomCube + 5);
- }
-
- animate();
- </script>
+        // Start animation
+        animate();
+    </script>
 </body>
 </html>
