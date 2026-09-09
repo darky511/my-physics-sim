@@ -248,19 +248,25 @@
          ctx.fill();
      });
 
-     // БОКОВЫЕ ПОДПИСИ (Слева от 3D-кубов)
+     // СТАТИЧНЫЕ БОКОВЫЕ ПОДПИСИ (Зафиксированы на экране слева, не крутятся)
      ctx.font = 'bold 15px sans-serif';
-     ctx.textAlign = 'right';
+     ctx.textAlign = 'left'; // Выравнивание по левому краю для аккуратности
 
-     // Текст для верхнего куба
+     // Вычисляем фиксированную базовую координату X (отступаем 25-40 пикселей от левого края экрана)
+     let fixedX = width * 0.12; 
+     if (width > 600) fixedX = width / 2 - 160; // Центрирование на широких ПК экранах
+
+     // Получаем текущую высоту центров кубов через проекцию, чтобы текст всегда стоял ровно напротив них
+     let heightTopCube = project(0, 12, 0).y;
+     let heightBottomCube = project(0, -9, 0).y;
+
+     // Текст для верхнего куба (Поролон)
      ctx.fillStyle = '#0284c7';
-     let labelTop = project(-13, 12, 0); 
-     ctx.fillText("ПОРОЛОН", labelTop.x, labelTop.y + 4);
+     ctx.fillText("ПОРОЛОН", fixedX, heightTopCube + 5);
 
-     // Текст для нижнего куба
+     // Текст для нижнего куба (Железо)
      ctx.fillStyle = '#e11d48';
-     let labelBottom = project(-13, -9, 0); 
-     ctx.fillText("ЖЕЛЕЗО", labelBottom.x, labelBottom.y + 4);
+     ctx.fillText("ЖЕЛЕЗО", fixedX, heightBottomCube + 5);
  }
 
  animate();
