@@ -5,19 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Давление: Твердые тела, Жидкости, Газы</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- MathJax Configuration -->
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
-            svg: { fontCache: 'global' }
-        };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         
@@ -84,7 +71,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
         }
+
+        /* CSS-only Math styling */
+        .math-fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 5px;
+            font-size: 1.2em;
+        }
+        .math-num { border-bottom: 2px solid white; padding: 0 5px 2px 5px; }
+        .math-den { padding: 2px 5px 0 5px; }
+        .math-var { font-weight: bold; color: #fbbf24; }
 
         @media (max-width: 1024px) {
             .app-container { flex-direction: column; }
@@ -121,7 +123,7 @@
                 <div><div class="text-sm font-bold">Твердые тела</div><div class="text-[10px] opacity-70">Зависимость от площади опоры</div></div>
             </button>
             <button id="btn-liquid" class="mode-btn" onclick="setMode('liquid')">
-                <span class="text-xl">💧</span>
+                <span class="text-xl"></span>
                 <div><div class="text-sm font-bold">Жидкости (Паскаль)</div><div class="text-[10px] opacity-70">Передача давления во все стороны</div></div>
             </button>
             <button id="btn-gas" class="mode-btn" onclick="setMode('gas')">
@@ -135,10 +137,10 @@
             <!-- Injected via JS based on mode -->
         </div>
 
-        <!-- Formula Display -->
+        <!-- Formula Display (CSS only, no external libs) -->
         <div class="formula-box">
             <div id="formula-content" class="text-lg font-bold text-white w-full text-center">
-                $$p = \frac{F}{S}$$
+                <!-- Content injected by JS -->
             </div>
         </div>
 
@@ -176,6 +178,7 @@
         // Liquid props
         depth: 2, // meters
         density: 1000, // kg/m^3
+        sensorY: 0,
         
         // Gas props
         temp: 300, // Kelvin
@@ -188,16 +191,20 @@
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
         initParticles();
+        // Reset sensor Y to middle of tank if needed
+        if(state.mode === 'liquid') {
+            state.sensorY = canvas.height/2 + 50;
+        }
     }
     window.addEventListener('resize', resize);
 
     function initParticles() {
         state.particles = [];
-        const count = 50;
+        const count = 60;
         for(let i=0; i<count; i++) {
             state.particles.push({
-                x: Math.random() * (canvas.width * 0.6),
-                y: Math.random() * (canvas.height * 0.6),
+                x: Math.random() * 200,
+                y: Math.random() * 200,
                 vx: (Math.random() - 0.5) * 4,
                 vy: (Math.random() - 0.5) * 4,
                 r: 3
@@ -213,6 +220,11 @@
         
         renderControls();
         updateFormula();
+        
+        // Re-init specific states
+        if(mode === 'liquid') {
+            state.sensorY = canvas.height/2 + 50;
+        }
     }
 
     function renderControls() {
@@ -221,28 +233,24 @@
         if (state.mode === 'solid') {
             controlsArea.innerHTML = `
                 <div>
-                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Масса груза (F)</label><span id="val-mass" class="text-xs text-blue-400">10 кг</span></div>
+                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Масса груза (F)</label><span id="val-mass" class="text-xs text-blue-400">${state.mass} кг</span></div>
                     <input type="range" min="1" max="50" value="${state.mass}" oninput="updateSolid('mass', this.value)">
                 </div>
                 <div>
-                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Площадь опоры (S)</label><span id="val-area" class="text-xs text-blue-400">1 м²</span></div>
+                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Площадь опоры (S)</label><span id="val-area" class="text-xs text-blue-400">${state.area} м²</span></div>
                     <input type="range" min="0.2" max="3" step="0.1" value="${state.area}" oninput="updateSolid('area', this.value)">
                 </div>
             `;
         } else if (state.mode === 'liquid') {
             controlsArea.innerHTML = `
-                <div>
-                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Глубина погружения (h)</label><span id="val-depth" class="text-xs text-cyan-400">2 м</span></div>
-                    <input type="range" min="0.1" max="5" step="0.1" value="${state.depth}" oninput="updateLiquid('depth', this.value)">
-                </div>
-                <div class="text-[10px] text-slate-500 mt-2">
-                     Перемещайте датчик мышкой по экрану, чтобы измерить давление на разной глубине.
+                <div class="text-[10px] text-slate-500 mt-2 bg-slate-800/50 p-2 rounded">
+                     💡 Перемещайте желтый датчик мышкой по экрану, чтобы измерить давление на разной глубине.
                 </div>
             `;
         } else if (state.mode === 'gas') {
             controlsArea.innerHTML = `
                 <div>
-                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Температура (T)</label><span id="val-temp" class="text-xs text-red-400">300 К</span></div>
+                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Температура (T)</label><span id="val-temp" class="text-xs text-red-400">${state.temp} К</span></div>
                     <input type="range" min="100" max="1000" value="${state.temp}" oninput="updateGas('temp', this.value)">
                 </div>
             `;
@@ -251,48 +259,59 @@
 
     // Update Handlers
     window.updateSolid = (k, v) => { state[k] = parseFloat(v); document.getElementById(`val-${k}`).innerText = v + (k==='mass'?' кг':' м²'); };
-    window.updateLiquid = (k, v) => { state[k] = parseFloat(v); document.getElementById(`val-${k}`).innerText = v + ' м'; };
+    window.updateLiquid = (k, v) => { state[k] = parseFloat(v); };
     window.updateGas = (k, v) => { state[k] = parseFloat(v); document.getElementById(`val-${k}`).innerText = v + ' К'; };
 
     function updateFormula() {
-        let latex = "";
+        let html = "";
         let desc = "";
         
         if (state.mode === 'solid') {
-            latex = "$$p = \\frac{F}{S} = \\frac{mg}{S}$$";
+            html = `<span class="math-var">p</span> = <div class="math-fraction"><span class="math-num"><span class="math-var">F</span></span><span class="math-den"><span class="math-var">S</span></span></div>`;
             desc = "Давление твердого тела прямо пропорционально силе тяжести и обратно пропорционально площади опоры.";
         } else if (state.mode === 'liquid') {
-            latex = "$$p = \\rho g h$$";
+            html = `<span class="math-var">p</span> = <span class="math-var">ρ</span> · <span class="math-var">g</span> · <span class="math-var">h</span>`;
             desc = "Гидростатическое давление зависит только от плотности жидкости и глубины. Оно передается во все стороны одинаково (Закон Паскаля).";
         } else if (state.mode === 'gas') {
-            latex = "$$p = \\frac{N k_B T}{V}$$";
+            html = `<span class="math-var">p</span> ~ <span class="math-var">T</span>`;
             desc = "Давление газа вызвано ударами молекул о стенки. При нагревании скорость молекул растет, удары становятся чаще и сильнее.";
         }
         
-        formulaContent.innerHTML = latex;
+        formulaContent.innerHTML = html;
         modeDesc.innerText = desc;
-        if(window.MathJax) MathJax.typesetPromise([formulaContent]);
     }
 
     // --- Physics & Rendering ---
     function drawArrow(ctx, x, y, len, color, label) {
-        if(len < 2) return;
+        if(Math.abs(len) < 2) return;
+        const endY = y + len;
+        const headSize = 6;
+        
         ctx.beginPath();
         ctx.strokeStyle = color;
         ctx.lineWidth = 3;
         ctx.moveTo(x, y);
-        ctx.lineTo(x, y + len);
+        ctx.lineTo(x, endY);
         ctx.stroke();
         
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.moveTo(x, y+len);
-        ctx.lineTo(x-4, y+len-6);
-        ctx.lineTo(x+4, y+len-6);
+        if (len > 0) { // Down
+            ctx.moveTo(x, endY);
+            ctx.lineTo(x - headSize, endY - headSize);
+            ctx.lineTo(x + headSize, endY - headSize);
+        } else { // Up
+            ctx.moveTo(x, endY);
+            ctx.lineTo(x - headSize, endY + headSize);
+            ctx.lineTo(x + headSize, endY + headSize);
+        }
         ctx.fill();
         
-        ctx.font = "12px Inter";
-        ctx.fillText(label, x+8, y+len/2);
+        if(label) {
+            ctx.font = "bold 12px Inter";
+            ctx.fillStyle = color;
+            ctx.fillText(label, x+8, y+len/2);
+        }
     }
 
     function draw() {
@@ -320,140 +339,221 @@
             ctx.fillStyle = '#d97706';
             ctx.fillRect(boxX, boxY, baseW, baseH);
             ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2;
             ctx.strokeRect(boxX, boxY, baseW, baseH);
             
-            // Force Arrow
+            // Force Arrow (Gravity)
             drawArrow(ctx, cx, boxY - 20, state.mass * 3, '#ef4444', 'F тяж');
             
-            // Pressure Arrows (Underneath)
-            const arrowCount = Math.floor(baseW / 15);
-            const arrowLen = (P / 500); // Scale for visuals
+            // Pressure Arrows (Underneath) - showing force distributed over area
+            const arrowCount = Math.max(1, Math.floor(baseW / 20));
+            const arrowLen = Math.min(50, P / 100); // Scale for visuals
+            
             for(let i=0; i<arrowCount; i++) {
-                const ax = boxX + 10 + i*15;
+                const ax = boxX + (baseW/(arrowCount+1)) * (i+1);
                 drawArrow(ctx, ax, cy+100, arrowLen, '#fbbf24', '');
             }
 
         } else if (state.mode === 'liquid') {
-            // Tank
+            // Tank dimensions
             const tankW = 300;
             const tankH = 400;
             const tankX = cx - tankW/2;
             const tankY = cy - tankH/2 + 50;
             
-            // Water
-            ctx.fillStyle = 'rgba(6, 182, 212, 0.4)';
+            // Water background
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
             ctx.fillRect(tankX, tankY, tankW, tankH);
+            
+            // Tank borders
             ctx.strokeStyle = '#22d3ee';
             ctx.lineWidth = 4;
-            ctx.strokeRect(tankX, tankY, tankW, tankH);
+            ctx.beginPath();
+            ctx.moveTo(tankX, tankY);
+            ctx.lineTo(tankX, tankY+tankH);
+            ctx.lineTo(tankX+tankW, tankY+tankH);
+            ctx.lineTo(tankX+tankW, tankY);
+            ctx.stroke();
             
             // Surface Line
             ctx.beginPath();
             ctx.moveTo(tankX, tankY);
             ctx.lineTo(tankX+tankW, tankY);
+            ctx.strokeStyle = '#67e8f9';
+            ctx.lineWidth = 2;
             ctx.stroke();
             
-            // Calculate Pressure at current mouse depth (simulated by fixed sensor or just bottom for now)
-            // Let's use a sensor that follows mouse Y if inside tank
-            let sensorY = state.sensorY || (tankY + state.depth * 50);
-            const h = Math.max(0, (sensorY - tankY) / 50); // pixels to meters approx
-            const P = state.density * 9.8 * h;
+            // Sensor Logic
+            // Clamp sensor to tank bounds
+            if (!state.sensorY) state.sensorY = tankY + 100;
+            state.sensorY = Math.max(tankY, Math.min(tankY + tankH, state.sensorY));
+            
+            const h_pixels = state.sensorY - tankY;
+            const h_meters = h_pixels / 50; // 50px = 1m scale
+            
+            const P = state.density * 9.8 * h_meters;
             pressureVal.innerText = Math.round(P) + " Па";
             
-            // Sensor
+            // Draw Sensor
             ctx.fillStyle = '#fbbf24';
+            ctx.shadowColor = 'rgba(251, 191, 36, 0.5)';
+            ctx.shadowBlur = 10;
             ctx.beginPath();
-            ctx.arc(cx, sensorY, 15, 0, Math.PI*2);
+            ctx.arc(cx, state.sensorY, 12, 0, Math.PI*2);
             ctx.fill();
-            ctx.fillStyle = '#000';
-            ctx.font = "10px Inter";
-            ctx.textAlign = "center";
-            ctx.fillText("P", cx, sensorY+4);
+            ctx.shadowBlur = 0;
             
-            // Depth Indicator
+            ctx.fillStyle = '#000';
+            ctx.font = "bold 10px Inter";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("P", cx, state.sensorY);
+            
+            // Depth Indicator Line
             ctx.strokeStyle = 'white';
-            ctx.setLineDash([5,5]);
+            ctx.setLineDash([4,4]);
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(cx + 40, tankY);
-            ctx.lineTo(cx + 40, sensorY);
+            ctx.moveTo(cx + 30, tankY);
+            ctx.lineTo(cx + 30, state.sensorY);
             ctx.stroke();
             ctx.setLineDash([]);
-            ctx.fillStyle = 'white';
-            ctx.fillText(`h = ${h.toFixed(1)}м`, cx + 50, (tankY+sensorY)/2);
-
-            // Pascal Arrows (showing omnidirectional pressure)
-            const arrLen = P / 200;
-            drawArrow(ctx, cx, sensorY + 20, arrLen, '#fbbf24', ''); // Down
-            drawArrow(ctx, cx, sensorY - 20, -arrLen, '#fbbf24', ''); // Up
-            // Side arrows need custom draw, simplified here to vertical for clarity or add horizontal
             
+            // Depth Label
+            ctx.fillStyle = 'white';
+            ctx.textAlign = "left";
+            ctx.fillText(`h = ${h_meters.toFixed(1)} м`, cx + 40, (tankY + state.sensorY)/2);
+
+            // Pascal Arrows (Omnidirectional pressure visualization)
+            // The deeper you go, the longer the arrows
+            const arrLen = Math.min(60, P / 200); 
+            
+            // Draw arrows pointing OUT from sensor in 4 directions
+            // Up
+            drawArrow(ctx, cx, state.sensorY - 20, -arrLen, '#fbbf24', '');
+            // Down
+            drawArrow(ctx, cx, state.sensorY + 20, arrLen, '#fbbf24', '');
+            // Left
+            ctx.save();
+            ctx.translate(cx - 20, state.sensorY);
+            ctx.rotate(-Math.PI/2);
+            drawArrow(ctx, 0, 0, arrLen, '#fbbf24', '');
+            ctx.restore();
+            // Right
+            ctx.save();
+            ctx.translate(cx + 20, state.sensorY);
+            ctx.rotate(Math.PI/2);
+            drawArrow(ctx, 0, 0, arrLen, '#fbbf24', '');
+            ctx.restore();
+
         } else if (state.mode === 'gas') {
             // Container
             const boxS = 300;
             const bx = cx - boxS/2;
             const by = cy - boxS/2;
             
+            // Background glow based on temp
+            const opacity = Math.min(0.3, (state.temp - 100) / 2000);
+            ctx.fillStyle = `rgba(167, 139, 250, ${opacity})`;
+            ctx.fillRect(bx, by, boxS, boxS);
+
             ctx.strokeStyle = '#94a3b8';
             ctx.lineWidth = 4;
             ctx.strokeRect(bx, by, boxS, boxS);
             
-            // Particles
-            const speedMult = state.temp / 300;
+            // Particles physics
+            const speedMult = Math.sqrt(state.temp / 300); // Speed proportional to sqrt(T)
             ctx.fillStyle = '#a78bfa';
             
-            let collisions = 0;
+            let wallHits = 0;
             
             state.particles.forEach(p => {
                 // Move
                 p.x += p.vx * speedMult;
                 p.y += p.vy * speedMult;
                 
-                // Bounce
-                if(p.x < bx + p.r || p.x > bx + boxS - p.r) { p.vx *= -1; collisions++; }
-                if(p.y < by + p.r || p.y > by + boxS - p.r) { p.vy *= -1; collisions++; }
+                // Bounce off walls
+                if(p.x < bx + p.r || p.x > bx + boxS - p.r) { 
+                    p.vx *= -1; 
+                    wallHits++; 
+                    // Clamp to prevent sticking
+                    p.x = Math.max(bx+p.r, Math.min(bx+boxS-p.r, p.x));
+                }
+                if(p.y < by + p.r || p.y > by + boxS - p.r) { 
+                    p.vy *= -1; 
+                    wallHits++;
+                    p.y = Math.max(by+p.r, Math.min(by+boxS-p.r, p.y));
+                }
                 
-                // Keep in bounds
-                p.x = Math.max(bx+p.r, Math.min(bx+boxS-p.r, p.x));
-                p.y = Math.max(by+p.r, Math.min(by+boxS-p.r, p.y));
-                
-                // Draw
+                // Draw Particle
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
                 ctx.fill();
             });
             
-            // Approximate Pressure based on Temp and Collisions
-            // P ~ N*T/V
-            const P = (state.particles.length * state.temp * 0.5) / (boxS*boxS/10000); 
+            // Approximate Pressure calculation for display
+            // P is proportional to N * T / V
+            const P = (state.particles.length * state.temp * 0.8) / (boxS*boxS/10000); 
             pressureVal.innerText = Math.round(P) + " Па";
             
-            // Wall Pressure Indicators
-            ctx.fillStyle = 'rgba(167, 139, 250, 0.2)';
-            ctx.fillRect(bx, by, boxS, boxS);
+            // Visualizing pressure on walls (small ticks or arrows)
+            // We draw arrows pushing OUT from the center of each wall
+            const arrL = Math.min(40, P / 150);
             
-            // Arrows pushing out
-            const arrL = P / 100;
-            // Top
-            ctx.beginPath(); ctx.moveTo(cx, by); ctx.lineTo(cx, by-arrL); ctx.stroke();
-            // Bottom
-            ctx.beginPath(); ctx.moveTo(cx, by+boxS); ctx.lineTo(cx, by+boxS+arrL); ctx.stroke();
+            // Top Wall Arrow (Up)
+            drawArrow(ctx, cx, by, -arrL, '#fbbf24', '');
+            // Bottom Wall Arrow (Down)
+            drawArrow(ctx, cx, by+boxS, arrL, '#fbbf24', '');
+            // Left Wall Arrow (Left) - rotated
+            ctx.save();
+            ctx.translate(bx, cy);
+            ctx.rotate(-Math.PI/2);
+            drawArrow(ctx, 0, 0, arrL, '#fbbf24', '');
+            ctx.restore();
+            // Right Wall Arrow (Right) - rotated
+            ctx.save();
+            ctx.translate(bx+boxS, cy);
+            ctx.rotate(Math.PI/2);
+            drawArrow(ctx, 0, 0, arrL, '#fbbf24', '');
+            ctx.restore();
         }
 
         requestAnimationFrame(draw);
     }
 
-    // Mouse interaction for Liquid mode
-    canvas.addEventListener('mousemove', (e) => {
+    // Mouse interaction for Liquid mode (dragging sensor)
+    let isDraggingSensor = false;
+    
+    canvas.addEventListener('mousedown', (e) => {
         if(state.mode === 'liquid') {
             const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            
+            // Check distance to sensor
+            const dx = mx - cx; // cx is global, need current frame cx
+            // Actually, let's just check Y distance since X is fixed center
+            if (Math.abs(my - state.sensorY) < 30) {
+                isDraggingSensor = true;
+            }
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if(isDraggingSensor && state.mode === 'liquid') {
+            const rect = canvas.getBoundingClientRect();
             const y = e.clientY - rect.top;
-            // Constrain to tank area roughly
             const tankTop = canvas.height/2 - 200 + 50;
             const tankBot = tankTop + 400;
+            
             if(y > tankTop && y < tankBot) {
                 state.sensorY = y;
             }
         }
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDraggingSensor = false;
     });
 
     // Start
