@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сила Тяжести: Интерактивная Симуляция</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        .simulation-area {
+            flex-grow: 1;
+            position: relative;
+            background: linear-gradient(to bottom, #1e293b 0%, #0f172a 100%);
+            cursor: grab;
+            overflow: hidden;
+        }
+        
+        .simulation-area:active {
+            cursor: grabbing;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 380px;
+            background-color: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            overflow-y: auto;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            z-index: 20;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 5px;
+            outline: none;
+            margin-top: 10px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .formula-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #ef4444; /* Red for gravity theme */
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            font-family: monospace;
+        }
+
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .sidebar { 
+                width: 100%; 
+                height: 45%; 
+                border-left: none; 
+                border-top: 1px solid rgba(255, 255, 255, 0.1); 
+                padding: 1rem; 
+                gap: 1rem; 
+            }
+            .simulation-area { height: 55%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- Left Side: Simulation Canvas -->
+    <div class="simulation-area" id="simContainer">
+        <canvas id="simCanvas"></canvas>
+        
+        <!-- Overlay Title -->
+        <div class="absolute top-6 left-0 w-full text-center pointer-events-none select-none">
+            <h1 class="text-3xl md:text-4xl font-bold text-red-400 drop-shadow-lg tracking-tight">
+                Сила Тяжести
+            </h1>
+            <p class="text-slate-300 text-sm mt-2 max-w-lg mx-auto opacity-80 px-4">
+                Поднимите мяч мышкой и отпустите. Измените массу объекта или выберите другую планету, чтобы увидеть, как меняется сила притяжения.
+            </p>
+        </div>
+    </div>
+
+    <!-- Right Side: Controls Sidebar -->
+    <div class="sidebar">
+        
+        <div class="hidden md:block">
+            <h2 class="text-xl font-bold text-white mb-1">Параметры</h2>
+            <p class="text-xs text-slate-400">Управляйте физикой процесса</p>
+        </div>
+
+        <!-- Control: Mass -->
+        <div class="control-group">
+            <div class="flex justify-between items-end mb-2">
+                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Масса тела (m)</label>
+                <span id="mass-val" class="text-sm font-mono text-blue-400 font-bold">5 кг</span>
+            </div>
+            <input type="range" min="1" max="50" value="5" id="mass-slider">
+            <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-medium">
+                <span>Легкий</span>
+                <span>Тяжелый</span>
+            </div>
+        </div>
+
+        <!-- Control: Planet/Gravity -->
+        <div class="control-group">
+            <div class="flex justify-between items-end mb-2">
+                <label class="text-sm font-semibold text-slate-200 uppercase tracking-wider">Гравитация (g)</label>
+                <span id="gravity-val" class="text-sm font-mono text-purple-400 font-bold">9.8 м/с²</span>
+            </div>
+            <input type="range" min="1" max="25" step="0.1" value="9.8" id="gravity-slider">
+            <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-medium">
+                <span>Луна</span>
+                <span>Юпитер</span>
+            </div>
+        </div>
+
+        <!-- Formula Display -->
+        <div class="formula-box">
+            <div class="text-slate-400 text-xs mb-2 uppercase tracking-wide">Формула силы тяжести:</div>
+            <div class="text-white text-lg font-bold mb-3">F<sub>тяж</sub> = m · g</div>
+            
+            <div class="grid grid-cols-2 gap-4 text-sm border-t border-slate-700 pt-3">
+                <div>
+                    <span class="text-slate-400 block text-xs">Масса (m):</span>
+                    <span id="disp-mass" class="text-blue-400 font-mono font-bold">5 кг</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-slate-400 block text-xs">Сила (F):</span>
+                    <span id="disp-force" class="text-red-400 font-mono font-bold">49 Н</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explanation Card -->
+        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 mt-auto">
+            <h3 class="text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                Что происходит?
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                Сила тяжести — это сила, с которой Земля (или другая планета) притягивает к себе тело. 
+                <br><br>
+                Чем <strong>больше масса</strong> предмета, тем сильнее его притягивает планета. 
+                Чем <strong>сильнее гравитация</strong> планеты, тем тяжелее предмет на ней весит.
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- Configuration & State ---
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('simContainer');
+    
+    // Physics Constants
+    const PIXELS_PER_METER = 60; // Scale: 60px = 1 meter
+    
+    // Simulation State
+    const state = {
+        mass: 5, // kg
+        gravity: 9.8, // m/s^2
+        
+        // Object Properties
+        radius: 30, // pixels (visual size changes with mass)
+        x: 0, 
+        y: 0,
+        vx: 0,
+        vy: 0,
+        
+        // Interaction
+        isDragging: false,
+        dragOffsetX: 0,
+        dragOffsetY: 0,
+        
+        // Environment
+        floorY: 0
+    };
+
+    // DOM Elements
+    const elMassSlider = document.getElementById('mass-slider');
+    const elGravitySlider = document.getElementById('gravity-slider');
+    const elMassVal = document.getElementById('mass-val');
+    const elGravityVal = document.getElementById('gravity-val');
+    const elDispMass = document.getElementById('disp-mass');
+    const elDispForce = document.getElementById('disp-force');
+
+    // --- Initialization ---
+    function resize() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        state.floorY = canvas.height - 60; // Floor padding
+        
+        if (state.x === 0) {
+            state.x = canvas.width / 2;
+            state.y = state.floorY - state.radius - 100;
+        }
+    }
+    
+    window.addEventListener('resize', resize);
+    setTimeout(resize, 50);
+
+    // --- Physics Engine ---
+    function updatePhysics() {
+        if (state.isDragging) return;
+
+        // Calculate Force of Gravity
+        const forceGravity = state.mass * state.gravity; // Newtons
+        
+        // Acceleration due to gravity (independent of mass in vacuum, but we simulate visual weight)
+        // a = F/m = g. So acceleration is constant regardless of mass (Galileo).
+        // However, to make it "feel" heavy for the user, we can add air resistance or just keep it realistic.
+        // Let's keep it realistic: all objects fall at same rate (ignoring air resistance for simplicity).
+        
+        const acceleration = state.gravity * PIXELS_PER_METER; 
+        
+        // Apply to velocity
+        state.vy += acceleration * 0.016; // dt ~ 16ms
+        
+        // Air resistance (simple damping) - makes it feel more natural and stops infinite bouncing
+        state.vy *= 0.995; 
+
+        // Update Position
+        state.y += state.vy;
+
+        // Floor Collision
+        if (state.y + state.radius > state.floorY) {
+            state.y = state.floorY - state.radius;
+            
+            // Bounce with energy loss (restitution)
+            // Heavier objects might lose less energy visually? No, physics says coefficient of restitution depends on materials.
+            // Let's use a standard bounce factor.
+            state.vy = -state.vy * 0.6; 
+            
+            // Stop jittering when near rest
+            if (Math.abs(state.vy) < 10) {
+                state.vy = 0;
+            }
+        }
+        
+        // Ceiling Collision (optional)
+        if (state.y - state.radius < 0) {
+            state.y = state.radius;
+            state.vy = 0;
+        }
+
+        // Update UI Values
+        updateUI(forceGravity);
+    }
+
+    function updateUI(fGravity) {
+        elDispMass.textContent = state.mass.toFixed(1) + " кг";
+        elDispForce.textContent = fGravity.toFixed(1) + " Н";
+    }
+
+    // --- Rendering ---
+    function drawArrow(ctx, fromX, fromY, length, color, label) {
+        if (length < 5) return;
+        
+        const headLen = 15;
+        const endY = fromY + length;
+        
+        // Line
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(fromX, endY);
+        ctx.stroke();
+        
+        // Arrow Head
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.moveTo(fromX, endY);
+        ctx.lineTo(fromX - headLen/2, endY - headLen);
+        ctx.lineTo(fromX + headLen/2, endY - headLen);
+        ctx.fill();
+        
+        // Label
+        ctx.fillStyle = color;
+        ctx.font = "bold 16px Inter";
+        ctx.textAlign = "left";
+        ctx.fillText(label, fromX + 20, fromY + length/2 + 5);
+    }
+
+    function draw() {
+        // Clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 1. Draw Floor
+        ctx.fillStyle = '#334155'; // Slate 700
+        ctx.fillRect(0, state.floorY, canvas.width, canvas.height - state.floorY);
+        
+        // Floor Top Line
+        ctx.beginPath();
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 4;
+        ctx.moveTo(0, state.floorY);
+        ctx.lineTo(canvas.width, state.floorY);
+        ctx.stroke();
+
+        // 2. Draw Object (Ball)
+        ctx.save();
+        ctx.translate(state.x, state.y);
+        
+        // Ball Gradient
+        const grad = ctx.createRadialGradient(-state.radius*0.3, -state.radius*0.3, state.radius*0.1, 0, 0, state.radius);
+        grad.addColorStop(0, '#60a5fa'); // Light Blue
+        grad.addColorStop(1, '#1d4ed8'); // Dark Blue
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, state.radius, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        
+        // Border
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Mass Label inside ball
+        ctx.fillStyle = 'white';
+        ctx.font = `bold ${Math.max(12, state.radius * 0.6)}px Inter`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(state.mass + "кг", 0, 0);
+        
+        ctx.restore();
+
+        // 3. Draw Gravity Vector (Red, Down)
+        // Length proportional to Force (F = mg)
+        // Scale factor to make it visible but not huge
+        const forceMagnitude = state.mass * state.gravity;
+        const arrowLength = forceMagnitude * 1.5; 
+        
+        // Only draw if significant
+        if (arrowLength > 10) {
+            drawArrow(ctx, state.x, state.y, arrowLength, '#ef4444', `F = ${forceMagnitude.toFixed(0)}Н`);
+        }
+
+        requestAnimationFrame(() => {
+            updatePhysics();
+            draw();
+        });
+    }
+
+    // --- Interaction Handlers ---
+    
+    // Sliders
+    elMassSlider.addEventListener('input', (e) => {
+        state.mass = parseFloat(e.target.value);
+        elMassVal.textContent = state.mass + " кг";
+        
+        // Visual feedback: change ball size slightly based on mass
+        // Base radius 30, max radius 60
+        state.radius = 30 + (state.mass / 50) * 30;
+    });
+
+    elGravitySlider.addEventListener('input', (e) => {
+        state.gravity = parseFloat(e.target.value);
+        elGravityVal.textContent = state.gravity + " м/с²";
+    });
+
+    // Mouse/Touch Dragging Logic
+    function getPointerPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function onDown(e) {
+        const pos = getPointerPos(e);
+        // Distance check for circle collision
+        const dx = pos.x - state.x;
+        const dy = pos.y - state.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist <= state.radius + 20) { // +20 padding for easier grabbing
+            state.isDragging = true;
+            state.dragOffsetX = dx;
+            state.dragOffsetY = dy;
+            state.vx = 0;
+            state.vy = 0;
+            canvas.style.cursor = 'grabbing';
+        }
+    }
+
+    function onMove(e) {
+        if (state.isDragging) {
+            const pos = getPointerPos(e);
+            state.x = pos.x - state.dragOffsetX;
+            state.y = pos.y - state.dragOffsetY;
+            
+            // Keep within horizontal bounds
+            if (state.x < state.radius) state.x = state.radius;
+            if (state.x > canvas.width - state.radius) state.x = canvas.width - state.radius;
+        }
+    }
+
+    function onUp() {
+        state.isDragging = false;
+        canvas.style.cursor = 'grab';
+    }
+
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    
+    canvas.addEventListener('touchstart', (e) => { onDown(e); e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchmove', (e) => { onMove(e); e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchend', onUp);
+
+    // Start Loop
+    draw();
+
+</script>
+</body>
+</html>
