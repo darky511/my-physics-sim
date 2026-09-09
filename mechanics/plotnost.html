@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Плотность на молекулярном уровне: 3D</title>
+    <title>Плотность на молекулярном уровне</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.19/index.css');
@@ -19,23 +19,11 @@
             display: block;
             width: 100%;
             height: 60vh;
+            cursor: grab;
         }
 
-        .molecule-label {
-            position: absolute;
-            pointer-events: none;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            transform: translate(-50%, -150%);
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .visible {
-            opacity: 1 !important;
+        canvas:active {
+            cursor: grabbing;
         }
 
         .slider-container {
@@ -71,6 +59,7 @@
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
@@ -80,13 +69,12 @@
             Плотность на молекулярном уровне
         </h1>
         <p class="text-gray-300 mt-2 max-w-2xl mx-auto">
-            Сравнение упаковки атомов в поролоне и железе при одинаковом объеме
+            Два куба имеют абсолютно одинаковый объем. Но в железе атомы упакованы тесно, а в поролоне — зафиксированы на огромном расстоянии друг от друга.
         </p>
     </header>
 
-    <div id="canvas-container" class="w-full max-w-5xl relative rounded-xl overflow-hidden shadow-2xl border border-gray-700">
+    <div id="canvas-container" class="w-full max-w-5xl relative rounded-xl overflow-hidden shadow-2xl border border-gray-700 bg-slate-900">
         <canvas id="densityCanvas"></canvas>
-        <div id="labels-container"></div>
     </div>
 
     <div class="w-full max-w-5xl mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -130,7 +118,6 @@
         // Canvas setup
         const canvas = document.getElementById('densityCanvas');
         const ctx = canvas.getContext('2d');
-        const labelsContainer = document.getElementById('labels-container');
         const tempSlider = document.getElementById('temperature-slider');
         const tempValue = document.getElementById('temp-value');
 
@@ -154,14 +141,15 @@
                 this.baseX = x;
                 this.baseY = y;
                 this.baseZ = z;
-                this.radius = type === 'foam' ? 8 : 10;
-                this.color = type === 'foam' ? '#3b82f6' : '#f97316';
+                // Smaller molecules as requested
+                this.radius = type === 'foam' ? 3 : 3.5; 
+                this.color = type === 'foam' ? '#60a5fa' : '#fb923c';
                 this.vibration = 0;
             }
 
             update(temperature) {
                 // Calculate vibration based on temperature
-                this.vibration = temperature * 0.05;
+                this.vibration = temperature * 0.03;
                 
                 // Apply random vibration
                 this.x = this.baseX + (Math.random() - 0.5) * this.vibration;
@@ -182,10 +170,10 @@
                 ctx.fillStyle = this.color;
                 ctx.fill();
                 
-                // Add highlight
+                // Add subtle highlight for 3D effect
                 ctx.beginPath();
-                ctx.arc(screenX - screenRadius*0.3, screenY - screenRadius*0.3, screenRadius*0.3, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.arc(screenX - screenRadius*0.3, screenY - screenRadius*0.3, screenRadius*0.4, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.fill();
             }
         }
@@ -193,22 +181,25 @@
         // Create molecules for foam and iron
         const foamMolecules = [];
         const ironMolecules = [];
-        const cubeSize = 120;
+        const cubeSize = 140;
 
         // Generate foam molecules (sparse)
-        for (let i = 0; i < 30; i++) {
+        // Reduced count to make it look more "airy" and less like a cloud
+        for (let i = 0; i < 40; i++) {
             const x = (Math.random() - 0.5) * cubeSize;
             const y = (Math.random() - 0.5) * cubeSize;
             const z = (Math.random() - 0.5) * cubeSize;
             foamMolecules.push(new Molecule(x, y, z, 'foam'));
         }
 
-        // Generate iron molecules (dense)
-        const spacing = 15;
-        for (let x = -cubeSize/2; x <= cubeSize/2; x += spacing) {
-            for (let y = -cubeSize/2; y <= cubeSize/2; y += spacing) {
-                for (let z = -cubeSize/2; z <= cubeSize/2; z += spacing) {
-                    if (Math.random() > 0.2) { // Not completely full but very dense
+        // Generate iron molecules (dense but distinct)
+        // Increased spacing slightly so individual molecules are visible
+        const spacing = 12; 
+        for (let x = -cubeSize/2 + spacing/2; x <= cubeSize/2; x += spacing) {
+            for (let y = -cubeSize/2 + spacing/2; y <= cubeSize/2; y += spacing) {
+                for (let z = -cubeSize/2 + spacing/2; z <= cubeSize/2; z += spacing) {
+                    // Keep most atoms but remove some randomly to avoid perfect grid look
+                    if (Math.random() > 0.1) { 
                         ironMolecules.push(new Molecule(x, y, z, 'iron'));
                     }
                 }
@@ -216,8 +207,8 @@
         }
 
         // Camera rotation
-        let rotationX = 0;
-        let rotationY = 0;
+        let rotationX = 0.3;
+        let rotationY = 0.5;
         let targetRotationX = 0.3;
         let targetRotationY = 0.5;
         let isDragging = false;
@@ -298,8 +289,22 @@
             }
         });
 
+        // Helper function to rotate a point in 3D
+        function rotatePoint(x, y, z, rotX, rotY) {
+            // Rotate around Y axis
+            let newX = x * Math.cos(rotY) - z * Math.sin(rotY);
+            let newZ = x * Math.sin(rotY) + z * Math.cos(rotY);
+            let newY = y;
+            
+            // Rotate around X axis
+            let finalY = newY * Math.cos(rotX) - newZ * Math.sin(rotX);
+            let finalZ = newY * Math.sin(rotX) + newZ * Math.cos(rotX);
+            
+            return [newX, finalY, finalZ];
+        }
+
         // Draw cube edges
-        function drawCubeEdges(ctx, centerX, centerY, size, color) {
+        function drawCubeEdges(ctx, centerX, centerY, size, color, rotX, rotY) {
             const halfSize = size / 2;
             
             // Define cube vertices
@@ -314,33 +319,21 @@
                 [-halfSize, halfSize, halfSize]
             ];
             
-            // Rotate vertices
-            const rotatedVertices = vertices.map(v => {
-                // Rotate around Y axis
-                let x = v[0] * Math.cos(rotationY) - v[2] * Math.sin(rotationY);
-                let z = v[0] * Math.sin(rotationY) + v[2] * Math.cos(rotationY);
-                let y = v[1];
-                
-                // Rotate around X axis
-                let newY = y * Math.cos(rotationX) - z * Math.sin(rotationX);
-                let newZ = y * Math.sin(rotationX) + z * Math.cos(rotationX);
-                
-                return [x, newY, newZ];
-            });
-            
-            // Project to 2D
-            const projectedVertices = rotatedVertices.map(v => {
-                const scale = 300 / (300 + v[2]);
+            // Rotate and project vertices
+            const projectedVertices = vertices.map(v => {
+                const [rx, ry, rz] = rotatePoint(v[0], v[1], v[2], rotX, rotY);
+                const scale = 300 / (300 + rz);
                 return [
-                    centerX + v[0] * scale,
-                    centerY + v[1] * scale,
-                    v[2]
+                    centerX + rx * scale,
+                    centerY + ry * scale,
+                    rz
                 ];
             });
             
             // Draw edges
             ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.6;
             
             // Front face
             ctx.beginPath();
@@ -367,6 +360,8 @@
                 ctx.lineTo(projectedVertices[i+4][0], projectedVertices[i+4][1]);
                 ctx.stroke();
             }
+            
+            ctx.globalAlpha = 1.0;
         }
 
         // Main animation loop
@@ -388,67 +383,50 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Draw title in canvas
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 24px Inter';
-            ctx.textAlign = 'center';
-            ctx.fillText('Сравнение плотности материалов', centerX, 40);
-            
             // Draw cubes side by side
-            const cubeSpacing = 300;
+            const cubeSpacing = 320;
             const leftCubeX = centerX - cubeSpacing/2;
             const rightCubeX = centerX + cubeSpacing/2;
             
-            // Draw foam cube
-            ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
-            ctx.strokeStyle = '#3b82f6';
-            drawCubeEdges(ctx, leftCubeX, centerY, cubeSize, '#3b82f6');
+            // Draw foam cube edges
+            drawCubeEdges(ctx, leftCubeX, centerY, cubeSize, '#3b82f6', rotationX, rotationY);
             
-            // Draw iron cube
-            ctx.fillStyle = 'rgba(249, 115, 22, 0.1)';
-            ctx.strokeStyle = '#f97316';
-            drawCubeEdges(ctx, rightCubeX, centerY, cubeSize, '#f97316');
+            // Draw iron cube edges
+            drawCubeEdges(ctx, rightCubeX, centerY, cubeSize, '#f97316', rotationX, rotationY);
             
-            // Update and draw foam molecules
+            // Collect all molecules with their projected Z for sorting
+            const allMolecules = [];
+            
+            // Process foam molecules
             foamMolecules.forEach(molecule => {
                 molecule.update(temperature);
-                
-                // Rotate molecule position
-                let x = molecule.x * Math.cos(rotationY) - molecule.z * Math.sin(rotationY);
-                let z = molecule.x * Math.sin(rotationY) + molecule.z * Math.cos(rotationY);
-                let y = molecule.y;
-                
-                let newY = y * Math.cos(rotationX) - z * Math.sin(rotationX);
-                let newZ = y * Math.sin(rotationX) + z * Math.cos(rotationX);
-                
-                molecule.x = x;
-                molecule.y = newY;
-                molecule.z = newZ;
-                
-                molecule.draw(ctx, leftCubeX, centerY);
+                const [rx, ry, rz] = rotatePoint(molecule.x, molecule.y, molecule.z, rotationX, rotationY);
+                molecule.x = rx;
+                molecule.y = ry;
+                molecule.z = rz;
+                allMolecules.push({ molecule, cx: leftCubeX, cy: centerY });
             });
             
-            // Update and draw iron molecules
+            // Process iron molecules
             ironMolecules.forEach(molecule => {
                 molecule.update(temperature);
-                
-                // Rotate molecule position
-                let x = molecule.x * Math.cos(rotationY) - molecule.z * Math.sin(rotationY);
-                let z = molecule.x * Math.sin(rotationY) + molecule.z * Math.cos(rotationY);
-                let y = molecule.y;
-                
-                let newY = y * Math.cos(rotationX) - z * Math.sin(rotationX);
-                let newZ = y * Math.sin(rotationX) + z * Math.cos(rotationX);
-                
-                molecule.x = x;
-                molecule.y = newY;
-                molecule.z = newZ;
-                
-                molecule.draw(ctx, rightCubeX, centerY);
+                const [rx, ry, rz] = rotatePoint(molecule.x, molecule.y, molecule.z, rotationX, rotationY);
+                molecule.x = rx;
+                molecule.y = ry;
+                molecule.z = rz;
+                allMolecules.push({ molecule, cx: rightCubeX, cy: centerY });
+            });
+            
+            // Sort by Z depth (painter's algorithm)
+            allMolecules.sort((a, b) => b.molecule.z - a.molecule.z);
+            
+            // Draw sorted molecules
+            allMolecules.forEach(item => {
+                item.molecule.draw(ctx, item.cx, item.cy);
             });
             
             // Draw labels
-            ctx.font = '16px Inter';
+            ctx.font = 'bold 16px Inter';
             ctx.fillStyle = '#3b82f6';
             ctx.textAlign = 'center';
             ctx.fillText('ПОРОЛОН', leftCubeX, centerY + cubeSize/2 + 30);
