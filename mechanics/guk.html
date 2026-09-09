@@ -105,6 +105,18 @@
             .simulation-area { height: 50%; }
         }
     </style>
+    <!-- Подключение MathJax для красивых формул -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Настройка разделителей (чтобы работали одиночные $) -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
 </head>
 <body>
 
@@ -175,7 +187,10 @@
             </div>
             <div class="mt-3 pt-3 border-t border-slate-700 text-center">
                 <span class="text-xs text-slate-400 uppercase tracking-widest">Формула</span>
-                <div class="text-lg font-bold text-white mt-1">$F_{упр} = k \cdot \Delta x$</div>
+                <!-- Исправленный LaTeX код -->
+                <div class="text-xl font-bold text-white mt-2">
+                    $$F_{\text{упр}} = k \cdot \Delta x$$
+                </div>
             </div>
         </div>
 
