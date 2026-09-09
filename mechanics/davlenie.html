@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Давление: Твердые тела, Жидкости, Газы</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .app-container { display: flex; height: 100%; width: 100%; }
+        
+        .simulation-area {
+            flex-grow: 1;
+            position: relative;
+            background: linear-gradient(to bottom, #1e293b 0%, #0f172a 100%);
+            overflow: hidden;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+
+        .sidebar {
+            width: 420px;
+            background-color: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(12px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+            z-index: 20;
+        }
+
+        /* Custom Controls */
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 6px; background: #334155; 
+            border-radius: 5px; outline: none; margin-top: 10px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; 
+            background: #3b82f6; cursor: pointer; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .mode-btn {
+            background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+            padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;
+        }
+        .mode-btn:hover { background: #334155; color: white; }
+        .mode-btn.active {
+            background: #2563eb; border-color: #3b82f6; color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .formula-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #fbbf24;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; height: 50%; border-left: none; border-top: 1px solid rgba(255,255,255,0.1); padding: 1rem; }
+            .simulation-area { height: 50%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Simulation Canvas -->
+    <div class="simulation-area" id="simContainer">
+        <canvas id="simCanvas"></canvas>
+        <div class="absolute top-6 left-0 w-full text-center pointer-events-none select-none z-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">Физика Давления</h1>
+            <p class="text-slate-300 text-sm mt-2 max-w-lg mx-auto opacity-90 bg-black/20 rounded-full py-1 px-4 backdrop-blur-sm inline-block">
+                Переключайте режимы, чтобы увидеть разницу между твердыми телами, жидкостями и газами.
+            </p>
+        </div>
+    </div>
+
+    <!-- Sidebar Controls -->
+    <div class="sidebar">
+        <div>
+            <h2 class="text-xl font-bold text-white mb-1">Режимы演示</h2>
+            <p class="text-xs text-slate-400">Выберите тип давления для изучения</p>
+        </div>
+
+        <!-- Mode Buttons -->
+        <div class="grid grid-cols-1 gap-2">
+            <button id="btn-solid" class="mode-btn active" onclick="setMode('solid')">
+                <span class="text-xl">🧱</span>
+                <div><div class="text-sm font-bold">Твердые тела</div><div class="text-[10px] opacity-70">Зависимость от площади опоры</div></div>
+            </button>
+            <button id="btn-liquid" class="mode-btn" onclick="setMode('liquid')">
+                <span class="text-xl">💧</span>
+                <div><div class="text-sm font-bold">Жидкости (Паскаль)</div><div class="text-[10px] opacity-70">Передача давления во все стороны</div></div>
+            </button>
+            <button id="btn-gas" class="mode-btn" onclick="setMode('gas')">
+                <span class="text-xl">🎈</span>
+                <div><div class="text-sm font-bold">Газы</div><div class="text-[10px] opacity-70">Давление на стенки сосуда</div></div>
+            </button>
+        </div>
+
+        <!-- Dynamic Controls -->
+        <div id="controls-area" class="space-y-4">
+            <!-- Injected via JS based on mode -->
+        </div>
+
+        <!-- Formula Display -->
+        <div class="formula-box">
+            <div id="formula-content" class="text-lg font-bold text-white w-full text-center">
+                $$p = \frac{F}{S}$$
+            </div>
+        </div>
+
+        <!-- Live Stats -->
+        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs text-slate-400 uppercase">Текущее давление</span>
+                <span id="pressure-val" class="text-xl font-mono text-yellow-400 font-bold">0 Па</span>
+            </div>
+            <p id="mode-desc" class="text-xs text-slate-300 leading-relaxed">
+                Давление твердого тела зависит от силы и площади поверхности. Чем меньше площадь, тем больше давление.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- State & Config ---
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('simContainer');
+    const controlsArea = document.getElementById('controls-area');
+    const formulaContent = document.getElementById('formula-content');
+    const pressureVal = document.getElementById('pressure-val');
+    const modeDesc = document.getElementById('mode-desc');
+
+    let state = {
+        mode: 'solid', // solid, liquid, gas
+        time: 0,
+        
+        // Solid props
+        mass: 10, // kg
+        area: 1, // m^2
+        
+        // Liquid props
+        depth: 2, // meters
+        density: 1000, // kg/m^3
+        
+        // Gas props
+        temp: 300, // Kelvin
+        volume: 1, // m^3
+        particles: []
+    };
+
+    // --- Initialization ---
+    function resize() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        initParticles();
+    }
+    window.addEventListener('resize', resize);
+
+    function initParticles() {
+        state.particles = [];
+        const count = 50;
+        for(let i=0; i<count; i++) {
+            state.particles.push({
+                x: Math.random() * (canvas.width * 0.6),
+                y: Math.random() * (canvas.height * 0.6),
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                r: 3
+            });
+        }
+    }
+
+    // --- UI Logic ---
+    function setMode(mode) {
+        state.mode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`btn-${mode}`).classList.add('active');
+        
+        renderControls();
+        updateFormula();
+    }
+
+    function renderControls() {
+        controlsArea.innerHTML = '';
+        
+        if (state.mode === 'solid') {
+            controlsArea.innerHTML = `
+                <div>
+                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Масса груза (F)</label><span id="val-mass" class="text-xs text-blue-400">10 кг</span></div>
+                    <input type="range" min="1" max="50" value="${state.mass}" oninput="updateSolid('mass', this.value)">
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Площадь опоры (S)</label><span id="val-area" class="text-xs text-blue-400">1 м²</span></div>
+                    <input type="range" min="0.2" max="3" step="0.1" value="${state.area}" oninput="updateSolid('area', this.value)">
+                </div>
+            `;
+        } else if (state.mode === 'liquid') {
+            controlsArea.innerHTML = `
+                <div>
+                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Глубина погружения (h)</label><span id="val-depth" class="text-xs text-cyan-400">2 м</span></div>
+                    <input type="range" min="0.1" max="5" step="0.1" value="${state.depth}" oninput="updateLiquid('depth', this.value)">
+                </div>
+                <div class="text-[10px] text-slate-500 mt-2">
+                     Перемещайте датчик мышкой по экрану, чтобы измерить давление на разной глубине.
+                </div>
+            `;
+        } else if (state.mode === 'gas') {
+            controlsArea.innerHTML = `
+                <div>
+                    <div class="flex justify-between mb-1"><label class="text-sm font-semibold text-slate-200">Температура (T)</label><span id="val-temp" class="text-xs text-red-400">300 К</span></div>
+                    <input type="range" min="100" max="1000" value="${state.temp}" oninput="updateGas('temp', this.value)">
+                </div>
+            `;
+        }
+    }
+
+    // Update Handlers
+    window.updateSolid = (k, v) => { state[k] = parseFloat(v); document.getElementById(`val-${k}`).innerText = v + (k==='mass'?' кг':' м²'); };
+    window.updateLiquid = (k, v) => { state[k] = parseFloat(v); document.getElementById(`val-${k}`).innerText = v + ' м'; };
+    window.updateGas = (k, v) => { state[k] = parseFloat(v); document.getElementById(`val-${k}`).innerText = v + ' К'; };
+
+    function updateFormula() {
+        let latex = "";
+        let desc = "";
+        
+        if (state.mode === 'solid') {
+            latex = "$$p = \\frac{F}{S} = \\frac{mg}{S}$$";
+            desc = "Давление твердого тела прямо пропорционально силе тяжести и обратно пропорционально площади опоры.";
+        } else if (state.mode === 'liquid') {
+            latex = "$$p = \\rho g h$$";
+            desc = "Гидростатическое давление зависит только от плотности жидкости и глубины. Оно передается во все стороны одинаково (Закон Паскаля).";
+        } else if (state.mode === 'gas') {
+            latex = "$$p = \\frac{N k_B T}{V}$$";
+            desc = "Давление газа вызвано ударами молекул о стенки. При нагревании скорость молекул растет, удары становятся чаще и сильнее.";
+        }
+        
+        formulaContent.innerHTML = latex;
+        modeDesc.innerText = desc;
+        if(window.MathJax) MathJax.typesetPromise([formulaContent]);
+    }
+
+    // --- Physics & Rendering ---
+    function drawArrow(ctx, x, y, len, color, label) {
+        if(len < 2) return;
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + len);
+        ctx.stroke();
+        
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y+len);
+        ctx.lineTo(x-4, y+len-6);
+        ctx.lineTo(x+4, y+len-6);
+        ctx.fill();
+        
+        ctx.font = "12px Inter";
+        ctx.fillText(label, x+8, y+len/2);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+
+        if (state.mode === 'solid') {
+            // Draw Ground
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(0, cy + 100, canvas.width, canvas.height);
+            
+            // Calculate Pressure
+            const F = state.mass * 9.8;
+            const P = F / state.area;
+            pressureVal.innerText = Math.round(P) + " Па";
+            
+            // Visual Size depends on Area (inverse visual logic for demo: smaller area = smaller base)
+            const baseW = 50 + (state.area * 40); 
+            const baseH = 60;
+            const boxX = cx - baseW/2;
+            const boxY = cy + 100 - baseH;
+            
+            // Draw Box
+            ctx.fillStyle = '#d97706';
+            ctx.fillRect(boxX, boxY, baseW, baseH);
+            ctx.strokeStyle = '#fbbf24';
+            ctx.strokeRect(boxX, boxY, baseW, baseH);
+            
+            // Force Arrow
+            drawArrow(ctx, cx, boxY - 20, state.mass * 3, '#ef4444', 'F тяж');
+            
+            // Pressure Arrows (Underneath)
+            const arrowCount = Math.floor(baseW / 15);
+            const arrowLen = (P / 500); // Scale for visuals
+            for(let i=0; i<arrowCount; i++) {
+                const ax = boxX + 10 + i*15;
+                drawArrow(ctx, ax, cy+100, arrowLen, '#fbbf24', '');
+            }
+
+        } else if (state.mode === 'liquid') {
+            // Tank
+            const tankW = 300;
+            const tankH = 400;
+            const tankX = cx - tankW/2;
+            const tankY = cy - tankH/2 + 50;
+            
+            // Water
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.4)';
+            ctx.fillRect(tankX, tankY, tankW, tankH);
+            ctx.strokeStyle = '#22d3ee';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(tankX, tankY, tankW, tankH);
+            
+            // Surface Line
+            ctx.beginPath();
+            ctx.moveTo(tankX, tankY);
+            ctx.lineTo(tankX+tankW, tankY);
+            ctx.stroke();
+            
+            // Calculate Pressure at current mouse depth (simulated by fixed sensor or just bottom for now)
+            // Let's use a sensor that follows mouse Y if inside tank
+            let sensorY = state.sensorY || (tankY + state.depth * 50);
+            const h = Math.max(0, (sensorY - tankY) / 50); // pixels to meters approx
+            const P = state.density * 9.8 * h;
+            pressureVal.innerText = Math.round(P) + " Па";
+            
+            // Sensor
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(cx, sensorY, 15, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.font = "10px Inter";
+            ctx.textAlign = "center";
+            ctx.fillText("P", cx, sensorY+4);
+            
+            // Depth Indicator
+            ctx.strokeStyle = 'white';
+            ctx.setLineDash([5,5]);
+            ctx.beginPath();
+            ctx.moveTo(cx + 40, tankY);
+            ctx.lineTo(cx + 40, sensorY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = 'white';
+            ctx.fillText(`h = ${h.toFixed(1)}м`, cx + 50, (tankY+sensorY)/2);
+
+            // Pascal Arrows (showing omnidirectional pressure)
+            const arrLen = P / 200;
+            drawArrow(ctx, cx, sensorY + 20, arrLen, '#fbbf24', ''); // Down
+            drawArrow(ctx, cx, sensorY - 20, -arrLen, '#fbbf24', ''); // Up
+            // Side arrows need custom draw, simplified here to vertical for clarity or add horizontal
+            
+        } else if (state.mode === 'gas') {
+            // Container
+            const boxS = 300;
+            const bx = cx - boxS/2;
+            const by = cy - boxS/2;
+            
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(bx, by, boxS, boxS);
+            
+            // Particles
+            const speedMult = state.temp / 300;
+            ctx.fillStyle = '#a78bfa';
+            
+            let collisions = 0;
+            
+            state.particles.forEach(p => {
+                // Move
+                p.x += p.vx * speedMult;
+                p.y += p.vy * speedMult;
+                
+                // Bounce
+                if(p.x < bx + p.r || p.x > bx + boxS - p.r) { p.vx *= -1; collisions++; }
+                if(p.y < by + p.r || p.y > by + boxS - p.r) { p.vy *= -1; collisions++; }
+                
+                // Keep in bounds
+                p.x = Math.max(bx+p.r, Math.min(bx+boxS-p.r, p.x));
+                p.y = Math.max(by+p.r, Math.min(by+boxS-p.r, p.y));
+                
+                // Draw
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                ctx.fill();
+            });
+            
+            // Approximate Pressure based on Temp and Collisions
+            // P ~ N*T/V
+            const P = (state.particles.length * state.temp * 0.5) / (boxS*boxS/10000); 
+            pressureVal.innerText = Math.round(P) + " Па";
+            
+            // Wall Pressure Indicators
+            ctx.fillStyle = 'rgba(167, 139, 250, 0.2)';
+            ctx.fillRect(bx, by, boxS, boxS);
+            
+            // Arrows pushing out
+            const arrL = P / 100;
+            // Top
+            ctx.beginPath(); ctx.moveTo(cx, by); ctx.lineTo(cx, by-arrL); ctx.stroke();
+            // Bottom
+            ctx.beginPath(); ctx.moveTo(cx, by+boxS); ctx.lineTo(cx, by+boxS+arrL); ctx.stroke();
+        }
+
+        requestAnimationFrame(draw);
+    }
+
+    // Mouse interaction for Liquid mode
+    canvas.addEventListener('mousemove', (e) => {
+        if(state.mode === 'liquid') {
+            const rect = canvas.getBoundingClientRect();
+            const y = e.clientY - rect.top;
+            // Constrain to tank area roughly
+            const tankTop = canvas.height/2 - 200 + 50;
+            const tankBot = tankTop + 400;
+            if(y > tankTop && y < tankBot) {
+                state.sensorY = y;
+            }
+        }
+    });
+
+    // Start
+    setTimeout(() => {
+        resize();
+        setMode('solid');
+        draw();
+    }, 100);
+
+</script>
+</body>
+</html>
