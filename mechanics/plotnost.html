@@ -1,1 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+ <title>Что такое плотность? Молекулярный уровень 3D</title>
+ <style>
+ html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #060913; font-family: -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; touch-action: none; position: fixed; }
+ #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+ 
+ .ui-panel { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 24px; padding: 16px 20px; box-sizing: border-box; z-index: 10; box-shadow: 0 25px 50px rgba(0,0,0,0.7); color: #fff; }
+ .ui-title { font-size: 17px; font-weight: 700; margin: 0 0 4px 0; text-align: center; color: #38bdf8; }
+ .ui-subtitle { font-size: 11px; color: #94a3b8; margin: 0 0 14px 0; text-align: center; line-height: 1.4; }
+ 
+ .slider-container { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+ .slider-label { display: flex; justify-content: space-between; font-size: 11px; color: #f1f5f9; font-weight: 500; }
+ input[type=range] { -webkit-appearance: none; width: 100%; background: rgba(255,255,255,0.15); height: 6px; border-radius: 3px; outline: none; }
+ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #38bdf8; cursor: pointer; box-shadow: 0 0 10px #38bdf8; }
+ 
+ .stats-overlay { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; display: flex; justify-content: space-between; gap: 12px; z-index: 10; pointer-events: none; }
+ .stat-box { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 16px; flex: 1; text-align: center; backdrop-filter: blur(10px); }
+ .stat-box.low { border-left: 4px solid #38bdf8; }
+ .stat-box.high { border-left: 4px solid #f43f5e; }
+ .stat-name { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+ .stat-val { font-size: 13px; font-weight: 700; color: #fff; margin-top: 2px; }
+ .stat-desc { font-size: 11px; color: #38bdf8; margin-top: 1px; }
+ </style>
+</head>
+<body>
 
+ <div class="stats-overlay">
+ <div class="stat-box low">
+ <div class="stat-name">Поролон (Газ/Вата)</div>
+ <div class="stat-val">Плотность: НИЗКАЯ</div>
+ <div class="stat-desc">Много пустоты</div>
+ </div>
+ <div class="stat-box high">
+ <div class="stat-name">Железо (Металл)</div>
+ <div class="stat-val">Плотность: ВЫСОКАЯ</div>
+ <div class="stat-desc">Тесно упакованы</div>
+ </div>
+ </div>
+
+ <div id="canvas-container"></div>
+
+ <div class="ui-panel">
+ <div class="ui-title">Плотность на уровне молекул</div>
+ <div class="ui-subtitle" id="experimentDesc">Плотность — это количество «вещества», втиснутое в один объём. Покрутите слайдер, чтобы увидеть, как температура влияет на плотность газов и тел!</div>
+ <div class="slider-container">
+ <div class="slider-label">
+ <span>Температура (Скорость молекул)</span>
+ <span id="heatVal">Обычная</span>
+ </div>
+ <input type="range" id="heatSlider" min="1" max="4" step="0.1" value="1">
+ </div>
+ </div>
+
+ <script>
+ const container = document.getElementById('canvas-container');
+ const canvas = document.createElement('canvas');
+ container.appendChild(canvas);
+ const ctx = canvas.getContext('2d');
+ 
+ let width = canvas.width = window.innerWidth;
+ let height = canvas.height = window.innerHeight;
+
+ // Адаптация под вертикальные экраны мобильных устройств
+ let dynamicFov = width < height ? 320 : 480; 
+ let responsiveOffsetY = width < height ? (height * 0.14) : (height * 0.02);
+
+ window.addEventListener('resize', () => {
+ width = canvas.width = window.innerWidth;
+ height = canvas.height = window.innerHeight;
+ dynamicFov = width < height ? 320 : 480;
+ responsiveOffsetY = width < height ? (height * 0.14) : (height * 0.02);
+ });
+
+ let heatMultiplier = 1.0;
+ let angleY = 0; // Автоматическое плавное вращение контейнеров в 3D
+
+ // Генерация молекул для Поролона (Мало молекул, летают хаотично)
+ const lowDensityMolecules = [];
+ for(let i=0; i<8; i++) {
+ lowDensityMolecules.push({
+ x: (Math.random()-0.5)*14, y: (Math.random()-0.5)*14 + 11, z: (Math.random()-0.5)*14,
+ vx: (Math.random()-0.5)*0.15, vy: (Math.random()-0.5)*0.15, vz: (Math.random()-0.5)*0.15
+ });
+ }
+
+ // Генерация молекул для Железа (Много молекул, плотная кристаллическая решетка, дрожат на месте)
+ const highDensityMolecules = [];
+ for(let x=-2; x<=2; x++) {
+ for(let y=-2; y<=2; y++) {
+ for(let z=-2; z<=2; z++) {
+ highDensityMolecules.push({
+ bx: x * 3.5, by: y * 3.5 - 9, bz: z * 3.5, // базовые точки решетки
+ x: 0, y: 0, z: 0
+ });
+ }
+ }
+ }
+
+ const slider = document.getElementById('heatSlider');
+ const heatVal = document.getElementById('heatVal');
+
+ slider.addEventListener('input', (e) => {
+ heatMultiplier = parseFloat(e.target.value);
+ if (heatMultiplier < 1.5) heatVal.innerText = "Обычная";
+ else if (heatMultiplier >= 1.5 && heatMultiplier < 3.0) heatVal.innerText = "Тепло (Расширение)";
+ else heatVal.innerText = "Горячо (Плотность падает!)";
+ });
+
+ function project(x, y, z) {
+ // Вращение сцены вокруг оси Y для красивого 3D эффекта
+ let cosY = Math.cos(angleY);
+ let sinY = Math.sin(angleY);
+ let xRot = x * cosY - z * sinY;
+ let zRot = x * sinY + z * cosY;
+
+ let cameraDist = 65;
+ let denominator = zRot + cameraDist;
+ if (denominator <= 0) denominator = 1;
+ let scale = dynamicFov / denominator;
+ return {
+ x: width / 2 + xRot * scale,
+ y: height / 2 - y * scale - responsiveOffsetY,
+ scale: scale,
+ zRot: zRot
+ };
+ }
+ // ФУНКЦИЯ ОТРИСОВКИ ПРОЗРАЧНОГО 3D-КУБА (КОНТЕЙНЕРА)
+ function drawCube(centerY, size, color) {
+     let h = size / 2;
+     // 8 вершин куба в пространстве
+     let vertices = [
+         {x: -h, y: centerY - h, z: -h}, {x: h, y: centerY - h, z: -h},
+         {x: h, y: centerY + h, z: -h}, {x: -h, y: centerY + h, z: -h},
+         {x: -h, y: centerY - h, z: h},  {x: h, y: centerY - h, z: h},
+         {x: h, y: centerY + h, z: h},  {x: -h, y: centerY + h, z: h}
+     ];
+
+     let p = vertices.map(v => project(v.x, v.y, v.z));
+
+     // Ребра куба (пары индексов вершин)
+     let edges = [, [1,2], [2,3], [3,0], // задняя грань, [5,6], [6,7], [7,4], // передняя грань, [1,5], [2,6], [3,7]  // соединительные линии
+     ];
+
+     ctx.lineWidth = 1.5;
+     ctx.strokeStyle = color;
+     
+     edges.forEach(edge => {
+         ctx.beginPath();
+         ctx.moveTo(p[edge[0]].x, p[edge[0]].y);
+         ctx.lineTo(p[edge[1]].x, p[edge[1]].y);
+         ctx.stroke();
+     });
+ }
+
+ // ЦИКЛ АНИМАЦИИ И ФИЗИЧЕСКОГО РАСЧЕТА
+ function animate() {
+     requestAnimationFrame(animate);
+     
+     // Медленное автоматическое вращение камер вокруг кубов
+     angleY += 0.004;
+
+     // Очистка экрана (темный технологичный фон)
+     ctx.fillStyle = '#060913';
+     ctx.fillRect(0, 0, width, height);
+
+     // 1. ОТРИСОВКА ВЕРХНЕГО КУБА (ПОРОЛОН / ГАЗ)
+     drawCube(11, 18, 'rgba(56, 189, 248, 0.25)');
+
+     // Движение и отрисовка редких молекул в верхнем кубе
+     lowDensityMolecules.forEach(m => {
+         // Скорость зависит от ползунка температуры
+         m.x += m.vx * heatMultiplier;
+         m.y += m.vy * heatMultiplier;
+         m.z += m.vz * heatMultiplier;
+
+         // Физика отскока от стенок верхнего куба (размер куба 18, границы от -9 до 9)
+         let bound = 8.5;
+         if (m.x > bound) { m.x = bound; m.vx *= -1; }
+         if (m.x < -bound) { m.x = -bound; m.vx *= -1; }
+         if (m.y > 11 + bound) { m.y = 11 + bound; m.vy *= -1; }
+         if (m.y < 11 - bound) { m.y = 11 - bound; m.vy *= -1; }
+         if (m.z > bound) { m.z = bound; m.vz *= -1; }
+         if (m.z < -bound) { m.z = -bound; m.vz *= -1; }
+
+         let p2d = project(m.x, m.y, m.z);
+         let rad = 4.5 * (p2d.scale / 8);
+
+         // Красивый светящийся атом газа (голубой неон)
+         ctx.beginPath();
+         ctx.arc(p2d.x, p2d.y, rad, 0, Math.PI * 2);
+         let grad = ctx.createRadialGradient(p2d.x - rad*0.3, p2d.y - rad*0.3, rad*0.05, p2d.x, p2d.y, rad);
+         grad.addColorStop(0, '#e0f2fe');
+         grad.addColorStop(0.3, '#38bdf8');
+         grad.addColorStop(1, '#0369a1');
+         ctx.fillStyle = grad;
+         ctx.fill();
+     });
+
+     // 2. ОТРИСОВКА НИЖНЕГО КУБА (ЖЕЛЕЗО / МЕТАЛЛ)
+     drawCube(-9, 18, 'rgba(244, 63, 94, 0.25)');
+
+     // Сортировка молекул железа по глубине (чтобы передние атомы перекрывали задние)
+     highDensityMolecules.forEach(m => {
+         // Атомы твердого тела дрожат (вибрируют) возле своих базовых точек решетки
+         // Чем выше температура, тем сильнее дрожь
+         let jitter = 0.15 * heatMultiplier;
+         m.x = m.bx + (Math.random() - 0.5) * jitter;
+         m.y = m.by + (Math.random() - 0.5) * jitter;
+         m.z = m.bz + (Math.random() - 0.5) * jitter;
+     });
+
+     // Проецируем и собираем данные для отрисовки решетки железа
+     let projectedIron = highDensityMolecules.map(m => {
+         return { p: project(m.x, m.y, m.z), zRot: project(m.x, m.y, m.z).zRot };
+     });
+     
+     // Сортируем сзади наперед
+     projectedIron.sort((a, b) => b.zRot - a.zRot);
+
+     // Отрисовка плотной кристаллической решетки железа
+     projectedIron.forEach(item => {
+         let p2d = item.p;
+         let rad = 3.5 * (p2d.scale / 8);
+
+         ctx.beginPath();
+         ctx.arc(p2d.x, p2d.y, rad, 0, Math.PI * 2);
+         let grad = ctx.createRadialGradient(p2d.x - rad*0.3, p2d.y - rad*0.3, rad*0.05, p2d.x, p2d.y, rad);
+         
+         // Цвет атомов железа меняется от нагрева (от розового к ярко-красному лавовому)
+         if (heatMultiplier < 2.0) {
+             grad.addColorStop(0, '#ffe4e6');
+             grad.addColorStop(0.3, '#f43f5e');
+             grad.addColorStop(1, '#9f1239');
+         } else {
+             grad.addColorStop(0, '#fef08a');
+             grad.addColorStop(0.3, '#f97316');
+             grad.addColorStop(1, '#7c2d12');
+         }
+         ctx.fillStyle = grad;
+         ctx.fill();
+     });
+
+     // КОНТРАСТНЫЕ ПОДПИСИ К РЕЖИМАМ (Цвет текста настраивается здесь)
+     ctx.fillStyle = '#38bdf8'; // Неоново-голубой цвет текста для верхнего контейнера
+     ctx.font = 'bold 13px sans-serif';
+     ctx.textAlign = 'center';
+     let textTop = project(0, 21.5, 0);
+     ctx.fillText("Контейнер 1: ПОРОЛОН", textTop.x, textTop.y);
+
+     ctx.fillStyle = '#f43f5e'; // Контрастный малиновый цвет текста для нижнего контейнера
+     let textBottom = project(0, 1.5, 0);
+     ctx.fillText("Контейнер 2: ЖЕЛЕЗО", textBottom.x, textBottom.y);
+ }
+
+ animate();
+ </script>
+</body>
+</html>
