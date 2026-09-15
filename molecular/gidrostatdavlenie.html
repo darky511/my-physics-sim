@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гидростатическое давление и Закон Паскаля</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Премиальная верхняя панель */
+        #ui-panel {
+            background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+            padding: 15px 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        #ui-panel h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #1e293b;
+        }
+
+        #formula-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0284c7;
+            background: #e0f2fe;
+            padding: 4px 15px;
+            border-radius: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        /* Кнопки управления акробатами */
+        button {
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        button:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #94a3b8;
+            transform: translateY(-1px);
+        }
+
+        button#add-btn {
+            background: #10b981;
+            border-color: #10b981;
+            color: #fff;
+        }
+
+        button#add-btn:hover {
+            background: #059669;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        button#remove-btn {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: #fff;
+        }
+
+        button#remove-btn:hover {
+            background: #dc2626;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Главный контейнер, разделенный пополам */
+        #simulation-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #ffffff;
+            display: flex;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <h2>Гидростатическое давление: p = &rho;gh</h2>
+        <div id="formula-display">Текущее давление p = 0 Па</div>
+        <div class="controls">
+            <button id="add-btn">Добавить акробата на плечи 🤸‍♂️</button>
+            <button id="remove-btn">Снять акробата ❌</button>
+        </div>
+    </div>
+
+    <div id="simulation-container">
+        <!-- Сюда инжектируется сплит-симуляция -->
+    </div>
+<script>
+    const container = document.getElementById('simulation-container');
+    let canvas, ctx;
+
+    // Настройки 3D камеры для обеих половин
+    let angleX = 0.2; 
+    let angleY = -0.3; 
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+
+    // Состояние интерактивной башни
+    let acrobatCount = 1; // Минимум 1 нижний акробат
+    const maxAcrobats = 5;
+    let targetCubeY = -1.0; // Целевая глубина куба
+    let currentCubeY = -1.0; // Интерполированная глубина для плавности анимации
+
+    function init() {
+        canvas = document.createElement('canvas');
+        container.appendChild(canvas);
+        ctx = canvas.getContext('2d');
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Вращение сцены мышкой во все стороны
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+
+            angleY += deltaX * 0.005;
+            angleX = Math.max(0.05, Math.min(Math.PI / 2 - 0.2, angleX + deltaY * 0.005));
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        // Управление акробатами
+        document.getElementById('add-btn').onclick = () => {
+            if (acrobatCount < maxAcrobats) {
+                acrobatCount++;
+                updateLinkedPhysics();
+            }
+        };
+
+        document.getElementById('remove-btn').onclick = () => {
+            if (acrobatCount > 1) {
+                acrobatCount--;
+                updateLinkedPhysics();
+            }
+        };
+
+        updateLinkedPhysics();
+        animate();
+    }
+
+    function resizeCanvas() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+    }
+
+    // Связанная физика: больше акробатов -> куб уходит глубже
+    function updateLinkedPhysics() {
+        // Рассчитываем глубину куба (от -1.0 у поверхности до -2.3 на дне)
+        targetCubeY = -0.9 - (acrobatCount - 1) * 0.35;
+        
+        // Вывод давления в интерфейс (имитируем расчет p = rho * g * h)
+        let simulatedPressure = acrobatCount * 2450; 
+        document.getElementById('formula-display').innerText = `Текущее давление p = ${simulatedPressure} Па`;
+    }
+
+    // Матрица проекции 3D координат в 2D пиксели экрана с учетом смещения центра (centerX, centerY)
+    function project(x, y, z, centerX, centerY) {
+        let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+        let x1 = x * cosY - z * sinY;
+        let z1 = x * sinY + z * cosY;
+
+        let cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+        let y2 = y * cosX - z1 * sinX;
+        let z2 = y * sinX + z1 * cosX;
+
+        const viewScale = Math.min(canvas.width, canvas.height) * 0.0016;
+        const scale = (400 / (400 + z2)) * viewScale; 
+        
+        return {
+            x: centerX + x1 * scale * 150,
+            y: centerY - y2 * scale * 150
+        };
+    }
+
+    // Отрисовка стрелки давления в 3D пространстве
+    function draw3DArrow(pStart, pEnd, color) {
+        let pt1 = project(pStart.x, pStart.y, pStart.z, canvas.width * 0.75, canvas.height / 2 + 80);
+        let pt2 = project(pEnd.x, pEnd.y, pEnd.z, canvas.width * 0.75, canvas.height / 2 + 80);
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(pt1.x, pt1.y);
+        ctx.lineTo(pt2.x, pt2.y);
+        ctx.stroke();
+
+        // Наконечник стрелки
+        let angle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(pt2.x, pt2.y);
+        ctx.lineTo(pt2.x - 8 * Math.cos(angle - Math.PI / 6), pt2.y - 8 * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(pt2.x - 8 * Math.cos(angle + Math.PI / 6), pt2.y - 8 * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+    }
+    // Отрисовка полноценного 3D куба на основе его центральной координаты Y
+    function draw3DCube(cy, size, waterLevelY) {
+        let half = size / 2;
+        // Ограничиваем отрисовку куба под водой, если он уходит ниже дна аквариума
+        let vertices = [
+            {x: -half, y: cy + half, z: -half}, {x: half, y: cy + half, z: -half},
+            {x: half, y: cy - half, z: -half}, {x: -half, y: cy - half, z: -half},
+            {x: -half, y: cy + half, z: half},  {x: half, y: cy + half, z: half},
+            {x: half, y: cy - half, z: half},  {x: -half, y: cy - half, z: half}
+        ];
+
+        let screenPts = vertices.map(v => project(v.x, v.y, v.z, canvas.width * 0.75, canvas.height / 2 + 80));
+
+        // Грани куба (индексы вершин)
+        let faces = [, [4, 5, 6, 7], [0, 4, 7, 3],
+, [0, 1, 5, 4], [3, 2, 6, 7]
+        ];
+
+        // Отрисовка граней измерительного кубика
+        faces.forEach((face, index) => {
+            ctx.beginPath();
+            ctx.moveTo(screenPts[face[0]].x, screenPts[face[0]].y);
+            for(let i = 1; i < 4; i++) ctx.lineTo(screenPts[face[i]].x, screenPts[face[i]].y);
+            ctx.closePath();
+            
+            // Полупрозрачный премиальный оранжевый цвет куба
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.45)';
+            ctx.fill();
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        });
+
+        // СТРЕЛКИ ДАВЛЕНИЯ ПО ЗАКОНУ ПАСКАЛЯ (чем глубже куб, тем они длиннее!)
+        let depthMultiplier = Math.abs(cy - waterLevelY) * 0.55;
+        let arrowLen = 0.2 + depthMultiplier;
+
+        // 1. Давление сверху
+        draw3DArrow({x: 0, y: cy + half + arrowLen, z: 0}, {x: 0, y: cy + half, z: 0}, '#ef4444');
+        // 2. Давление снизу (оно больше, так как низ глубже!)
+        draw3DArrow({x: 0, y: cy - half - (arrowLen + 0.15), z: 0}, {x: 0, y: cy - half, z: 0}, '#ef4444');
+        // 3. Давление по бокам (сжимает барабанные перепонки сбоку)
+        draw3DArrow({x: -half - arrowLen, y: cy, z: 0}, {x: -half, y: cy, z: 0}, '#ef4444');
+        draw3DArrow({x: half + arrowLen, y: cy, z: 0}, {x: half, y: cy, z: 0}, '#ef4444');
+    }
+
+    // Отрисовка схематичного, но понятного 3D человечка-акробата
+    function draw3DAcrobat(bx, by, bz, isStraining) {
+        let cX = canvas.width * 0.25;
+        let cY = canvas.height / 2 + 80;
+
+        // Небольшое покачивание/тряска нижнего акробата от тяжести
+        let shake = isStraining ? (Math.random() * 0.015 - 0.007) : 0;
+        let x = bx + shake;
+
+        let head = project(x, by + 0.5, bz, cX, cY);
+        let spineTop = project(x, by + 0.3, bz, cX, cY);
+        let spineBot = project(x, by - 0.1, bz, cX, cY);
+        let handL = project(x - 0.35, by + 0.25, bz, cX, cY);
+        let handR = project(x + 0.35, by + 0.25, bz, cX, cY);
+        let legL = project(x - 0.25, by - 0.5, bz, cX, cY);
+        let legR = project(x + 0.25, by - 0.5, bz, cX, cY);
+
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = isStraining ? `rgb(${200 + Math.sin(Date.now()*0.05)*55}, 50, 50)` : '#334155';
+        ctx.lineCap = 'round';
+
+        // Туловище и конечности
+        ctx.beginPath(); ctx.moveTo(spineTop.x, spineTop.y); ctx.lineTo(spineBot.x, spineBot.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(spineTop.x, spineTop.y); ctx.lineTo(handL.x, handL.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(spineTop.x, spineTop.y); ctx.lineTo(handR.x, handR.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(spineBot.x, spineBot.y); ctx.lineTo(legL.x, legL.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(spineBot.x, spineBot.y); ctx.lineTo(legR.x, legR.y); ctx.stroke();
+
+        // Голова
+        ctx.fillStyle = isStraining ? '#f87171' : '#64748b';
+        ctx.beginPath(); ctx.arc(head.x, head.y, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.stroke();
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // РАЗДЕЛИТЕЛЬНАЯ ЛИНИЯ ПОСЕРЕДИНЕ СЦЕНЫ
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(canvas.width / 2, 0); ctx.lineTo(canvas.width / 2, canvas.height); ctx.stroke();
+
+        // --- ЛЕВАЯ ЧАСТЬ: АКРОБАТЫ ---
+        ctx.font = 'bold 14px sans-serif'; ctx.fillStyle = '#64748b';
+        ctx.fillText("ЖИВАЯ ПИРАМИДА (СЛОИ МОЛЕКУЛ)", 30, 40);
+        
+        // Отрисовка пола слева
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+        let floorL1 = project(-1.5, -0.5, 0, canvas.width * 0.25, canvas.height / 2 + 80);
+        let floorL2 = project(1.5, -0.5, 0, canvas.width * 0.25, canvas.height / 2 + 80);
+        ctx.beginPath(); ctx.moveTo(floorL1.x, floorL1.y); ctx.lineTo(floorL2.x, floorL2.y); ctx.stroke();
+
+        // Строим башню из акробатов
+        for (let i = 0; i < acrobatCount; i++) {
+            let heightOffset = i * 0.95; // Каждый следующий стоит на плечах предыдущего
+            let isBottom = (i === 0 && acrobatCount > 1); // Трясется ли нижний от веса всей башни
+            drawDAcrobat(0, -0.05 + heightOffset, 0, isBottom);
+        }
+
+        // --- ПРАВАЯ ЧАСТЬ: ГИДРОСТАТИКА ---
+        ctx.fillStyle = '#64748b';
+        ctx.fillText("СТОЛБ ЖИДКОСТИ И ДАВЛЕНИЕ НА ТЕЛО", canvas.width / 2 + 30, 40);
+
+        // Интерполяция движения кубика под водой
+        currentCubeY += (targetCubeY - currentCubeY) * 0.08;
+
+        const waterTopY = -0.6;
+        const aquariumBotY = -2.6;
+
+        // Рисуем заднюю стенку аквариума и воду полупрозрачным слоем
+        ctx.fillStyle = 'rgba(14, 165, 233, 0.15)';
+        let w1 = project(-1.2, waterTopY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
+        let w2 = project(1.2, waterTopY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
+        let w3 = project(1.2, aquariumBotY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
+        let w4 = project(-1.2, aquariumBotY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
+        ctx.beginPath(); ctx.moveTo(w1.x, w1.y); ctx.lineTo(w2.x, w2.y); ctx.lineTo(w3.x, w3.y); ctx.lineTo(w4.x, w4.y); ctx.closePath(); ctx.fill();
+
+        // Отрисовка измерительного 3D куба внутри воды
+        draw3DCube(currentCubeY, 0.45, waterTopY);
+
+        // Передние стеклянные грани аквариума (накладываются поверх куба)
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+        let g1 = project(-1.2, waterTopY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
+        let g2 = project(1.2, waterTopY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
+        let g3 = project(1.2, aquariumBotY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
+        let g4 = project(-1.2, aquariumBotY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
+        ctx.beginPath(); ctx.moveTo(g1.x, g1.y); ctx.lineTo(g2.x, g2.y); ctx.lineTo(g3.x, g3.y); ctx.lineTo(g4.x, g4.y); ctx.closePath(); ctx.stroke();
+    }
+
+    function animate() {
+        render();
+        requestAnimationFrame(animate);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
