@@ -127,8 +127,8 @@
 
         <div class="controls">
             <button id="mode-btn">Режим: Сравнение сред 🔄</button>
-            <button id="add-btn">Добавить акробата 🤸‍♂️</button>
-            <button id="remove-btn">Снять акробата ❌</button>
+            <button id="add-btn">Увеличить целевое давление 🔼</button>
+            <button id="remove-btn">Уменьшить целевое давление 🔽</button>
         </div>
     </div>
 
@@ -137,15 +137,14 @@
     const container = document.getElementById('simulation-container');
     let canvas, ctx;
 
-    // Режимы: 'single' (только вода) или 'compare' (вода и масло)
     let currentMode = 'single'; 
 
-    // Количество акробатов (высота h)
-    let acrobatCount = 1;
-    const maxAcrobats = 5;
+    // Шаги симуляции давления (от 1 до 5)
+    let pressureStep = 1;
+    const maxSteps = 5;
 
-    // Переменные анимации для сглаживания движения датчика
-    let currentHFactor = 0;
+    // Переменные плавной интерполяции высоты
+    let currentHFactor = 1;
 
     function init() {
         canvas = document.createElement('canvas');
@@ -155,13 +154,12 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Обработка кнопок панели
         document.getElementById('add-btn').onclick = () => {
-            if (acrobatCount < maxAcrobats) acrobatCount++;
+            if (pressureStep < maxSteps) pressureStep++;
         };
 
         document.getElementById('remove-btn').onclick = () => {
-            if (acrobatCount > 1) acrobatCount--;
+            if (pressureStep > 1) pressureStep--;
         };
 
         document.getElementById('mode-btn').onclick = () => {
@@ -183,7 +181,6 @@
         canvas.height = container.clientHeight;
     }
 
-    // Вспомогательная функция рисования 2D стрелок
     function draw2DArrow(x1, y1, x2, y2, color, width = 2.5) {
         ctx.strokeStyle = color;
         ctx.lineWidth = width;
@@ -203,164 +200,142 @@
         ctx.fill();
     }
 
-    // Отрисовка размерной стрелки "h" с выносными линиями
     function drawHeightDimension(x, yStart, yEnd, label) {
         ctx.strokeStyle = '#64748b';
         ctx.lineWidth = 1;
         
-        // Выносные горизонтальные засечки
         ctx.beginPath(); ctx.moveTo(x - 15, yStart); ctx.lineTo(x + 15, yStart); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(x - 15, yEnd); ctx.lineTo(x + 15, yEnd); ctx.stroke();
 
-        // Двусторонняя стрелка высоты
         draw2DArrow(x, yStart + (yEnd - yStart)/2 - 2, x, yStart, '#475569', 1.5);
         draw2DArrow(x, yStart + (yEnd - yStart)/2 + 2, x, yEnd, '#475569', 1.5);
 
-        // Буква h по центру стрелки
         ctx.fillStyle = '#1e293b';
         ctx.font = 'italic bold 15px Georgia, serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(label, x + 15, yStart + (yEnd - yStart) / 2);
     }
-    // Отрисовка плоского схематичного человечка
-    function draw2DAcrobat(x, y, scale = 1, isStraining = false) {
+    // Кастомный человечек с возможностью изменения ширины тела (ScaleX)
+    function draw2DAcrobat(x, y, scaleX = 1, scaleY = 1, isStraining = false) {
         ctx.save();
         ctx.translate(x, y);
-        ctx.scale(scale, scale);
+        ctx.scale(scaleX, scaleY);
 
         let shake = isStraining ? (Math.random() * 2 - 1) : 0;
         ctx.translate(shake, 0);
 
-        ctx.lineWidth = 4.5;
+        ctx.lineWidth = 4.5 / scaleX; // Сохраняем визуальную толщину линий при сужении
         ctx.strokeStyle = isStraining ? `rgb(${210 + Math.sin(Date.now()*0.04)*45}, 60, 60)` : '#334155';
         ctx.lineCap = 'round';
 
-        // Позвоночник
         ctx.beginPath(); ctx.moveTo(0, -35); ctx.lineTo(0, -15); ctx.stroke();
-        // Руки (держат плечи или разведены для баланса)
         ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(-22, -32); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(22, -32); stroke = ctx.stroke();
-        // Ноги упираются широко
+        ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(22, -32); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(-12, 0); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(12, 0); ctx.stroke();
-        // Голова
+        
         ctx.fillStyle = isStraining ? '#f87171' : '#64748b';
         ctx.beginPath(); ctx.arc(0, -42, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
         ctx.restore();
     }
 
-    // Отрисовка одной полноценной физической среды (Башня + Аквариум)
     function renderEnvironment(startX, width, liquidType) {
         let halfW = width / 2;
         let midLeftX = startX + halfW * 0.45;
         let midRightX = startX + halfW * 1.45;
         let floorY = canvas.height - 80;
-        let waterTopY = canvas.height - 290;
+        let waterTopY = canvas.height - 320; // Увеличили высоту аквариума, чтобы было место для глубины масла
 
-        // Физические константы
-        let rho = liquidType === 'water' ? 1000 : 920; 
-        let g = 9.8;
-        let h_meters = acrobatCount * 0.5; 
-        let pressure = Math.round(rho * g * h_meters);
+        // Физические параметры компенсации:
+        // Давление в обеих средах строго одинаковое!
+        let simulatedPressure = pressureStep * 2000; 
 
-        // Обновляем плашки данных наверху
+        // Коэффициент компенсации высоты h в зависимости от плотности среды rho
+        // Если это масло (плотность меньше), множитель высоты должен быть больше!
+        let densityMultiplier = liquidType === 'water' ? 1.0 : (1000 / 920); // Масло глубже примерно на 9%
+        
+        // Сколько акробатов визуально рисовать в башне
+        // В масле плотность меньше, значит человечки худее, и чтобы набрать ту же силу, их нужно БОЛЬШЕ!
+        let visualAcrobatCount = liquidType === 'water' ? pressureStep : Math.round(pressureStep * densityMultiplier);
+
         if (liquidType === 'water') {
-            document.getElementById('p-water').innerText = `Вода (\u03C1=${rho}): p = ${pressure} Па`;
+            document.getElementById('p-water').innerText = `Вода (\u03C1=1000): p = ${simulatedPressure} Па`;
         } else {
-            document.getElementById('p-oil').innerText = `Масло (\u03C1=${rho}): p = ${pressure} Па`;
+            document.getElementById('p-oil').innerText = `Масло (\u03C1=920): p = ${simulatedPressure} Па`;
         }
 
-        // --- ЛЕВАЯ СТОРОНА: АКРОБАТЫ ---
-        // Опора для акробатов
+        // --- ЛЕВАЯ СТОРОНА: БАШНЯ АКРОБАТОВ ---
         ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(startX + 20, floorY); ctx.lineTo(startX + halfW - 20, floorY); ctx.stroke();
 
-        // Сборка башни человечков
-        for (let i = 0; i < acrobatCount; i++) {
-            let yPos = floorY - (i * 45);
-            let isBottom = (i === 0 && acrobatCount > 1);
-            draw2DAcrobat(midLeftX, yPos, 1.1, isBottom);
+        // Параметры толщины акробата: в масле они худее (scaleX = 0.65)
+        let sizeX = liquidType === 'water' ? 1.1 : 0.7;
+        let sizeY = liquidType === 'water' ? 1.1 : 0.95; // чуть приплюснуты, чтобы влезло больше слоев
+        let stepHeight = 45 * sizeY;
+
+        for (let i = 0; i < visualAcrobatCount; i++) {
+            let yPos = floorY - (i * stepHeight);
+            let isBottom = (i === 0 && visualAcrobatCount > 1);
+            draw2DAcrobat(midLeftX, yPos, sizeX, sizeY, isBottom);
         }
 
-        // Выносная стрелка h для акробатов
-        let acrobatTopY = floorY - (acrobatCount * 45);
-        drawHeightDimension(startX + 30, floorY, acrobatTopY, 'h');
+        // Замер линейки h у акробатов
+        let acrobatTopY = floorY - (visualAcrobatCount * stepHeight);
+        drawHeightDimension(startX + 25, floorY, acrobatTopY, 'h');
 
-        // --- ПРАВАЯ СТОРОНА: АКВАРИУМ И ДАТЧИК ---
+        // --- ПРАВАЯ СТОРОНА: АКВАРИУМ С ВЫРАВНЕННЫМ ДАВЛЕНИЕМ ---
         let aqW = halfW * 0.65;
         let aqX = midRightX - aqW / 2;
 
-        // Рисуем жидкость (Вода - лазурная, Масло - золотистое)
         ctx.fillStyle = liquidType === 'water' ? 'rgba(14, 165, 233, 0.18)' : 'rgba(234, 179, 8, 0.18)';
         ctx.fillRect(aqX, waterTopY, aqW, floorY - waterTopY);
 
-        // Контур аквариума (U-образный срез)
         ctx.strokeStyle = '#475569'; ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(aqX, waterTopY);
-        ctx.lineTo(aqX, floorY);
-        ctx.lineTo(aqX + aqW, floorY);
-        ctx.lineTo(aqX + aqW, waterTopY);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(aqX, waterTopY); ctx.lineTo(aqX, floorY); ctx.lineTo(aqX + aqW, floorY); ctx.lineTo(aqX + aqW, waterTopY); ctx.stroke();
 
-        // Расчет глубины положения куба (привязан к текущему h_factor анимации)
-        let maxDepthRange = (floorY - waterTopY) - 70; 
-        let sensorCenterY = waterTopY + 35 + (currentHFactor / maxAcrobats) * maxDepthRange;
-        let sSize = 42; // Размер измерительного 2D квадрата
+        // Расчет глубины с учетом компенсации плотности
+        let maxDepthRange = (floorY - waterTopY) - 80; 
+        let currentDepthFactor = currentHFactor * densityMultiplier; // У масла этот фактор больше!
+        
+        let sensorCenterY = waterTopY + 35 + (currentDepthFactor / maxSteps) * maxDepthRange;
+        let sSize = 42; 
 
-        // Отрисовка выносной стрелки h под водой
-        drawHeightDimension(aqX + aqW + 25, waterTopY, sensorCenterY, 'h');
+        // Линейка h под водой (у масла она визуально длиннее!)
+        drawHeightDimension(aqX + aqW + 20, waterTopY, sensorCenterY, 'h');
 
-        // Рисуем плоский измерительный датчик-квадрат
-        ctx.fillStyle = '#f97316';
-        ctx.strokeStyle = '#ea580c';
-        ctx.lineWidth = 2;
+        // Рисуем квадратный датчик
+        ctx.fillStyle = '#f97316'; ctx.strokeStyle = '#ea580c'; ctx.lineWidth = 2;
         ctx.fillRect(midRightX - sSize/2, sensorCenterY - sSize/2, sSize, sSize);
         ctx.strokeRect(midRightX - sSize/2, sensorCenterY - sSize/2, sSize, sSize);
 
-        // ВЕКТОРЫ СИЛ ДАВЛЕНИЯ (2D стрелочки со всех сторон одинаково по закону Паскаля)
-        // Длина векторов зависит от глубины h и плотности среды rho!
-        let baseForceLen = 12 + (currentHFactor * 8) * (rho / 1000);
+        // Векторы сил (Так как давления одинаковы — длины красных стрелок СТРОГО равны!)
+        let baseForceLen = 12 + (currentHFactor * 8);
 
-        // 1. Давление сверху (нажимает вниз)
         draw2DArrow(midRightX, sensorCenterY - sSize/2 - baseForceLen, midRightX, sensorCenterY - sSize/2, '#ef4444');
-        // 2. Давление снизу (нажимает вверх, чуть сильнее из-за перепада высоты)
         draw2DArrow(midRightX, sensorCenterY + sSize/2 + baseForceLen + 3, midRightX, sensorCenterY + sSize/2, '#ef4444');
-        // 3. Давление сбоку (сжимает бока симметрично)
         draw2DArrow(midRightX - sSize/2 - baseForceLen, sensorCenterY, midRightX - sSize/2, sensorCenterY, '#ef4444');
         draw2DArrow(midRightX + sSize/2 + baseForceLen, sensorCenterY, midRightX + sSize/2, sensorCenterY, '#ef4444');
 
-        // Название жидкости на дне аквариума
-        ctx.fillStyle = '#64748b';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
+        ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(liquidType === 'water' ? "РЕЗЕРВУАР С ВОДОЙ" : "РЕЗЕРВУАР С МАСЛОМ", midRightX, floorY + 25);
     }
 
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Плавная интерполяция высоты для эффекта погружения куба в реальном времени
-        currentHFactor += (acrobatCount - currentHFactor) * 0.08;
+        currentHFactor += (pressureStep - currentHFactor) * 0.08;
 
         if (currentMode === 'single') {
-            // Однородная сцена (только Вода во весь экран)
             renderEnvironment(0, canvas.width, 'water');
         } else {
-            // Режим сравнения сред (Экран пополам)
             let midScreenX = canvas.width / 2;
-
-            // Левая половина: Вода
             renderEnvironment(0, midScreenX, 'water');
 
-            // Разделительный барьер сред посередине холста
-            ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+            ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(midScreenX, 0); ctx.lineTo(midScreenX, canvas.height); ctx.stroke();
-            ctx.setLineDash([]);
 
-            // Правая половина: Подсолнечное Масло
             renderEnvironment(midScreenX, midScreenX, 'oil');
         }
     }
