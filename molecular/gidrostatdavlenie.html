@@ -139,11 +139,9 @@
 
     let currentMode = 'single'; 
 
-    // Шаги симуляции давления (от 1 до 5)
     let pressureStep = 1;
     const maxSteps = 5;
 
-    // Переменная плавной интерполяции для анимаций погружения
     let currentHFactor = 1;
 
     function init() {
@@ -240,10 +238,8 @@
         ctx.restore();
     }
 
-    // Отрисовка башни акробатов по заданным координатам
     function drawAcrobatTower(centerX, floorY, liquidType) {
         let isWater = liquidType === 'water';
-        // Наоборот: у ВОДЫ акробаты крупнее (1.25), у МАСЛА — меньше и худее (0.85)
         let sizeX = isWater ? 1.25 : 0.85;
         let sizeY = isWater ? 1.15 : 0.85;
         let stepHeight = 45 * sizeY;
@@ -251,7 +247,6 @@
         let multiplier = isWater ? 1.0 : (1000 / 920);
         let visualAcrobatCount = isWater ? pressureStep : Math.round(pressureStep * multiplier);
 
-        // Линия пола
         ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(centerX - 60, floorY); ctx.lineTo(centerX + 60, floorY); ctx.stroke();
 
@@ -261,55 +256,48 @@
             draw2DAcrobat(centerX, yPos, sizeX, sizeY, isBottom);
         }
 
-        // Выносная линейка h
         let towerTopY = floorY - (visualAcrobatCount * stepHeight);
         drawHeightDimension(centerX - 85, floorY, towerTopY, 'h');
 
-        // Подпись под башней
         ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(isWater ? "АКРОБАТЫ (ВОДА)" : "АКРОБАТЫ (МАСЛО)", centerX, floorY + 25);
     }
 
-    // Отрисовка бака с жидкостью по заданным координатам
+    // Возвращает точную Y координату центра куба для выноски дельты
     function drawAquarium(centerX, floorY, waterTopY, liquidType) {
         let isWater = liquidType === 'water';
         let aqW = 160;
         let aqX = centerX - aqW / 2;
 
-        // Фон жидкости
         ctx.fillStyle = isWater ? 'rgba(14, 165, 233, 0.18)' : 'rgba(234, 179, 8, 0.18)';
         ctx.fillRect(aqX, waterTopY, aqW, floorY - waterTopY);
 
-        // Стенки бака
         ctx.strokeStyle = '#475569'; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(aqX, waterTopY); ctx.lineTo(aqX, floorY); ctx.lineTo(aqX + aqW, floorY); ctx.lineTo(aqX + aqW, waterTopY); ctx.stroke();
 
-        // Расчет глубины кубика с учетом инверсии размеров
         let maxDepthRange = (floorY - waterTopY) - 80;
         let multiplier = isWater ? 1.0 : (1000 / 920);
-        let currentDepthFactor = currentHFactor * multiplier; // Масло уходит глубже!
+        let currentDepthFactor = currentHFactor * multiplier;
 
         let sensorCenterY = waterTopY + 35 + (currentDepthFactor / maxSteps) * maxDepthRange;
         let sSize = 42;
 
-        // Линейка h под водой (у масла длиннее!)
         drawHeightDimension(centerX + aqW/2 + 20, waterTopY, sensorCenterY, 'h');
 
-        // Оранжевый датчик-куб
         ctx.fillStyle = '#f97316'; ctx.strokeStyle = '#ea580c'; ctx.lineWidth = 2;
         ctx.fillRect(centerX - sSize/2, sensorCenterY - sSize/2, sSize, sSize);
         ctx.strokeRect(centerX - sSize/2, sensorCenterY - sSize/2, sSize, sSize);
 
-        // Векторы сил давления (равны, так как шаги давления одинаковы)
         let baseForceLen = 12 + (currentHFactor * 8);
         draw2DArrow(centerX, sensorCenterY - sSize/2 - baseForceLen, centerX, sensorCenterY - sSize/2, '#ef4444');
         draw2DArrow(centerX, sensorCenterY + sSize/2 + baseForceLen + 3, centerX, sensorCenterY + sSize/2, '#ef4444');
         draw2DArrow(centerX - sSize/2 - baseForceLen, sensorCenterY, centerX - sSize/2, sensorCenterY, '#ef4444');
         draw2DArrow(centerX + sSize/2 + baseForceLen, sensorCenterY, centerX + sSize/2, sensorCenterY, '#ef4444');
 
-        // Подпись под баком
         ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(isWater ? "РЕЗЕРВУАР С ВОДОЙ" : "РЕЗЕРВУАР С МАСЛОМ", centerX, floorY + 25);
+
+        return sensorCenterY; // Отдаем координату наружу
     }
 
     function render() {
@@ -321,29 +309,48 @@
         let waterTopY = canvas.height - 320;
         let simulatedPressure = pressureStep * 2000;
 
-        document.getElementById('p-water').innerText = `Вода (\u03C1=1000): p = ${simulatedPressure} Pa`;
+        document.getElementById('p-water').innerText = `Вода (\u03C1=1000): p = ${simulatedPressure} Па`;
 
         if (currentMode === 'single') {
-            // Обычный режим: экран 50/50 (акробаты слева, бак справа)
             drawAcrobatTower(canvas.width * 0.25, floorY, 'water');
             drawAquarium(canvas.width * 0.75, floorY, waterTopY, 'water');
         } else {
-            // Режим сравнения сред
-            document.getElementById('p-oil').innerText = `Масло (\u03C1=920): p = ${simulatedPressure} Pa`;
+            document.getElementById('p-oil').innerText = `Масло (\u03C1=920): p = ${simulatedPressure} Па`;
 
             let midX = canvas.width / 2;
 
-            // --- ЛЕВАЯ ПОЛОВИНА ЭКРАНА: ВСЕ АКРОБАТЫ ---
+            // Левая половина: Акробаты
             drawAcrobatTower(midX * 0.35, floorY, 'water');
             drawAcrobatTower(midX * 0.75, floorY, 'oil');
 
-            // Тонкий центральный разделитель половин экрана
             ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(midX, 0); ctx.lineTo(midX, canvas.height); ctx.stroke();
 
-            // --- ПРАВАЯ ПОЛОВИНА ЭКРАНА: ВСЕ БАКИ С ВОДОЙ ---
-            drawAquarium(midX + midX * 0.25, floorY, waterTopY, 'water');
-            drawAquarium(midX + midX * 0.65, floorY, waterTopY, 'oil');
+            // Правая половина: Аквариумы (и ловим их Y-координаты центров кубиков)
+            let waterCubeY = drawAquarium(midX + midX * 0.25, floorY, waterTopY, 'water');
+            let oilCubeY = drawAquarium(midX + midX * 0.65, floorY, waterTopY, 'oil');
+
+            // --- ДОБАВЛЕНИЕ ЛИНЕЙКИ ДЕЛЬТЫ (МЕЖДУ БАКАМИ) ---
+            let startDeltaX = midX + midX * 0.25 + 80; // Правый край бака с водой
+            let endDeltaX = midX + midX * 0.65 - 80;   // Левый край бака с маслом
+            let midDeltaX = (startDeltaX + endDeltaX) / 2;
+
+            // Пунктирные линии-выноски от нижних граней кубиков
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(startDeltaX - 30, waterCubeY); ctx.lineTo(midDeltaX + 15, waterCubeY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(endDeltaX + 30, oilCubeY); ctx.lineTo(midDeltaX - 15, oilCubeY); ctx.stroke();
+            ctx.setLineDash([]); // Сброс пунктира
+
+            // Красная стрелка разницы высот Delta h
+            draw2DArrow(midDeltaX, waterCubeY + (oilCubeY - waterCubeY)/2 - 1, midDeltaX, oilCubeY, '#ef4444', 2);
+            draw2DArrow(midDeltaX, waterCubeY + (oilCubeY - waterCubeY)/2 + 1, midDeltaX, waterCubeY, '#ef4444', 2);
+
+            // Текст "Delta h" рядом со стрелкой
+            ctx.fillStyle = '#ef4444';
+            ctx.font = 'bold 15px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("\u0394h", midDeltaX + 10, waterCubeY + (oilCubeY - waterCubeY) / 2);
         }
     }
 
