@@ -133,17 +133,15 @@
     </div>
 
     <div id="simulation-container"></div>
+
 <script>
     const container = document.getElementById('simulation-container');
     let canvas, ctx;
 
     let currentMode = 'single'; 
-
     let pressureStep = 1;
     const maxSteps = 5;
-
     let currentHFactor = 1;
-
     function init() {
         canvas = document.createElement('canvas');
         container.appendChild(canvas);
@@ -152,6 +150,7 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
+        // Привязка кликов к кнопкам теперь будет работать железно
         document.getElementById('add-btn').onclick = () => {
             if (pressureStep < maxSteps) pressureStep++;
         };
@@ -170,8 +169,6 @@
                 oilLabel.style.display = 'none';
             }
         };
-
-        animate();
     }
 
     function resizeCanvas() {
@@ -214,8 +211,6 @@
         ctx.textBaseline = 'middle';
         ctx.fillText(label, x + 15, yStart + (yEnd - yStart) / 2);
     }
-</script>
-<script>
     function draw2DAcrobat(x, y, scaleX = 1, scaleY = 1, isStraining = false) {
         ctx.save();
         ctx.translate(x, y);
@@ -242,7 +237,6 @@
 
     function drawAcrobatTower(centerX, floorY, liquidType) {
         let isWater = liquidType === 'water';
-        // ИЗМЕНЕНО: Теперь у ВОДЫ человечки поменьше (0.85), а у МАСЛА — крупнее по размеру (1.25)
         let sizeX = isWater ? 0.85 : 1.25;
         let sizeY = isWater ? 0.85 : 1.15;
         let stepHeight = 45 * sizeY;
@@ -334,7 +328,7 @@
             let endDeltaX = midX + midX * 0.65 - 80;   
             let midDeltaX = (startDeltaX + endDeltaX) / 2;
 
-            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5; ctx.setLineDash();
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
             ctx.beginPath(); ctx.moveTo(startDeltaX - 30, waterCubeY); ctx.lineTo(midDeltaX + 15, waterCubeY); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(endDeltaX + 30, oilCubeY); ctx.lineTo(midDeltaX - 15, oilCubeY); ctx.stroke();
             ctx.setLineDash([]); 
@@ -355,7 +349,11 @@
         requestAnimationFrame(animate);
     }
 
-    window.onload = init;
+    // Жесткий запуск только ПОСЛЕ того, как все функции объявлены браузером
+    window.onload = function() {
+        init();
+        animate();
+    };
 </script>
 </body>
 </html>
