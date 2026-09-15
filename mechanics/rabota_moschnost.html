@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Физика: Работа и Мощность</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #ui-panel {
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+            padding: 15px 25px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        #ui-panel h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #0f172a;
+        }
+
+        #ui-panel h2 span.formula {
+            color: #0284c7;
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+        }
+
+        .dashboard-main {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 800px;
+            gap: 20px;
+        }
+
+        .p-panel-box {
+            flex: 1;
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: center;
+        }
+        #dash-left { background: #e0f2fe; color: #0369a1; }
+        #dash-right { background: #fef9c3; color: #a16207; }
+
+        #simulation-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #ffffff;
+            display: flex;
+        }
+
+        /* Разделение экрана 50/50 */
+        .sim-half {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 40px;
+            box-sizing: border-box;
+        }
+        #half-left { border-right: 2px dashed #cbd5e1; }
+
+        .half-title {
+            position: absolute;
+            top: 20px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .local-controls {
+            position: absolute;
+            top: 55px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        button:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+        .btn-active-green { background: #10b981 !important; border-color: #10b981 !important; color: #fff !important; }
+        .btn-active-blue { background: #3b82f6 !important; border-color: #3b82f6 !important; color: #fff !important; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <h2>Работа и Мощность: <span class="formula">A = F &middot; S</span> и <span class="formula">N = A / t</span></h2>
+        <div class="dashboard-main">
+            <div id="dash-left" class="p-panel-box">
+                <div>МЕХАНИЧЕСКАЯ РАБОТА (A)</div>
+                <div id="math-work" style="font-size: 16px; margin-top: 2px;">A = 0 Н &middot; 0 м = 0 Дж</div>
+            </div>
+            <div id="dash-right" class="p-panel-box">
+                <div>СРАВНЕНИЕ МОЩНОСТИ (N)</div>
+                <div id="math-power" style="font-size: 14px; margin-top: 2px;">Ждем старта...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="simulation-container">
+        <!-- ЛЕВАЯ ПОЛОВИНА: МЕХАНИЧЕСКАЯ РАБОТА -->
+        <div id="half-left" class="sim-half">
+            <div class="half-title">1. Условие совершения работы</div>
+            <div class="local-controls">
+                <button id="btn-hold" onclick="setWorkMode('hold')">🏋️‍♂️ Просто держит штангу</button>
+                <button id="btn-lift" onclick="setWorkMode('lift')">🚀 Поднимает штангу вверх</button>
+            </div>
+
+            <style>
+                .weightlifter-arena { position: relative; width: 260px; height: 260px; }
+                
+                /* Подвижная штанга */
+                .barbell-box {
+                    position: absolute;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 180px;
+                    height: 12px;
+                    background: #334155;
+                    border-radius: 4px;
+                    bottom: var(--bar-y, 110px);
+                    transition: bottom 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+                    z-index: 5;
+                }
+                /* Блины штанги */
+                .barbell-box::before, .barbell-box::after {
+                    content: ''; position: absolute; top: -14px; width: 20px; height: 40px; background: #b91c1c; border-radius: 6px;
+                }
+                .barbell-box::before { left: 0; }
+                .barbell-box::after { right: 0; }
+
+                /* Фигурка штангиста */
+                .athlete {
+                    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 110px;
+                }
+                .ath-head { width: 18px; height: 18px; background: #64748b; border-radius: 50%; margin: 0 auto; }
+                /* Руки штангиста плавно вытягиваются через CSS-переменную высоты рук */
+                .ath-arms {
+                    position: absolute; top: 18px; left: 0; right: 0;
+                    height: var(--arms-h, 45px);
+                    border-left: 4px solid #475569; border-right: 4px solid #475569;
+                    border-top: 4px solid #475569;
+                    transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .ath-body { width: 6px; height: 45px; background: #475569; margin: 0 auto; }
+                .ath-legs { display: flex; justify-content: space-between; width: 34px; height: 45px; margin: -4px auto 0 auto; }
+                .ath-leg { width: 5px; height: 100%; background: #475569; }
+                
+                /* Тряска тела штангиста от напряжения (когда просто держит) */
+                .straining { animation: tremble 0.08s infinite; }
+                @keyframes tremble {
+                    0% { transform: translate(1px, 1px) rotate(0deg); }
+                    100% { transform: translate(-1px, -1px) rotate(0.5deg); }
+                }
+
+                /* --- ЛИНЕЙКА ПЕРЕМЕЩЕНИЯ S --- */
+                .s-dimension {
+                    position: absolute; left: 10px; top: 70px; bottom: 0; width: 2px; border-left: 1.5px dashed #475569; display: none;
+                }
+                .s-arrow { position: absolute; left: -5px; font-size: 14px; color: #475569; font-weight: bold; }
+
+                /* Вектор силы штангиста */
+                .f-vector { position: absolute; left: 24px; color: #16a34a; font-weight: bold; font-size: 20px; transition: top 0.8s ease; display: none; }
+            </style>
+
+            <div class="weightlifter-arena">
+                <!-- Вектор силы F -->
+                <div id="left-f-arrow" class="f-vector" style="top: 10px;">▲<br><span style="font-size:11px;">F=200Н</span></div>
+
+                <!-- Выносная линейка пути S -->
+                <div id="left-s-line" class="s-dimension">
+                    <div class="s-arrow" style="top: 0;">▲</div>
+                    <div class="s-arrow" style="bottom: 75px;">▼</div>
+                    <div style="position: absolute; left: 10px; top: 40%; font-weight: bold; font-size: 13px; color: #475569;">S = 1.5 м</div>
+                </div>
+
+                <!-- Штанга -->
+                <div id="barbell" class="barbell-box" style="--bar-y: 80px;"></div>
+                
+                <!-- Штангист -->
+                <div id="sportsman-body" class="athlete">
+                    <div class="ath-head"></div>
+                    <div id="ath-arms" class="ath-arms" style="--arms-h: 62px;"></div>
+                    <div class="ath-body"></div>
+                    <div class="ath-legs"><div class="ath-leg" style="transform:rotate(10deg)"></div><div class="ath-leg" style="transform:rotate(-10deg)"></div></div>
+                </div>
+            </div>
+            
+            <div style="position: absolute; bottom: 12px; font-weight: bold; font-size: 12px; color: #64748b; text-align: center; width: 80%;">
+                Если тело стоит на месте ($S=0$), то с точки зрения физики работа не совершается ($A=0$), сколько бы сил ни тратилось!
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ ПОЛОВИНА: МОЩНОСТЬ (СКОРОСТЬ РАБОТЫ) -->
+        <div id="half-right" class="sim-half">
+            <div class="half-title">2. Мощность (Скорость траты сил)</div>
+            <div class="local-controls">
+                <button id="btn-race" class="btn-active-blue" onclick="startPowerRace()">Запустить подъем мешков 🚀</button>
+            </div>
+
+            <style>
+                .race-arena { position: relative; width: 280px; height: 260px; border-bottom: 3px solid #94a3b8; }
+                
+                /* Вертикальные дорожки для подъема на 5-й этаж */
+                .lane { position: absolute; bottom: 0; width: 80px; height: 100%; background: rgba(0,0,0,0.02); border-left: 1px dashed #e2e8f0; border-right: 1px dashed #e2e8f0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+                .lane-pro { left: 20px; }
+                .lane-grandpa { right: 20px; }
+
+                /* Поднимающиеся персонажи с мешками */
+                .climber {
+                    width: 40px; height: 65px; position: absolute; bottom: 0px; display: flex; flex-direction: column; align-items: center;
+                }
+                /* Мешок картошки на плечах */
+                .bag { width: 34px; height: 22px; background: #b45309; border-radius: 8px; border: 1.5px solid #78350f; font-size: 9px; color: #fff; font-weight: bold; text-align: center; line-height: 22px; z-index: 6; }
+                .person-head { width: 12px; height: 12px; background: #475569; border-radius: 50%; margin-top: -2px; }
+                .person-body { width: 4px; height: 24px; background: #475569; }
+
+                /* Плавные анимации движения с РАЗНОЙ скоростью (t) */
+                .move-fast { transition: bottom 1.5s linear; }  /* Спортсмен летит за 1.5с */
+                .move-slow { transition: bottom 6.0s linear; }  /* Дедушка идет за 6.0с */
+
+                .lane-label { font-size: 11px; font-weight: bold; color: #64748b; margin-top: 8px; text-align: center; }
+            </style>
+
+            <div class="race-arena">
+                <!-- Дорожка Молодого Спортсмена -->
+                <div class="lane lane-pro">
+                    <div id="runner-pro" class="climber" style="bottom: 0px;">
+                        <div class="bag">50 кг</div>
+                        <div class="person-head"></div>
+                        <div class="person-body"></div>
+                    </div>
+                </div>
+
+                <!-- Дорожка Дедушки -->
+                <div class="lane lane-grandpa">
+                    <div id="runner-grandpa" class="climber" style="bottom: 0px;">
+                        <div class="bag" style="background:#d97706">50 кг</div>
+                        <div class="person-head" style="background:#94a3b8"></div>
+                        <div class="person-body"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display:flex; justify-content: space-around; width: 100%; max-width: 320px;">
+                <div class="lane-label" style="width:100px;">Молодой атлет<br><span style="color:#10b981">Быстро (t = 1.5с)</span></div>
+                <div class="lane-label" style="width:100px;">Пожилой дедушка<br><span style="color:#f59e0b">Медленно (t = 6с)</span></div>
+            </div>
+        </div>
+    </div>
+<script>
+    // Первичные физические состояния
+    let currentWorkMode = '';
+    let isRaceRunning = false;
+
+    // Функция переключения левой симуляции (Механическая работа)
+    function setWorkMode(mode) {
+        currentWorkMode = mode;
+        
+        let btnHold = document.getElementById('btn-hold');
+        let btnLift = document.getElementById('btn-lift');
+        let sportsman = document.getElementById('sportsman-body');
+        let barbell = document.getElementById('barbell');
+        let arms = document.getElementById('ath-arms');
+        
+        let fArrow = document.getElementById('left-f-arrow');
+        let sLine = document.getElementById('left-s-line');
+        let mathWork = document.getElementById('math-work');
+
+        if (mode === 'hold') {
+            // Режим 1: Просто держит. Расстояние S = 0!
+            btnHold.className = "btn-active-green";
+            btnLift.className = "";
+            sportsman.className = "athlete straining"; // Тело трясется от усталости
+            
+            // Опускаем штангу на уровень плеч/рук
+            barbell.style.setProperty('--bar-y', '80px');
+            arms.style.setProperty('--arms-h', '62px');
+
+            // Сила F приложена, но пройденный путь S строго равен 0
+            fArrow.style.display = "block";
+            fArrow.style.top = "50px";
+            sLine.style.display = "none";
+
+            mathWork.innerHTML = `A = 200 Н &middot; <span style="color:#dc2626; font-size:18px;">0 м</span> = <span style="font-size:18px; color:#dc2626;">0 Дж</span> (Работа НЕ совершается!)`;
+        } else {
+            // Режим 2: Поднимает вверх. Появляется перемещение S!
+            btnHold.className = "";
+            btnLift.className = "btn-active-green";
+            sportsman.className = "athlete"; // Движется плавно без тряски
+            
+            // Штанга идет наверх, руки выпрямляются
+            barbell.style.setProperty('--bar-y', '140px');
+            arms.style.setProperty('--arms-h', '122px');
+
+            fArrow.style.display = "block";
+            fArrow.style.top = "-5px";
+            sLine.style.display = "block";
+
+            let WorkVal = 200 * 1.5; // F * S = 200H * 1.5м = 300 Дж
+            mathWork.innerHTML = `A = 200 Н &middot; <span style="color:#16a34a; font-size:16px;">1.5 м</span> = <span style="font-size:18px; color:#16a34a;">${WorkVal} Дж</span> (Работа совершена! 🎉)`;
+        }
+    }
+
+    // Функция запуска правой симуляции (Соревнование Мощности)
+    function startPowerRace() {
+        if (isRaceRunning) return;
+        isRaceRunning = true;
+
+        let pro = document.getElementById('runner-pro');
+        let grandpa = document.getElementById('runner-grandpa');
+        let mathPower = document.getElementById('math-power');
+        let btnRace = document.getElementById('btn-race');
+
+        btnRace.disabled = true;
+        btnRace.innerText = "Подъем в процессе... ⏳";
+
+        // Сбрасываем позиции в ноль
+        pro.className = "climber";
+        grandpa.className = "climber";
+        pro.style.bottom = "0px";
+        grandpa.style.bottom = "0px";
+
+        mathPower.innerText = "Персонажи начали подъем мешков картошки...";
+
+        // Форсируем перерисовку браузера перед наложением анимационных CSS-классов
+        setTimeout(() => {
+            // Применяем разные скорости перемещения через CSS Transitions
+            pro.className = "climber move-fast";
+            grandpa.className = "climber move-slow";
+
+            // Высота подъема на 5 этаж (200px) одинакова для обоих тел! То есть Работа (А) будет РАВНОЙ!
+            pro.style.bottom = "195px";
+            grandpa.style.bottom = "195px";
+        }, 50);
+
+        // Таймер 1.5 секунды: финиш Спортсмена
+        setTimeout(() => {
+            let workA = 500; // Допустим, оба совершают работу 500 Дж
+            let tPro = 1.5;
+            let nPro = Math.round(workA / tPro);
+            mathPower.innerHTML = `🏃‍♂️ Атлет финишировал! Мощность <span style="color:#10b981;">N = 500Дж / 1.5с = ${nPro} Вт!</span>`;
+        }, 1500);
+
+        // Таймер 6.0 секунд: финиш Дедушки
+        setTimeout(() => {
+            let workA = 500; // Работа абсолютно такая же!
+            let tGrandpa = 6.0;
+            let nGrandpa = Math.round(workA / tGrandpa);
+            
+            mathPower.innerHTML = `
+                <div style="line-height:1.4">
+                    <div>✅ Оба совершили одинаковую работу <b>A = 500 Дж</b> (подняли мешок на 5 этаж).</div>
+                    <div style="color:#10b981">Мощность атлета: N₁ = 500Дж / 1.5с = <b>333 Вт</b> (Высокая!)</div>
+                    <div style="color:#f59e0b">Мощность дедушки: N₂ = 500Дж / 6с = <b>83 Вт</b> (Маленькая)</div>
+                </div>
+            `;
+            
+            // Возвращаем кнопку в активное состояние
+            btnRace.disabled = false;
+            btnRace.innerText = "Запустить подъем мешков снова 🚀";
+            isRaceRunning = false;
+        }, 6000);
+    }
+
+    // Первичный демонстрационный запуск левой половины страницы
+    setWorkMode('hold');
+</script>
+</body>
+</html>
