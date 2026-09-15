@@ -80,18 +80,13 @@
         #simulation-container {
             flex: 1;
             width: 100%;
+            height: 100%;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
+            background: radial-gradient(circle, #1a2634 0%, #0a0a0f 100%);
         }
 
         canvas {
             display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
         }
@@ -109,21 +104,22 @@
             <button id="fire-btn">ВЫСТРЕЛ 🔫</button>
         </div>
     </div>
-
-    <div id="simulation-container"></div>
 <script>
     const container = document.getElementById('simulation-container');
     let scene, camera, renderer, controls;
-    let flask, water, piston;
+    let flask, water, piston, gun;
+    let waterStreams = [];
+    let isFiring = false;
 
     function init() {
         scene = new THREE.Scene();
 
-        const width = container.clientWidth;
-        const height = container.clientHeight;
+        // Берем точные размеры контейнера, когда он гарантированно отрисован
+        const width = container.clientWidth || window.innerWidth;
+        const height = container.clientHeight || (window.innerHeight - 90);
 
         camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-        camera.position.set(0, 5, 15);
+        camera.position.set(0, 4, 12);
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(width, height);
@@ -135,14 +131,18 @@
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2 + 0.1;
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        // Освещение (сделали ярче, чтобы всё было видно)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0x00d2ff, 0.8);
+        const dirLight = new THREE.DirectionalLight(0x00d2ff, 1.0);
         dirLight.position.set(10, 20, 10);
         scene.add(dirLight);
+
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        fillLight.position.set(-10, 10, -10);
+        scene.add(fillLight);
 
         createPhysicsScene();
 
@@ -154,40 +154,95 @@
     }
 
     function createPhysicsScene() {
-        const grid = new THREE.GridHelper(20, 20, 0x00d2ff, 0x444444);
-        grid.position.y = -4;
+        // Сетка пола
+        const grid = new THREE.GridHelper(20, 20, 0x00d2ff, 0x333333);
+        grid.position.y = -3;
         scene.add(grid);
 
-        const flaskGeo = new THREE.CylinderGeometry(2, 2, 6, 32, 1, true);
-        const flaskMat = new THREE.MeshPhysicalMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.3,
-            roughness: 0.1,
-            metalness: 0.1,
-            transmission: 0.9,
-            ior: 1.5,
-            side: THREE.DoubleSide
-        });
-        flask = new THREE.Mesh(flaskGeo, flaskMat);
-        flask.position.y = -1;
+        // --- ШАР ПАСКАЛЯ (Колба с отверстиями) ---
+        flask = new THREE.Group();
+        flask.position.set(0, 0, 0);
         scene.add(flask);
 
-        const pistonGeo = new THREE.CylinderGeometry(1.95, 1.95, 0.4, 32);
-        const pistonMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.8, roughness: 0.2 });
+        // Стеклянное тело прибора
+        const bodyGeo = new THREE.CylinderGeometry(1.5, 1.5, 4, 32, 1, true);
+        const glassMat = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.25,
+            transmission: 0.9,
+            roughness: 0.1,
+            side: THREE.DoubleSide
+        });
+        const bodyMesh = new THREE.Mesh(bodyGeo, glassMat);
+        flask.add(bodyMesh);
+
+        // Сферический наконечник снизу (где отверстия)
+        const sphereGeo = new THREE.SphereGeometry(1.5, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+        const sphereMesh = new THREE.Mesh(sphereGeo, glassMat);
+        sphereMesh.position.y = -2;
+        flask.add(sphereMesh);
+
+        // Отверстия в сфере для вылета струй
+        const holeGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 8);
+        const holeMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        
+        // Генерируем 6 отверстий по окружности сферы
+        for(let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const hole = new THREE.Mesh(holeGeo, holeMat);
+            hole.position.set(Math.cos(angle) * 1.45, -2.5, Math.sin(angle) * 1.45);
+            hole.rotation.z = -angle - Math.PI/2;
+            flask.add(hole);
+
+            // Создаем скрытые заготовки для будущих водяных струй
+            const streamGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 8);
+            const streamMat = new THREE.MeshStandardMaterial({ color: 0x00aaff, transparent: true, opacity: 0 });
+            const stream = new THREE.Mesh(streamGeo, streamMat);
+            // Смещаем центр геометрии, чтобы рос в длину
+            streamGeo.translate(0, 0.05, 0);
+            stream.position.copy(hole.position);
+            stream.rotation.z = angle - Math.PI/2;
+            scene.add(stream);
+            waterStreams.push(stream);
+        }
+
+        // --- ПОРШЕНЬ ---
+        const pistonGeo = new THREE.CylinderGeometry(1.45, 1.45, 0.4, 32);
+        const pistonMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.8, roughness: 0.2 });
         piston = new THREE.Mesh(pistonGeo, pistonMat);
-        piston.position.y = 2.8; // Начальная позиция поршня чуть выше
+        piston.position.y = 1.8;
         flask.add(piston);
 
-        const waterGeo = new THREE.CylinderGeometry(1.9, 1.9, 4, 32);
-        const waterMat = new THREE.MeshStandardMaterial({
-            color: 0x00aaff,
-            transparent: true,
-            opacity: 0.0
-        });
+        // --- ВОДА (внутри колбы) ---
+        const waterGeo = new THREE.CylinderGeometry(1.42, 1.42, 3.8, 32);
+        const waterMat = new THREE.MeshStandardMaterial({ color: 0x00aaff, transparent: true, opacity: 0.0 });
         water = new THREE.Mesh(waterGeo, waterMat);
-        water.position.y = -0.9;
+        water.position.y = -0.1;
         flask.add(water);
+
+        // --- МОДЕЛЬ ПИСТОЛЕТА / РУКОЯТКИ ДАВЛЕНИЯ ---
+        gun = new THREE.Group();
+        gun.position.set(0, 3.5, 0); // Ставим прямо над поршнем
+        flask.add(gun);
+
+        // Рычаг/шток поршня
+        const rodGeo = new THREE.CylinderGeometry(0.15, 0.15, 2, 16);
+        const rod = new THREE.Mesh(rodGeo, pistonMat);
+        rod.position.y = -0.5;
+        gun.add(rod);
+
+        // Рукоятка пистолетного типа
+        const gripGeo = new THREE.BoxGeometry(0.4, 1.2, 0.6);
+        const gripMat = new THREE.MeshStandardMaterial({ color: 0xff3366, roughness: 0.5 });
+        const grip = new THREE.Mesh(gripGeo, gripMat);
+        grip.position.set(0, 0.6, 0);
+        gun.add(grip);
+        
+        const triggerGeo = new THREE.BoxGeometry(0.3, 0.4, 0.2);
+        const trigger = new THREE.Mesh(triggerGeo, holeMat);
+        trigger.position.set(0, 0.4, 0.3);
+        gun.add(trigger);
     }
 
     function onWindowResize() {
@@ -199,13 +254,20 @@
     }
 
     function fillWater() {
-        water.material.opacity = 0.6;
-        piston.position.y = 1.8; // Поршень ложится на воду
+        water.material.opacity = 0.5;
+        piston.position.y = 1.8;
+        gun.position.y = 3.5;
     }
 
     function resetSimulation() {
         water.material.opacity = 0.0;
-        piston.position.y = 2.8;
+        piston.position.y = 1.8;
+        gun.position.y = 3.5;
+        isFiring = false;
+        waterStreams.forEach(stream => {
+            stream.scale.set(1, 1, 1);
+            stream.material.opacity = 0;
+        });
     }
 
     function fireShot() {
@@ -213,10 +275,34 @@
             alert("Сначала налей воду 💧!");
             return;
         }
-        // Небольшой толчок поршня вниз при выстреле
-        piston.position.y = 1.5;
-        setTimeout(() => { piston.position.y = 1.8; }, 200);
-        console.log("Давление передалось!");
+        if(isFiring) return;
+        isFiring = true;
+
+        // Анимация укола/удара пистолета вниз
+        let startTime = Date.now();
+        function animateShot() {
+            let elapsed = (Date.now() - startTime) / 300; // анимация длится 300мс
+            if (elapsed > 1) elapsed = 1;
+
+            // Движение поршня и пистолета вниз
+            let drop = Math.sin(elapsed * Math.PI) * 0.6;
+            piston.position.y = 1.8 - drop;
+            gun.position.y = 3.5 - drop;
+
+            // По закону Паскаля струи бьют во ВСЕ стороны одинаково!
+            waterStreams.forEach(stream => {
+                stream.material.opacity = 0.7 * Math.sin(elapsed * Math.PI);
+                let length = drop * 8; // Длина струи зависит от силы нажатия
+                stream.scale.set(1, length + 1, 1);
+            });
+
+            if (elapsed < 1) {
+                requestAnimationFrame(animateShot);
+            } else {
+                isFiring = false;
+            }
+        }
+        animateShot();
     }
 
     function animate() {
@@ -225,8 +311,15 @@
         renderer.render(scene, camera);
     }
 
-    init();
-    animate();
+    // Запускаем только после полной готовности DOM дерева
+    window.onload = function() {
+        init();
+        animate();
+        // Принудительный вызов ресайза для фиксации геометрии
+        setTimeout(onWindowResize, 100);
+    };
 </script>
 </body>
 </html>
+
+    <div id="simulation-container"></div>
