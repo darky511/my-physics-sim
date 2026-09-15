@@ -123,7 +123,7 @@
 
     <div id="simulation-container">
         <style>
-            /* Исправленное позиционирование: разносим колена сосуда в стороны */
+            /* Стенд сосуда */
             .vessel-stand {
                 position: relative;
                 width: 320px;
@@ -150,8 +150,8 @@
             .bottom-channel {
                 position: absolute;
                 bottom: 0;
-                left: 60px; /* Исключает наложение на стенки левой трубки */
-                right: 60px; /* Исключает наложение на стенки правой трубки */
+                left: 60px; 
+                right: 60px; 
                 height: 40px;
                 border-bottom: 4px solid #334155;
                 background: transparent;
@@ -251,6 +251,7 @@
         </div>
     </div>
 <script>
+    // Изолированное состояние и константы
     let activeMode = 'water_only';
     let currentLeftHeightPx = 120;
 
@@ -260,13 +261,14 @@
 
     function updateLayout() {
         let leftHeight = currentLeftHeightPx;
+        // Расчет высоты правого колена по закону сообщающихся сосудов
         let rightHeight = activeMode === 'water_only' ? leftHeight : Math.round(leftHeight * (densityWater / densityOil));
 
-        // Передаем точную высоту колен в CSS
-        document.getElementById('fluid-l').style.setProperty('--h', leftHeight + 'px');
-        document.getElementById('fluid-r').style.setProperty('--h', rightHeight + 'px');
+        // Применяем высоты к элементам интерфейса
+        document.getElementById('fluid-l').style.setProperty('--h', `${leftHeight}px`);
+        document.getElementById('fluid-r').style.setProperty('--h', `${rightHeight}px`);
 
-        // Расчет физического гидростатического давления
+        // Расчет точного гидростатического давления в Паскалях
         let pLeft = Math.round(densityWater * gravity * (leftHeight * 0.01));
         let pRight = Math.round((activeMode === 'water_only' ? densityWater : densityOil) * gravity * (rightHeight * 0.01));
 
@@ -284,14 +286,14 @@
             document.getElementById('channel-r').className = "channel-half oil-fluid";
             document.getElementById('arrow-r-img').style.color = "#ea580c";
 
-            // Отрезаем и выравниваем красную стрелочку Delta h между менисками
+            // Отрисовка красной стрелки разности высот Delta h
             let deltaIndicator = document.getElementById('delta-indicator');
             deltaIndicator.style.display = "block";
-            deltaIndicator.style.bottom = leftHeight + "px"; // отсчет от уровня воды
+            deltaIndicator.style.bottom = `${leftHeight}px`; 
             
             let deltaBox = document.getElementById('delta-box');
             let diff = rightHeight - leftHeight;
-            deltaBox.style.height = diff + "px';
+            deltaBox.style.height = `${diff}px`;
             deltaBox.style.transform = `translateX(-50%) translateY(${-diff}px)`;
         }
     }
@@ -321,6 +323,7 @@
         updateLayout();
     }
 
+    // Первичный запуск разметки
     updateLayout();
 </script>
 </body>
