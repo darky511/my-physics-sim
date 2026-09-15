@@ -3,42 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Закон Паскаля: 3D Симуляция</title>
+    <title>Закон Паскаля: Физическая Симуляция</title>
     <style>
-        /* Обнуляем отступы для полного экрана */
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0b0f19;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0b0e14;
             color: #fff;
             display: flex;
             flex-direction: column;
         }
 
-        /* Панель управления строго сверху */
+        /* Премиальная темная панель управления */
         #ui-panel {
-            background: rgba(20, 27, 45, 0.95);
-            padding: 15px 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            background: linear-gradient(180deg, #161d2a 0%, #0f141f 100%);
+            padding: 15px 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
             z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-            border-bottom: 2px solid #1f293d;
+            gap: 12px;
+            border-bottom: 1px solid #232d42;
         }
 
         #ui-panel h2 {
             margin: 0;
-            font-size: 20px;
+            font-size: 22px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             color: #00d2ff;
-            text-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+            text-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
         }
 
         .controls {
@@ -47,47 +47,53 @@
             align-items: center;
         }
 
-        /* Кнопки управления */
+        /* Кнопки в стиле интерфейсов Sci-Fi */
         button {
-            background: #151d30;
-            color: #fff;
-            border: 2px solid #2c3a57;
-            padding: 10px 22px;
+            background: #1a2333;
+            color: #e2e8f0;
+            border: 1px solid #314361;
+            padding: 12px 24px;
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s ease;
+            border-radius: 8px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
         button:hover {
             background: #00d2ff;
-            color: #0b0f19;
+            color: #0b0e14;
             border-color: #00d2ff;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px);
         }
 
         button#fire-btn {
             background: #ff3366;
             border-color: #ff3366;
+            color: #fff;
         }
 
         button#fire-btn:hover {
             background: #ff5588;
             border-color: #ff5588;
-            box-shadow: 0 0 20px rgba(255, 51, 102, 0.5);
+            box-shadow: 0 0 25px rgba(255, 51, 102, 0.6);
         }
 
-        /* Главный контейнер симуляции по центру экрана */
         #simulation-container {
             flex: 1;
             width: 100%;
             height: 100%;
             position: relative;
-            background: radial-gradient(circle at center, #16222f 0%, #070a12 100%);
+            background: radial-gradient(circle at center, #1a2636 0%, #06090e 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -108,35 +114,37 @@
 <body>
 
     <div id="ui-panel">
-        <h2>Закон Паскаля 3D Симуляция</h2>
+        <h2>Закон Паскаля: Опыт с пулей</h2>
         <div class="controls">
             <button id="water-btn">Налить воду 💧</button>
-            <button id="reset-btn">Сброс 🔄</button>
-            <button id="fire-btn">ВЫСТРЕЛ 🔫</button>
+            <button id="reset-btn">Сбросить сцену 🔄</button>
+            <button id="fire-btn">ВЫСТРЕЛ ИЗ ПИСТОЛЕТА 🔫</button>
         </div>
     </div>
 
-    <div id="simulation-container">
-        <!-- Холст Canvas будет создан динамически -->
-    </div>
+    <div id="simulation-container"></div>
+
 <script>
     const container = document.getElementById('simulation-container');
     let canvas, ctx;
 
-    // Параметры 3D камеры и вращения
-    let angleX = 0.4; // наклон сверху
-    let angleY = 0.5; // поворот вокруг оси
+    // Углы обзора 3D камеры
+    let angleX = 0.25; 
+    let angleY = -0.4; 
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
 
-    // Состояния физики
-    let waterLevel = 0;      // 0 - пусто, 1 - полная колба
-    let targetWaterLevel = 0;
-    let pistonY = -100;      // Координата Y поршня
-    let shotProgress = 0;    // Прогресс выстрела и струй
-    let isFiring = false;
+    // Логика состояний симуляции
+    let hasWater = false;
+    let waterOpacity = 0;
+    let isExploded = false;
+    let hasHoles = false;
 
-    // Инициализация сцены
+    // Параметры выстрела
+    let bullet = { x: -350, y: 0, z: 0, active: false, speed: 7 };
+    let particles = []; 
+    let gunScreenPos = { x: 0, y: 0, radius: 40 };
+
     function init() {
         canvas = document.createElement('canvas');
         container.appendChild(canvas);
@@ -145,8 +153,17 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Интерактив: вращение сцены мышкой во все стороны (псевдо-3D)
         canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const distToGun = Math.hypot(mouseX - gunScreenPos.x, mouseY - gunScreenPos.y);
+
+            if (distToGun < gunScreenPos.radius) {
+                fireShot();
+                return;
+            }
+
             isDragging = true;
             previousMousePosition = { x: e.clientX, y: e.clientY };
         });
@@ -156,199 +173,244 @@
             const deltaX = e.clientX - previousMousePosition.x;
             const deltaY = e.clientY - previousMousePosition.y;
 
-            angleY += deltaX * 0.007;
-            angleX = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, angleX + deltaY * 0.007));
-
+            angleY += deltaX * 0.005;
+            angleX = Math.max(0.05, Math.min(Math.PI / 2 - 0.2, angleX + deltaY * 0.005));
             previousMousePosition = { x: e.clientX, y: e.clientY };
         });
 
         window.addEventListener('mouseup', () => isDragging = false);
 
-        // Привязка кнопок
-        document.getElementById('water-btn').onclick = () => { targetWaterLevel = 1; };
-        document.getElementById('reset-btn').onclick = () => { targetWaterLevel = 0; isFiring = false; shotProgress = 0; };
-        document.getElementById('fire-btn').onclick = () => {
-            if (waterLevel < 0.2) { alert("Сначала налей воду 💧!"); return; }
-            if (!isFiring) isFiring = true;
-        };
+        document.getElementById('water-btn').onclick = () => { if(!isExploded) hasWater = true; };
+        document.getElementById('reset-btn').onclick = () => resetSimulation();
+        document.getElementById('fire-btn').onclick = () => fireShot();
 
-        // Запуск бесконечного цикла отрисовки
         animate();
     }
-
     function resizeCanvas() {
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
     }
 
-    // Математическая функция проекции 3D точки (X, Y, Z) на 2D экран
+    function resetSimulation() {
+        hasWater = false;
+        waterOpacity = 0;
+        isExploded = false;
+        hasHoles = false;
+        bullet.active = false;
+        bullet.x = -350;
+        particles = [];
+    }
+
+    function fireShot() {
+        if (bullet.active) return;
+        bullet.x = -350;
+        bullet.active = true;
+    }
+
+    // Матрица проекции 3D -> 2D перспективы
     function project(x, y, z) {
-        // Вращение по оси Y
         let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
         let x1 = x * cosY - z * sinY;
         let z1 = x * sinY + z * cosY;
 
-        // Вращение по оси X
         let cosX = Math.cos(angleX), sinX = Math.sin(angleX);
         let y2 = y * cosX - z1 * sinX;
         let z2 = y * sinX + z1 * cosX;
 
-        // Эффект перспективы и масштабирование под центр экрана
-        const scale = 400 / (400 + z2); 
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2 + 50;
-
+        const viewScale = Math.min(canvas.width, canvas.height) * 0.0017;
+        const scale = (400 / (400 + z2)) * viewScale; 
+        
         return {
-            x: centerX + x1 * scale * 1.8,
-            y: centerY - y2 * scale * 1.8,
-            visible: z2 > -400
+            x: canvas.width / 2 + x1 * scale * 150,
+            y: canvas.height / 2 - y2 * scale * 150,
+            depth: z2
         };
     }
 
-    // Рисование объемного 3D эллипса (сечения цилиндра)
-    function draw3DCircle(y, radius, strokeColor, fillColor = null) {
+    // Отрисовка красивого 3D-диска банки
+    function draw3DDisk(y, r, fillColor, strokeColor, lineWidth = 1) {
         ctx.beginPath();
-        const segments = 64;
-        for (let i = 0; i <= segments; i++) {
-            let angle = (i / segments) * Math.PI * 2;
-            let px = Math.cos(angle) * radius;
-            let pz = Math.sin(angle) * radius;
-            let pt = project(px, y, pz);
+        for (let i = 0; i <= 64; i++) {
+            let alpha = (i / 64) * Math.PI * 2;
+            let pt = project(Math.cos(alpha) * r, y, Math.sin(alpha) * r);
             if (i === 0) ctx.moveTo(pt.x, pt.y);
             else ctx.lineTo(pt.x, pt.y);
         }
         ctx.closePath();
-        if (fillColor) {
-            ctx.fillStyle = fillColor;
-            ctx.fill();
-        }
-        if (strokeColor) {
-            ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
+        if (fillColor) { ctx.fillStyle = fillColor; ctx.fill(); }
+        if (strokeColor) { ctx.strokeStyle = strokeColor; ctx.lineWidth = lineWidth; ctx.stroke(); }
+    }
+
+    // Генерация взрыва частиц (по закону Паскаля — во все стороны равномерно)
+    function createExplosion(isWaterExplosion) {
+        const count = isWaterExplosion ? 150 : 30;
+        for (let i = 0; i < count; i++) {
+            let theta = Math.random() * Math.PI * 2;
+            let phi = Math.acos((Math.random() * 2) - 1);
+            let speed = isWaterExplosion ? (2 + Math.random() * 5) : (1 + Math.random() * 3);
+            
+            particles.push({
+                x: 0, y: (Math.random() * 1.6 - 0.8), z: 0,
+                vx: Math.sin(phi) * Math.cos(theta) * speed,
+                vy: Math.sin(phi) * Math.sin(theta) * speed,
+                vz: Math.cos(phi) * speed,
+                type: isWaterExplosion ? (Math.random() > 0.4 ? 'water' : 'glass') : 'glass',
+                size: Math.random() * 3 + 1,
+                alpha: 1
+            });
         }
     }
 
-    // Отрисовка всей физической лаборатории
-    function renderScene() {
+    function updatePhysics() {
+        if (hasWater && waterOpacity < 1) waterOpacity += 0.05;
+        if (!hasWater && waterOpacity > 0) waterOpacity -= 0.05;
+
+        if (bullet.active) {
+            bullet.x += bullet.speed;
+
+            // Касание пулей стенки банки
+            if (!isExploded && !hasHoles && bullet.x >= -150 && bullet.x < 0) {
+                if (hasWater) {
+                    isExploded = true;
+                    hasWater = false;
+                    createExplosion(true);
+                } else {
+                    hasHoles = true;
+                    createExplosion(false);
+                }
+            }
+            
+            if (bullet.x > 400) {
+                bullet.active = false;
+                bullet.x = -350;
+            }
+        }
+
+        particles.forEach((p, index) => {
+            p.x += p.vx * 0.1;
+            p.y += p.vy * 0.1;
+            p.z += p.vz * 0.1;
+            p.vy -= 0.05; 
+            p.alpha -= 0.015;
+            if (p.alpha <= 0) particles.splice(index, 1);
+        });
+    }
+    function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 1. Рисуем сетку пола для ощущения глубины пространства
-        ctx.strokeStyle = 'rgba(0, 210, 255, 0.07)';
-        ctx.lineWidth = 1;
-        for (let i = -5; i <= 5; i++) {
-            ctx.beginPath();
-            let p1 = project(i * 50, -180, -250);
-            let p2 = project(i * 50, -180, 250);
-            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-
-            ctx.beginPath();
-            let p3 = project(-250, -180, i * 50);
-            let p4 = project(250, -180, i * 50);
-            ctx.moveTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y);
-            ctx.stroke();
+        // 1. Отрисовка лабораторного стола (Сетка)
+        ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+        for(let i = -4; i <= 4; i++) {
+            let p1 = project(i*2, -1.2, -2); let p2 = project(i*2, -1.2, 2);
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            let p3 = project(-2, -1.2, i*2); let p4 = project(2, -1.2, i*2);
+            ctx.beginPath(); ctx.moveTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y); ctx.stroke();
         }
 
-        const radius = 60;
-        const baseBotY = -120;
-        const baseTopY = 120;
+        // 2. Основание штатива банки
+        draw3DDisk(-1.1, 1.3, '#1f293d', '#34495e', 2);
+        draw3DDisk(-1.2, 1.3, '#111622', '#1f293d', 1);
 
-        // Расчет анимаций движения жидкостей и поршня
-        waterLevel += (targetWaterLevel - waterLevel) * 0.1;
-        let currentWaterY = baseBotY + (baseTopY - baseBotY) * 0.6 * waterLevel;
-
-        if (isFiring) {
-            shotProgress += 0.08;
-            if (shotProgress > Math.PI) {
-                shotProgress = 0;
-                isFiring = false;
-            }
-        }
-        let currentShotOffset = Math.sin(shotProgress) * 25;
-        pistonY = (waterLevel > 0.1 ? currentWaterY : baseTopY - 20) - currentShotOffset;
-
-        // 2. Отрисовка ЗАДНИХ водяных струй (по закону Паскаля во все стороны одинаково!)
-        if (shotProgress > 0) {
-            ctx.strokeStyle = 'rgba(0, 170, 255, 0.8)';
-            ctx.lineWidth = 4;
-            const numStreams = 8;
-            for (let i = 0; i < numStreams; i++) {
-                let ang = (i / numStreams) * Math.PI * 2 + angleY;
-                // Струи сзади рисуются первыми
-                if (Math.sin(ang) < 0) {
-                    let streamLen = Math.sin(shotProgress) * 90;
-                    let pStart = project(Math.cos(ang) * radius, baseBotY, Math.sin(ang) * radius);
-                    let pEnd = project(Math.cos(ang) * (radius + streamLen), baseBotY - streamLen*0.2, Math.sin(ang) * (radius + streamLen));
-                    ctx.beginPath(); ctx.moveTo(pStart.x, pStart.y); ctx.lineTo(pEnd.x, pEnd.y); ctx.stroke();
+        // 3. ОТРИСОВКА БАНКИ / КОЛБЫ ПАСКАЛЯ
+        if (!isExploded) {
+            // Отрисовка воды внутри задним слоем
+            if (waterOpacity > 0) {
+                let gradWater = ctx.createLinearGradient(0, canvas.height/2, canvas.width, canvas.height/2);
+                gradWater.addColorStop(0, `rgba(0, 150, 255, ${waterOpacity * 0.4})`);
+                gradWater.addColorStop(1, `rgba(0, 100, 220, ${waterOpacity * 0.6})`);
+                
+                for(let h = -0.8; h <= 0.8; h += 0.05) {
+                    let rAtH = Math.cos(h) * 1.0;
+                    draw3DDisk(h, rAtH * 0.98, gradWater, null);
                 }
             }
-        }
 
-        // 3. Рисуем объёмную воду (цилиндр внутри колбы)
-        if (waterLevel > 0.01) {
-            for (let y = baseBotY; y < currentWaterY; y += 4) {
-                let alpha = 0.25 * (1 - (currentWaterY - y) / (currentWaterY - baseBotY));
-                draw3DCircle(y, radius - 1, null, `rgba(0, 140, 255, ${alpha})`);
+            // Слоистее стекло колбы
+            for (let h = -0.8; h <= 0.8; h += 0.1) {
+                let radiusAtH = Math.cos(h) * 1.0;
+                let edgeColor = `rgba(255, 255, 255, ${0.15 + (Math.sin(h)*0.05)})`;
+                draw3DDisk(h, radiusAtH, 'rgba(255,255,255,0.01)', edgeColor, 1.5);
             }
-            draw3DCircle(currentWaterY, radius - 1, 'rgba(0, 210, 255, 0.5)', 'rgba(0, 170, 255, 0.4)');
+            
+            // Горлышко
+            draw3DDisk(0.9, 0.3, 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0.3)', 2);
+
+            // Отрисовка дырок в сухой банке
+            if (hasHoles) {
+                let pHoleIn = project(-1.0, 0, 0);
+                let pHoleOut = project(1.0, 0, 0);
+                ctx.fillStyle = '#ff3366';
+                ctx.beginPath(); ctx.arc(pHoleIn.x, pHoleIn.y, 4, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(pHoleOut.x, pHoleOut.y, 4, 0, Math.PI*2); ctx.fill();
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(pHoleIn.x-10, pHoleIn.y); ctx.lineTo(pHoleIn.x+10, pHoleIn.y);ctx.moveTo(pHoleIn.x, pHoleIn.y-10); ctx.lineTo(pHoleIn.x, pHoleIn.y+10);ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(pHoleOut.x-10, pHoleOut.y); ctx.lineTo(pHoleOut.x+10, pHoleOut.y);ctx.moveTo(pHoleOut.x, pHoleOut.y-10); ctx.lineTo(pHoleOut.x, pHoleOut.y+10);ctx.stroke();
+            }
         }
 
-        // 4. Стеклянный прибор (корпус колбы)
-        // Задние ребра стенок
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        draw3DCircle(baseBotY, radius, 'rgba(255, 255, 255, 0.25)');
-        draw3DCircle(baseTopY, radius, 'rgba(255, 255, 255, 0.2)');
-
-        // Вертикальные направляющие ребра колбы
-        const sides = [0, Math.PI/2, Math.PI, Math.PI*1.5];
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        sides.forEach(s => {
-            let pBot = project(Math.cos(s)*radius, baseBotY, Math.sin(s)*radius);
-            let pTop = project(Math.cos(s)*radius, baseTopY, Math.sin(s)*radius);
-            ctx.beginPath(); ctx.moveTo(pBot.x, pBot.y); ctx.lineTo(pTop.x, pTop.y); ctx.stroke();
+        // 4. Отрендерить летящие частицы осколков/брызг
+        particles.forEach(p => {
+            let pt = project(p.x, p.y, p.z);
+            ctx.fillStyle = p.type === 'water' ? `rgba(0, 180, 255, ${p.alpha})` : `rgba(255, 255, 255, ${p.alpha * 0.7})`;
+            ctx.beginPath();
+            if(p.type === 'water') {
+                ctx.arc(pt.x, pt.y, p.size, 0, Math.PI*2);
+            } else {
+                ctx.moveTo(pt.x, pt.y - p.size);
+                ctx.lineTo(pt.x + p.size, pt.y);
+                ctx.lineTo(pt.x, pt.y + p.size);
+                ctx.lineTo(pt.x - p.size, pt.y);
+            }
+            ctx.fill();
         });
 
-        // 5. Металлический Поршень
-        draw3DCircle(pistonY, radius - 2, '#444', '#777');
-        draw3DCircle(pistonY + 12, radius - 2, '#333', '#555');
+        // 5. КИНЕМАТОГРАФИЧЕСКАЯ ПУЛЯ И ТРЕК
+        if (bullet.active) {
+            let pBullet = project(bullet.x * 0.01, bullet.y, bullet.z);
+            let pTail = project((bullet.x - 25) * 0.01, bullet.y, bullet.z);
+            
+            let bGrad = ctx.createLinearGradient(pTail.x, pTail.y, pBullet.x, pBullet.y);
+            bGrad.addColorStop(0, 'rgba(255, 51, 102, 0)');
+            bGrad.addColorStop(1, 'rgba(255, 210, 0, 0.8)');
+            ctx.strokeStyle = bGrad; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(pTail.x, pTail.y); ctx.lineTo(pBullet.x, pBullet.y); ctx.stroke();
 
-        // 6. Пистолетная Рукоятка Нагнетания Давления
-        let gunY = pistonY + 12;
-        let pHandleBot = project(0, gunY, 0);
-        let pHandleTop = project(0, gunY + 60, 0);
-        
-        ctx.strokeStyle = '#888'; ctx.lineWidth = 8;
-        ctx.beginPath(); ctx.moveTo(pHandleBot.x, pHandleBot.y); ctx.lineTo(pHandleTop.x, pHandleTop.y); ctx.stroke();
-
-        let pGripEnd = project(25, gunY + 80, 0);
-        ctx.strokeStyle = '#ff3366'; ctx.lineWidth = 14;
-        ctx.beginPath(); ctx.moveTo(pHandleTop.x, pHandleTop.y); ctx.lineTo(pGripEnd.x, pGripEnd.y); ctx.stroke();
-
-        // 7. Отрисовка ПЕРЕДНИХ водяных струй (перекрывают колбу)
-        if (shotProgress > 0) {
-            ctx.strokeStyle = 'rgba(0, 190, 255, 0.9)';
-            ctx.lineWidth = 4;
-            const numStreams = 8;
-            for (let i = 0; i < numStreams; i++) {
-                let ang = (i / numStreams) * Math.PI * 2 + angleY;
-                if (Math.sin(ang) >= 0) { // Струи, летящие вперед на зрителя
-                    let streamLen = Math.sin(shotProgress) * 90;
-                    let pStart = project(Math.cos(ang) * radius, baseBotY, Math.sin(ang) * radius);
-                    let pEnd = project(Math.cos(ang) * (radius + streamLen), baseBotY - streamLen*0.2, Math.sin(ang) * (radius + streamLen));
-                    ctx.beginPath(); ctx.moveTo(pStart.x, pStart.y); ctx.lineTo(pEnd.x, pEnd.y); ctx.stroke();
-                }
-            }
+            ctx.fillStyle = '#ffcc00';
+            ctx.shadowBlur = 15; ctx.shadowColor = '#ff3366';
+            ctx.beginPath(); ctx.arc(pBullet.x, pBullet.y, 4, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0; 
         }
+
+        // 6. ИНТЕРАКТИВНЫЙ 3D ПИСТОЛЕТ
+        let pGunBase = project(-2.2, 0.2, 0);
+        gunScreenPos.x = pGunBase.x;
+        gunScreenPos.y = pGunBase.y;
+
+        ctx.save();
+        ctx.translate(pGunBase.x, pGunBase.y);
+        ctx.fillStyle = 'rgba(0, 210, 255, 0.04)';
+        ctx.beginPath(); ctx.arc(0, 0, gunScreenPos.radius, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = 'rgba(0, 210, 255, 0.2)'; 
+        ctx.stroke();
+
+        let gGrad = ctx.createLinearGradient(-30, -10, 20, 10);
+        gGrad.addColorStop(0, '#2c3e50'); gGrad.addColorStop(1, '#0f171e');
+        ctx.fillStyle = gGrad;
+        ctx.fillRect(-30, -6, 50, 12); 
+        ctx.fillStyle = '#ff3366';
+        ctx.fillRect(-25, 6, 12, 22); 
+        ctx.fillStyle = '#111';
+        ctx.fillRect(15, -4, 10, 8); 
+        ctx.restore();
     }
 
-    // Игровой цикл обновлений
     function animate() {
-        renderScene();
+        updatePhysics();
+        render();
         requestAnimationFrame(animate);
     }
 
-    // Старт движка при полной готовности страницы
     window.onload = init;
 </script>
 </body>
