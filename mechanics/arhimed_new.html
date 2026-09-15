@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сила Архимеда и условия плавания тел</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #ui-panel {
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+            padding: 15px 25px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        #ui-panel h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #0f172a;
+        }
+
+        #ui-panel h2 span.formula {
+            color: #16a34a;
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+        }
+
+        .dashboard {
+            display: flex;
+            gap: 20px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .p-val {
+            padding: 4px 15px;
+            border-radius: 20px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        #f-grav { background: #fee2e2; color: #991b1b; }
+        #f-arch { background: #dcfce7; color: #166534; }
+        #f-result { background: #f1f5f9; color: #475569; }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        button {
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        button:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+
+        button.active-mode {
+            background: #0284c7;
+            border-color: #0284c7;
+            color: #fff;
+        }
+        button.active-mode:hover {
+            background: #0369a1;
+        }
+
+        #simulation-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <h2>Сила Архимеда: <span class="formula">F<sub>А</sub> = &rho;<sub>ж</sub> &middot; g &middot; V<sub>п</sub></span></h2>
+        <div class="dashboard">
+            <div id="f-grav" class="p-val">Сила тяжести Fтяж: -- Н</div>
+            <div id="f-arch" class="p-val">Сила Архимеда FА: -- Н</div>
+            <div id="f-result" class="p-val">Итог: --</div>
+        </div>
+        <div class="controls">
+            <button id="btn-brick" class="active-mode" onclick="selectMaterial('brick')">🧱 Тяжёлый кирпич (Тонет)</button>
+            <button id="btn-foam" onclick="selectMaterial('foam')">🧼 Легкий пенопласт (Всплывает)</button>
+            <button id="btn-sub" onclick="selectMaterial('sub')">🐟 Рыба / Подлодка (Зависает)</button>
+        </div>
+    </div>
+
+    <div id="simulation-container">
+        <style>
+            /* Стенд лабораторной установки */
+            .archimedes-stand {
+                position: relative;
+                width: 360px;
+                height: 380px;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+            }
+
+            /* Аквариум с водой */
+            .aquarium {
+                position: relative;
+                width: 100%;
+                height: 320px;
+                border-left: 4px solid #475569;
+                border-right: 4px solid #475569;
+                border-bottom: 4px solid #475569;
+                background-color: rgba(14, 165, 233, 0.15);
+                z-index: 1;
+            }
+            /* Поверхность воды */
+            .water-line {
+                position: absolute;
+                top: 60px; /* Уровень воды в баке */
+                left: 0; right: 0;
+                height: 2px;
+                border-top: 2px dashed #0284c7;
+                z-index: 2;
+            }
+
+            /* --- ПОДВИЖНОЕ ТЕЛО --- */
+            .submerged-body {
+                position: absolute;
+                left: 50%;
+                width: 70px;
+                height: 55px;
+                transform: translateX(-50%);
+                border: 2px solid #1e293b;
+                border-radius: 4px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+                z-index: 5;
+                transition: bottom 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-weight: bold;
+                font-size: 11px;
+                color: #fff;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+            }
+            .body-brick { background-color: #b91c1c; content: 'Кирпич'; }
+            .body-foam { background-color: #e2e8f0; border-color: #94a3b8; color: #475569; text-shadow: none; }
+            .body-sub { background-color: #0d9488; border-radius: 20px; }
+
+            /* --- ГЛАВНЫЕ ВЕКТОРЫ СИЛ --- */
+            .force-arrow {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 26px;
+                font-weight: bold;
+                z-index: 10;
+                transition: all 1.5s ease;
+                text-align: center;
+                line-height: 1;
+            }
+            .arrow-grav { color: #000000; }  /* Сила тяжести строго черная */
+            .arrow-arch { color: #16a34a; }  /* Сила Архимеда зеленая */
+
+            /* --- ГИДРОСТАТИЧЕСКОЕ ДАВЛЕНИЕ НА ГРАНИ --- */
+            .pressure-indicator {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                color: #0284c7;
+                font-size: 18px;
+                font-weight: bold;
+                z-index: 4;
+                transition: all 1.5s ease;
+            }
+            .p-top { font-size: 14px; } /* Маленькое давление сверху */
+            .p-bottom { font-size: 24px; } /* Огромное давление снизу */
+        </style>
+
+        <div class="archimedes-stand">
+            <div class="aquarium">
+                <div class="water-line"></div>
+
+                <!-- Исследуемое физическое тело -->
+                <div id="physics-body" class="submerged-body body-brick" style="bottom: 4px;">Кирпич</div>
+
+                <!-- Главные силы: Тяжесть и Архимед -->
+                <div id="vector-grav" class="force-arrow arrow-grav">▼<br><span style="font-size:11px; font-weight:bold;">F<sub>тяж</sub></span></div>
+                <div id="vector-arch" class="force-arrow arrow-arch"><span style="font-size:11px; font-weight:bold;">F<sub>А</sub></span><br>▲</div>
+
+                <!-- Давление воды на грани (Пункт 1 из учебника) -->
+                <div id="press-top" class="pressure-indicator p-top">▼</div>
+                <div id="press-bot" class="pressure-indicator p-bottom">▲</div>
+            </div>
+        </div>
+    </div>
+<script>
+    // Физические константы симулятора Архимеда
+    const physicsData = {
+        brick: {
+            name: 'Кирпич',
+            className: 'submerged-body body-brick',
+            bottomPx: 4,               // Падает на самое дно аквариума
+            fGrav: 45,                 // Fтяж большая
+            fArch: 20,                 // FА маленькая (не может удержать)
+            resultText: 'Тело тонет: Fтяж > FА 🧱'
+        },
+        foam: {
+            name: 'Пенопласт',
+            className: 'submerged-body body-foam',
+            bottomPx: 235,             // Всплывает и плавает на поверхности (высота воды)
+            fGrav: 8,                  // Fтяж крошечная
+            fArch: 8,                  // В точке плавания FА уравновешивает Fтяж!
+            resultText: 'Тело всплыло и плавает: Fтяж = FА 🧼'
+        },
+        sub: {
+            name: 'Подлодка',
+            className: 'submerged-body body-sub',
+            bottomPx: 120,             // Зависает строго посередине толщи воды
+            fGrav: 25,                 // Силы идеально равны
+            fArch: 25,
+            resultText: 'Тело плавает внутри воды: Fтяж = FА 🐟'
+        }
+    };
+
+    function selectMaterial(type) {
+        // Меняем активный класс на кнопках управления
+        document.getElementById('btn-brick').className = type === 'brick' ? 'active-mode' : '';
+        document.getElementById('btn-foam').className = type === 'foam' ? 'active-mode' : '';
+        document.getElementById('btn-sub').className = type === 'sub' ? 'active-mode' : '';
+
+        const data = physicsData[type];
+        const body = document.getElementById('physics-body');
+
+        // 1. Запускаем анимацию перемещения тела
+        body.className = data.className;
+        body.innerText = data.name;
+        body.style.bottom = `${data.bottomPx}px`;
+
+        // 2. Выводим расчет сил Архимеда и тяжести в дашборд панели
+        document.getElementById('f-grav').innerText = `Сила тяжести Fтяж: ${data.fGrav} Н`;
+        document.getElementById('f-arch').innerText = `Сила Архимеда FА: ${data.fArch} Н`;
+        document.getElementById('f-result').innerText = `Итог: ${data.resultText}`;
+
+        // 3. Динамически пересчитываем длины и положения стрелок сил на теле
+        let vGrav = document.getElementById('vector-grav');
+        let vArch = document.getElementById('vector-arch');
+
+        // Центрируем векторы сил относительно текущего положения тела
+        let bodyCenterY = data.bottomPx + 27; // 27px - половина высоты тела
+        
+        vGrav.style.bottom = `${bodyCenterY - 40}px`; // Черная стрелка тянет вниз
+        vArch.style.bottom = `${bodyCenterY + 12}px`; // Зеленая стрелка толкает вверх
+
+        // Корректируем визуальный размер стрелок в зависимости от Ньютонов
+        vGrav.style.transform = `translateX(-50%) scaleY(${0.6 + data.fGrav * 0.02})`;
+        vArch.style.transform = `translateX(-50%) scaleY(${0.6 + data.fArch * 0.02})`;
+
+        // 4. Отрисовка перепада гидростатических давлений на грани (Пункт 1)
+        let pTop = document.getElementById('press-top');
+        let pBot = document.getElementById('press-bot');
+
+        if (type === 'foam') {
+            // Если тело вытолкнуто на поверхность, верхняя грань на воздухе (давление воды = 0)
+            pTop.style.opacity = "0";
+            pBot.style.bottom = `${data.bottomPx - 22}px`;
+        } else {
+            pTop.style.opacity = "1";
+            pTop.style.bottom = `${data.bottomPx + 58}px`; // стрелочка над верхней гранью
+            pBot.style.bottom = `${data.bottomPx - 26}px`; // стрелочка под нижней гранью
+        }
+    }
+
+    // Автоматический старт с тяжелого кирпича при загрузке страницы
+    window.onload = () => selectMaterial('brick');
+</script>
+</body>
+</html>
