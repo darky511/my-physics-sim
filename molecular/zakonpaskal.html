@@ -6,11 +6,13 @@
     <title>Закон Паскаля: Гидравлический Удар</title>
     <style>
         :root {
-            --bg-color: #f1f5f9;
-            --panel-bg: rgba(255, 255, 255, 0.9);
+            --bg-color: #f8fafc;
+            --sidebar-bg: #ffffff;
             --accent: #2563eb;
             --danger: #ef4444;
-            --text: #1e293b;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
         }
 
         body {
@@ -20,154 +22,183 @@
             height: 100vh;
             overflow: hidden;
             background-color: var(--bg-color);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-main);
             display: flex;
-            justify-content: center;
-            align-items: center;
-            touch-action: none; /* Блокируем скролл */
+            touch-action: none; /* Блокируем зум и скролл всей страницы */
         }
 
+        /* Область симуляции (Canvas) */
         #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            flex-grow: 1;
+            position: relative;
             z-index: 1;
+            cursor: crosshair; /* Курсор прицела */
         }
 
-        /* Панель управления */
-        .control-panel {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--panel-bg);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        /* Правая панель управления */
+        .control-sidebar {
+            width: 320px;
+            background: var(--sidebar-bg);
+            border-left: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            width: 90%;
-            max-width: 500px;
+            padding: 24px;
+            box-sizing: border-box;
             z-index: 10;
-            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: -4px 0 24px rgba(0,0,0,0.03);
+            overflow-y: auto;
         }
 
-        .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
+        .header-block {
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
         }
 
         h2 {
-            margin: 0;
+            margin: 0 0 8px 0;
             font-size: 18px;
             font-weight: 700;
-            text-align: center;
-            color: var(--text);
+            letter-spacing: -0.5px;
         }
 
         p.desc {
             margin: 0;
             font-size: 13px;
-            color: #64748b;
-            text-align: center;
-            line-height: 1.4;
+            color: var(--text-muted);
+            line-height: 1.5;
         }
 
-        /* Кнопки */
-        button {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 13px;
-            flex: 1;
+        /* Элементы управления */
+        .control-group {
+            margin-bottom: 24px;
         }
 
-        .btn-shoot {
-            background-color: var(--danger);
-            color: white;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-        }
-        .btn-shoot:active { transform: scale(0.95); }
-
-        .btn-fill {
-            background-color: var(--accent);
-            color: white;
-        }
-        
-        .btn-reset {
-            background-color: #e2e8f0;
-            color: var(--text);
-        }
-
-        /* Слайдер */
-        .slider-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            width: 100%;
-        }
-        
-        .slider-label {
-            font-size: 12px;
-            font-weight: 600;
+        .label-row {
             display: flex;
             justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-main);
         }
 
         input[type=range] {
             width: 100%;
-            accent-color: var(--text);
+            accent-color: var(--text-main);
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
         }
 
-        /* Индикатор состояния */
+        /* Кнопки */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        button:active { transform: scale(0.96); }
+
+        .btn-fill { background: #eff6ff; color: var(--accent); border: 1px solid #dbeafe; }
+        .btn-fill:hover { background: #dbeafe; }
+        .btn-fill:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-reset { background: #f1f5f9; color: var(--text-muted); border: 1px solid var(--border); }
+        .btn-reset:hover { background: #e2e8f0; color: var(--text-main); }
+
+        .btn-shoot {
+            width: 100%;
+            background: var(--danger);
+            color: white;
+            padding: 16px;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+        .btn-shoot:hover { background: #dc2626; box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3); }
+
+        /* Статус бар сверху (для мобильных или как доп. инфо) */
         .status-badge {
             position: absolute;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            z-index: 10;
-            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            pointer-events: none;
+            z-index: 5;
+            transition: all 0.3s;
         }
 
+        /* Адаптив для мобильных */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .control-sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+                border-left: none;
+                border-top: 1px solid var(--border);
+                padding: 16px;
+                order: 2; /* Панель снизу */
+            }
+            #canvas-container { order: 1; height: 60vh; }
+            .btn-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="status-badge" id="statusBadge">Режим: ПУСТАЯ БАНКА</div>
+    <!-- Область симуляции -->
     <div id="canvas-container"></div>
+    
+    <!-- Индикатор состояния (плавающий) -->
+    <div class="status-badge" id="statusBadge">Режим: ПУСТАЯ БАНКА</div>
 
-    <div class="control-panel">
-        <h2>Эксперимент: Закон Паскаля</h2>
-        <p class="desc" id="infoText">Выстрелите в пустую банку. Пуля пробьет только одну стенку.</p>
+    <!-- Правая панель -->
+    <div class="control-sidebar">
+        <div class="header-block">
+            <h2>Эксперимент: Закон Паскаля</h2>
+            <p class="desc" id="infoText">Выстрелите в пустую банку. Пуля пробьет только одну стенку, так как воздух сжимаем.</p>
+        </div>
         
-        <div class="slider-group">
-            <div class="slider-label">
+        <div class="control-group">
+            <div class="label-row">
                 <span>Мощность патрона</span>
                 <span id="powerVal">Средняя</span>
             </div>
             <input type="range" id="powerSlider" min="1" max="3" step="1" value="2">
         </div>
 
-        <div class="row">
+        <div class="btn-grid">
             <button class="btn-fill" id="fillBtn">Налить воду 💧</button>
             <button class="btn-reset" id="resetBtn">Сброс 🔄</button>
         </div>
+        
         <button class="btn-shoot" id="shootBtn">ВЫСТРЕЛ 🔫</button>
     </div>
 
@@ -190,11 +221,11 @@
     let width, height;
     let isWaterFilled = false;
     let isShot = false;
-    let bulletPower = 2; // 1 - малая, 2 - средняя, 3 - высокая
+    let bulletPower = 2; 
     let particles = [];
     let waterDrops = [];
     
-    // Параметры банки
+    // Параметры банки (будут масштабироваться)
     const canConfig = {
         w: 100,
         h: 140,
@@ -206,24 +237,29 @@
 
     // Инициализация размеров
     function resize() {
-        width = window.innerWidth;
-        height = window.innerHeight;
+        width = container.clientWidth;
+        height = container.clientHeight;
         canvas.width = width;
         canvas.height = height;
+        
+        // Центрируем банку в доступной области Canvas
         canConfig.x = width / 2;
-        canConfig.y = height / 2 + 50; // Чуть ниже центра
+        canConfig.y = height / 2 + 20; 
     }
+    
     window.addEventListener('resize', resize);
-    resize();
+    // Небольшая задержка для корректного расчета после загрузки DOM
+    setTimeout(resize, 50);
 
     // Классы частиц
     class Particle {
         constructor(x, y, type) {
             this.x = x;
             this.y = y;
-            this.type = type; // 'metal' or 'water'
+            this.type = type; 
             const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * (type === 'metal' ? 15 : 10) + 5;
+            // Скорость зависит от типа: металл тяжелее, вода легче и быстрее разлетается
+            const speed = Math.random() * (type === 'metal' ? 12 : 18) + 5;
             this.vx = Math.cos(angle) * speed;
             this.vy = Math.sin(angle) * speed;
             this.gravity = 0.4;
@@ -236,19 +272,19 @@
             this.y += this.vy;
             this.vy += this.gravity;
             
-            // Трение о воздух
+            // Трение
             this.vx *= 0.98;
             this.vy *= 0.98;
 
             if (this.type === 'water') {
-                this.life -= 0.01;
+                this.life -= 0.015;
             }
         }
 
         draw(ctx) {
             ctx.beginPath();
             if (this.type === 'metal') {
-                ctx.fillStyle = '#64748b';
+                ctx.fillStyle = '#475569';
                 ctx.fillRect(this.x, this.y, this.size, this.size);
             } else {
                 ctx.fillStyle = `rgba(56, 189, 248, ${this.life})`;
@@ -264,27 +300,26 @@
         isShot = true;
 
         if (!isWaterFilled) {
-            // ПУСТАЯ БАНКА: Просто дырка
+            // ПУСТАЯ БАНКА
             statusBadge.innerText = "Результат: Локальное повреждение";
-            infoText.innerText = "Пуля передала энергию только металлу в точке удара. Остальная часть банки осталась целой.";
+            statusBadge.style.color = "#1e293b";
+            infoText.innerText = "Пуля пробила отверстие только в точке входа. Воздух внутри сжался, но не передал разрушительную энергию стенкам.";
         } else {
-            // ПОЛНАЯ БАНКА: Взрыв по Паскалю
+            // ПОЛНАЯ БАНКА
             statusBadge.innerText = "Результат: ГИДРАВЛИЧЕСКИЙ УДАР!";
             statusBadge.style.color = "#ef4444";
-            infoText.innerText = "Вода несжимаема! Давление удара мгновенно передалось во все стороны (Закон Паскаля). Банка разорвалась изнутри.";
-            
-            // Создаем взрыв
+            infoText.innerText = "Вода практически несжимаема! Давление удара мгновенно передалось во все точки жидкости (Закон Паскаля). Банка разорвалась изнутри одновременно.";
             createExplosion();
         }
     }
 
     function createExplosion() {
-        // Осколки металла
-        for(let i=0; i<60; i++) {
+        // Осколки металла (меньше, но тяжелее)
+        for(let i=0; i<50; i++) {
             particles.push(new Particle(canConfig.x, canConfig.y, 'metal'));
         }
-        // Брызги воды
-        for(let i=0; i<150; i++) {
+        // Брызги воды (много и быстро)
+        for(let i=0; i<200; i++) {
             waterDrops.push(new Particle(canConfig.x, canConfig.y, 'water'));
         }
     }
@@ -293,9 +328,8 @@
     function draw() {
         ctx.clearRect(0, 0, width, height);
 
-        // Рисуем банку
+        // Рисуем банку, если она не взорвалась полностью (или если это пустая банка с дыркой)
         if (!isShot || !isWaterFilled) {
-            // Если не стреляли ИЛИ стреляли в пустую (она остается стоять с дыркой)
             ctx.save();
             ctx.translate(canConfig.x, canConfig.y);
             
@@ -304,44 +338,44 @@
             ctx.strokeStyle = '#475569';
             ctx.lineWidth = 3;
             
-            // Основная форма
             ctx.beginPath();
             ctx.rect(-canConfig.w/2, -canConfig.h/2, canConfig.w, canConfig.h);
             ctx.fill();
             ctx.stroke();
 
-            // Вода внутри (если налита)
+            // Вода внутри
             if (isWaterFilled) {
                 ctx.fillStyle = canConfig.waterColor;
                 ctx.fillRect(-canConfig.w/2 + 3, -canConfig.h/2 + 3, canConfig.w - 6, canConfig.h - 6);
                 
-                // Блики на воде
-                ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                ctx.fillRect(-canConfig.w/2 + 10, -canConfig.h/2 + 10, 10, canConfig.h - 20);
+                // Блики
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.fillRect(-canConfig.w/2 + 12, -canConfig.h/2 + 10, 8, canConfig.h - 20);
             }
 
-            // Дырка от пули (если стреляли в пустую)
+            // Дырка от пули (для пустой банки)
             if (isShot && !isWaterFilled) {
-                ctx.fillStyle = '#1e293b'; // Темная дыра
+                ctx.fillStyle = '#0f172a'; 
                 ctx.beginPath();
-                ctx.arc(-canConfig.w/2 + 15, 0, 6, 0, Math.PI*2); // Слева вход
+                // Входное отверстие слева
+                ctx.arc(-canConfig.w/2 + 10, 0, 5, 0, Math.PI*2); 
                 ctx.fill();
                 
                 // Трещины
                 ctx.strokeStyle = '#475569';
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.moveTo(-canConfig.w/2 + 15, 0);
-                ctx.lineTo(-canConfig.w/2 + 30, -10);
-                ctx.moveTo(-canConfig.w/2 + 15, 0);
-                ctx.lineTo(-canConfig.w/2 + 25, 15);
+                ctx.moveTo(-canConfig.w/2 + 10, 0);
+                ctx.lineTo(-canConfig.w/2 + 35, -15);
+                ctx.moveTo(-canConfig.w/2 + 10, 0);
+                ctx.lineTo(-canConfig.w/2 + 30, 20);
                 ctx.stroke();
             }
 
             ctx.restore();
         }
 
-        // Рисуем частицы взрыва
+        // Частицы взрыва
         particles.forEach(p => { p.update(); p.draw(ctx); });
         waterDrops.forEach((p, index) => {
             p.update();
@@ -352,14 +386,14 @@
         requestAnimationFrame(draw);
     }
 
-    // Обработчики кнопок
+    // Обработчики
     shootBtn.addEventListener('click', shoot);
     
     fillBtn.addEventListener('click', () => {
-        if(isShot) return; // Нельзя наливать после выстрела в этом демо
+        if(isShot) return;
         isWaterFilled = true;
         statusBadge.innerText = "Режим: БАНКА С ВОДОЙ";
-        infoText.innerText = "Вода налита. Теперь жидкость заполнила всё пространство. Попробуйте выстрелить!";
+        infoText.innerText = "Вода налита. Жидкость заполнила весь объем. Теперь попробуйте выстрелить!";
         fillBtn.disabled = true;
         fillBtn.style.opacity = 0.5;
     });
@@ -370,7 +404,7 @@
         particles = [];
         waterDrops = [];
         statusBadge.innerText = "Режим: ПУСТАЯ БАНКА";
-        statusBadge.style.color = "var(--text)";
+        statusBadge.style.color = "#1e293b";
         infoText.innerText = "Выстрелите в пустую банку. Пуля пробьет только одну стенку.";
         fillBtn.disabled = false;
         fillBtn.style.opacity = 1;
@@ -383,7 +417,7 @@
         powerVal.innerText = labels[val-1];
     });
 
-    // Запуск анимации
+    // Запуск
     draw();
 
 </script>
