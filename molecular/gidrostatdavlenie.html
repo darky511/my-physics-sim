@@ -130,9 +130,8 @@
         </div>
     </div>
 
-    <div id="simulation-container">
-        <!-- Сюда инжектируется сплит-симуляция -->
-    </div>
+    <div id="simulation-container"></div>
+
 <script>
     const container = document.getElementById('simulation-container');
     let canvas, ctx;
@@ -144,10 +143,10 @@
     let previousMousePosition = { x: 0, y: 0 };
 
     // Состояние интерактивной башни
-    let acrobatCount = 1; // Минимум 1 нижний акробат
+    let acrobatCount = 1; 
     const maxAcrobats = 5;
-    let targetCubeY = -1.0; // Целевая глубина куба
-    let currentCubeY = -1.0; // Интерполированная глубина для плавности анимации
+    let targetCubeY = -1.0; 
+    let currentCubeY = -1.0; 
 
     function init() {
         canvas = document.createElement('canvas');
@@ -157,7 +156,6 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Вращение сцены мышкой во все стороны
         canvas.addEventListener('mousedown', (e) => {
             isDragging = true;
             previousMousePosition = { x: e.clientX, y: e.clientY };
@@ -175,7 +173,6 @@
 
         window.addEventListener('mouseup', () => isDragging = false);
 
-        // Управление акробатами
         document.getElementById('add-btn').onclick = () => {
             if (acrobatCount < maxAcrobats) {
                 acrobatCount++;
@@ -193,23 +190,17 @@
         updateLinkedPhysics();
         animate();
     }
-
     function resizeCanvas() {
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
     }
 
-    // Связанная физика: больше акробатов -> куб уходит глубже
     function updateLinkedPhysics() {
-        // Рассчитываем глубину куба (от -1.0 у поверхности до -2.3 на дне)
         targetCubeY = -0.9 - (acrobatCount - 1) * 0.35;
-        
-        // Вывод давления в интерфейс (имитируем расчет p = rho * g * h)
         let simulatedPressure = acrobatCount * 2450; 
         document.getElementById('formula-display').innerText = `Текущее давление p = ${simulatedPressure} Па`;
     }
 
-    // Матрица проекции 3D координат в 2D пиксели экрана с учетом смещения центра (centerX, centerY)
     function project(x, y, z, centerX, centerY) {
         let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
         let x1 = x * cosY - z * sinY;
@@ -228,7 +219,6 @@
         };
     }
 
-    // Отрисовка стрелки давления в 3D пространстве
     function draw3DArrow(pStart, pEnd, color) {
         let pt1 = project(pStart.x, pStart.y, pStart.z, canvas.width * 0.75, canvas.height / 2 + 80);
         let pt2 = project(pEnd.x, pEnd.y, pEnd.z, canvas.width * 0.75, canvas.height / 2 + 80);
@@ -240,7 +230,6 @@
         ctx.lineTo(pt2.x, pt2.y);
         ctx.stroke();
 
-        // Наконечник стрелки
         let angle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x);
         ctx.fillStyle = color;
         ctx.beginPath();
@@ -250,10 +239,8 @@
         ctx.closePath();
         ctx.fill();
     }
-    // Отрисовка полноценного 3D куба на основе его центральной координаты Y
     function draw3DCube(cy, size, waterLevelY) {
         let half = size / 2;
-        // Ограничиваем отрисовку куба под водой, если он уходит ниже дна аквариума
         let vertices = [
             {x: -half, y: cy + half, z: -half}, {x: half, y: cy + half, z: -half},
             {x: half, y: cy - half, z: -half}, {x: -half, y: cy - half, z: -half},
@@ -263,45 +250,37 @@
 
         let screenPts = vertices.map(v => project(v.x, v.y, v.z, canvas.width * 0.75, canvas.height / 2 + 80));
 
-        // Грани куба (индексы вершин)
-        let faces = [, [4, 5, 6, 7], [0, 4, 7, 3],
-, [0, 1, 5, 4], [3, 2, 6, 7]
+        // Исправленные индексы граней куба
+        let faces = [, [4, 5, 6, 7], [0, 1, 5, 4],
+, [0, 3, 7, 4], [1, 2, 6, 5]
         ];
 
-        // Отрисовка граней измерительного кубика
-        faces.forEach((face, index) => {
+        faces.forEach(face => {
             ctx.beginPath();
             ctx.moveTo(screenPts[face[0]].x, screenPts[face[0]].y);
             for(let i = 1; i < 4; i++) ctx.lineTo(screenPts[face[i]].x, screenPts[face[i]].y);
             ctx.closePath();
             
-            // Полупрозрачный премиальный оранжевый цвет куба
-            ctx.fillStyle = 'rgba(245, 158, 11, 0.45)';
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.5)';
             ctx.fill();
             ctx.strokeStyle = '#d97706';
             ctx.lineWidth = 1.5;
             ctx.stroke();
         });
 
-        // СТРЕЛКИ ДАВЛЕНИЯ ПО ЗАКОНУ ПАСКАЛЯ (чем глубже куб, тем они длиннее!)
         let depthMultiplier = Math.abs(cy - waterLevelY) * 0.55;
         let arrowLen = 0.2 + depthMultiplier;
 
-        // 1. Давление сверху
         draw3DArrow({x: 0, y: cy + half + arrowLen, z: 0}, {x: 0, y: cy + half, z: 0}, '#ef4444');
-        // 2. Давление снизу (оно больше, так как низ глубже!)
         draw3DArrow({x: 0, y: cy - half - (arrowLen + 0.15), z: 0}, {x: 0, y: cy - half, z: 0}, '#ef4444');
-        // 3. Давление по бокам (сжимает барабанные перепонки сбоку)
         draw3DArrow({x: -half - arrowLen, y: cy, z: 0}, {x: -half, y: cy, z: 0}, '#ef4444');
         draw3DArrow({x: half + arrowLen, y: cy, z: 0}, {x: half, y: cy, z: 0}, '#ef4444');
     }
 
-    // Отрисовка схематичного, но понятного 3D человечка-акробата
     function draw3DAcrobat(bx, by, bz, isStraining) {
         let cX = canvas.width * 0.25;
         let cY = canvas.height / 2 + 80;
 
-        // Небольшое покачивание/тряска нижнего акробата от тяжести
         let shake = isStraining ? (Math.random() * 0.015 - 0.007) : 0;
         let x = bx + shake;
 
@@ -317,14 +296,12 @@
         ctx.strokeStyle = isStraining ? `rgb(${200 + Math.sin(Date.now()*0.05)*55}, 50, 50)` : '#334155';
         ctx.lineCap = 'round';
 
-        // Туловище и конечности
         ctx.beginPath(); ctx.moveTo(spineTop.x, spineTop.y); ctx.lineTo(spineBot.x, spineBot.y); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(spineTop.x, spineTop.y); ctx.lineTo(handL.x, handL.y); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(spineTop.x, spineTop.y); ctx.lineTo(handR.x, handR.y); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(spineBot.x, spineBot.y); ctx.lineTo(legL.x, legL.y); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(spineBot.x, spineBot.y); ctx.lineTo(legR.x, legR.y); ctx.stroke();
 
-        // Голова
         ctx.fillStyle = isStraining ? '#f87171' : '#64748b';
         ctx.beginPath(); ctx.arc(head.x, head.y, 8, 0, Math.PI * 2); ctx.fill();
         ctx.stroke();
@@ -333,39 +310,33 @@
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // РАЗДЕЛИТЕЛЬНАЯ ЛИНИЯ ПОСЕРЕДИНЕ СЦЕНЫ
         ctx.strokeStyle = '#e2e8f0';
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(canvas.width / 2, 0); ctx.lineTo(canvas.width / 2, canvas.height); ctx.stroke();
 
-        // --- ЛЕВАЯ ЧАСТЬ: АКРОБАТЫ ---
         ctx.font = 'bold 14px sans-serif'; ctx.fillStyle = '#64748b';
         ctx.fillText("ЖИВАЯ ПИРАМИДА (СЛОИ МОЛЕКУЛ)", 30, 40);
         
-        // Отрисовка пола слева
         ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
         let floorL1 = project(-1.5, -0.5, 0, canvas.width * 0.25, canvas.height / 2 + 80);
         let floorL2 = project(1.5, -0.5, 0, canvas.width * 0.25, canvas.height / 2 + 80);
         ctx.beginPath(); ctx.moveTo(floorL1.x, floorL1.y); ctx.lineTo(floorL2.x, floorL2.y); ctx.stroke();
 
-        // Строим башню из акробатов
+        // ИСПРАВЛЕНО ИМЯ ФУНКЦИИ В ЦИКЛЕ
         for (let i = 0; i < acrobatCount; i++) {
-            let heightOffset = i * 0.95; // Каждый следующий стоит на плечах предыдущего
-            let isBottom = (i === 0 && acrobatCount > 1); // Трясется ли нижний от веса всей башни
-            drawDAcrobat(0, -0.05 + heightOffset, 0, isBottom);
+            let heightOffset = i * 0.95; 
+            let isBottom = (i === 0 && acrobatCount > 1); 
+            draw3DAcrobat(0, -0.05 + heightOffset, 0, isBottom);
         }
 
-        // --- ПРАВАЯ ЧАСТЬ: ГИДРОСТАТИКА ---
         ctx.fillStyle = '#64748b';
         ctx.fillText("СТОЛБ ЖИДКОСТИ И ДАВЛЕНИЕ НА ТЕЛО", canvas.width / 2 + 30, 40);
 
-        // Интерполяция движения кубика под водой
         currentCubeY += (targetCubeY - currentCubeY) * 0.08;
 
         const waterTopY = -0.6;
         const aquariumBotY = -2.6;
 
-        // Рисуем заднюю стенку аквариума и воду полупрозрачным слоем
         ctx.fillStyle = 'rgba(14, 165, 233, 0.15)';
         let w1 = project(-1.2, waterTopY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
         let w2 = project(1.2, waterTopY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
@@ -373,10 +344,8 @@
         let w4 = project(-1.2, aquariumBotY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
         ctx.beginPath(); ctx.moveTo(w1.x, w1.y); ctx.lineTo(w2.x, w2.y); ctx.lineTo(w3.x, w3.y); ctx.lineTo(w4.x, w4.y); ctx.closePath(); ctx.fill();
 
-        // Отрисовка измерительного 3D куба внутри воды
         draw3DCube(currentCubeY, 0.45, waterTopY);
 
-        // Передние стеклянные грани аквариума (накладываются поверх куба)
         ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
         let g1 = project(-1.2, waterTopY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
         let g2 = project(1.2, waterTopY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
