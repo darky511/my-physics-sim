@@ -64,7 +64,6 @@
             gap: 4px;
             text-align: center;
         }
-        /* ФИКС: Короткие и строгие названия плашек */
         #dash-left { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         #dash-right { background: #fef9c3; color: #a16207; border: 1px solid #fef08a; }
 
@@ -192,34 +191,35 @@
                     position: absolute; bottom: -8px; width: 14px; height: 14px; background: #334155; border-radius: 50%;
                 }
 
-                /* --- ФИКС ВЕКТОРОВ СИЛ: ЖЕСТКАЯ И ПРАВИЛЬНАЯ ПРИВЯЗКА К ТОЧКАМ --- */
-                
-                /* Сила двигателя привязана К СЕРЕДИНЕ ПРАВОГО БОКА ящика */
+                /* --- ФИКС ВЕКТОРОВ СИЛ: ТЕПЕРЬ ОНИ АВТОМАТИЧЕСКИ ПЕРЕВЕРТЫВАЮТСЯ --- */
                 .v-engine-box {
                     position: absolute;
-                    right: -45px;
                     top: 20px;
                     color: #16a34a;
                     font-weight: bold;
                     font-size: 16px;
                     line-height: 1.1;
                 }
+                /* Начальное положение при движении вправо */
+                .v-engine-right { right: -45px; left: auto; }
+                .v-engine-left { left: -45px; right: auto; }
 
-                /* Сила трения привязана К САМОМУ ДНУ (к границе соприкосновения с дорогой) */
                 .v-friction-box {
                     position: absolute;
-                    left: -45px;
-                    bottom: -2px; /* Четко на линии стыка */
+                    bottom: -2px; 
                     color: #1e293b;
                     font-weight: bold;
                     font-size: 16px;
                     line-height: 1.1;
-                    text-align: right;
                 }
+                /* Начальное положение при движении вправо */
+                .v-friction-left { left: -45px; right: auto; text-align: right; }
+                .v-friction-right { right: -45px; left: auto; text-align: left; }
 
+                /* Плашка текущего направления перемещения S */
                 .s-indicator-box {
                     position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-                    font-weight: 700; font-size: 15px; color: #0284c7; background: #e0f2fe; padding: 2px 12px; border-radius: 10px; display: none;
+                    font-weight: 700; font-size: 15px; padding: 2px 12px; border-radius: 10px; display: none;
                 }
             </style>
 
@@ -231,17 +231,17 @@
                     <div class="crate-wheel" style="left: 8px;"></div>
                     <div class="crate-wheel" style="right: 8px;"></div>
                     
-                    <!-- Стрелка двигателя: на боку -->
-                    <div class="v-engine-box">➔<br><span style="font-size:10px; font-weight:bold;">F<sub>двиг</sub></span></div>
+                    <!-- Стрелка двигателя: динамические классы добавятся из JS -->
+                    <div id="arrow-eng" class="v-engine-box v-engine-right"><span id="txt-eng-arrow">➔</span><br><span style="font-size:10px; font-weight:bold;">F<sub>двиг</sub></span></div>
                     
-                    <!-- Стрелка трения: строго на стыке колес и земли -->
-                    <div class="v-friction-box">◀<br><span style="font-size:10px; font-weight:bold;">F<sub>трен</sub></span></div>
+                    <!-- Стрелка трения: строго на границе соприкосновения колес и земли -->
+                    <div id="arrow-fric" class="v-friction-box v-friction-left"><span id="txt-fric-arrow">◀</span><br><span style="font-size:10px; font-weight:bold;">F<sub>трен</sub></span></div>
                 </div>
             </div>
             
             <div style="font-size: 12px; color: #64748b; text-align: center; width: 90%; font-weight: 500; line-height: 1.4;">
                 💡 <b>Интерактив:</b> Перетаскивай ящик мышкой влево-вправо!<br>
-                По направлению движения: <b>A &gt; 0</b> (положительная). Против движения: <b>A &lt; 0</b> (отрицательная). Без движения: <b>A = 0</b>.
+                Сила двигателя всегда совпадает с ходом тела, а сила трения всегда мешает и направлена против него.
             </div>
         </div>
 
@@ -312,6 +312,11 @@
     const sLabel = document.getElementById('s-motion-label');
     const mathWork = document.getElementById('math-work');
 
+    const arrowEng = document.getElementById('arrow-eng');
+    const arrowFric = document.getElementById('arrow-fric');
+    const txtEng = document.getElementById('txt-eng-arrow');
+    const txtFric = document.getElementById('txt-fric-arrow');
+
     let isDragging = false;
     let startX = 0;
     let crateLeftStart = 140;
@@ -335,39 +340,44 @@
 
         crate.style.left = newLeft + 'px';
 
-        if (Math.abs(deltaX) < 3) {
+        if (Math.abs(deltaX) < 4) {
+            // Без перемещения: работа равна нулю
             sLabel.style.display = "none";
-            mathWork.innerHTML = `S = 0 м &rarr; <span style="color:#dc2626; font-size:15px;"><b>A<sub>двиг</sub> = 0 Дж</b></span> и <span style="color:#dc2626; font-size:15px;"><b>A<sub>трен</sub> = 0 Дж</b></span>`;
+            mathWork.innerHTML = `Перемещение S = 0 &rarr; <span style="color:#dc2626; font-size:15px;"><b>A<sub>двиг</sub> = 0</b></span> и <span style="color:#dc2626; font-size:15px;"><b>A<sub>трен</sub> = 0</b></span>`;
         } else if (deltaX > 0) {
+            // --- ТЯНЕМ ВПРАВО ---
+            // Голубая плашка направления движения
             sLabel.style.display = "block";
             sLabel.innerText = "Перемещение S ➔";
             sLabel.style.background = "#e0f2fe"; sLabel.style.color = "#0284c7";
 
-            let path = (deltaX * 0.01).toFixed(2); 
-            let aEngine = Math.round(100 * path);
-            let aFriction = -aEngine;
+            // Силы: Двигатель вправо (совпадает с ходом), Трение влево (сопротивляется)
+            arrowEng.className = "v-engine-box v-engine-right"; txtEng.innerText = "➔";
+            arrowFric.className = "v-friction-box v-friction-left"; txtFric.innerText = "◀";
 
             mathWork.innerHTML = `
                 <div style="line-height:1.4">
-                    <div>Ящик едет <b>ВПРАВО</b> (S = ${path} м):</div>
-                    <div>Работа двигателя: A = F&middot;S = <span style="color:#16a34a;"><b>+${aEngine} Дж (A &gt; 0)</b></span></div>
-                    <div>Работа трения: A = -F&middot;S = <span style="color:#dc2626;"><b>${aFriction} Дж (A &lt; 0)</b></span></div>
+                    <div>Ящик перемещается <b>ВПРАВО</b>:</div>
+                    <div>Работа двигателя: <span style="color:#16a34a;"><b>A<sub>двиг</sub> &gt; 0 (Положительная)</b></span></div>
+                    <div>Работа трения: <span style="color:#dc2626;"><b>A<sub>трен</sub> &lt; 0 (Отрицательная)</b></span></div>
                 </div>
             `;
         } else {
+            // --- ТЯНЕМ ВЛЕВО ---
+            // Голубая (розовая для контраста направления) плашка направления движения влево
             sLabel.style.display = "block";
             sLabel.innerText = "◀ Перемещение S";
             sLabel.style.background = "#fee2e2"; sLabel.style.color = "#991b1b";
 
-            let path = (Math.abs(deltaX) * 0.01).toFixed(2);
-            let aEngine = -Math.round(100 * path);
-            let aFriction = Math.abs(aEngine);
+            // Силы переворачиваются вслед за ходом! Двигатель влево, Трение вправо (сопротивляется)
+            arrowEng.className = "v-engine-box v-engine-left"; txtEng.innerText = "◀";
+            arrowFric.className = "v-friction-box v-friction-right"; txtFric.innerText = "➔";
 
             mathWork.innerHTML = `
                 <div style="line-height:1.4">
-                    <div>Ящик едет <b>ВЛЕВО</b> (S = ${path} м):</div>
-                    <div>Работа двигателя: A = -F&middot;S = <span style="color:#dc2626;"><b>${aEngine} Дж (A &lt; 0)</b></span></div>
-                    <div>Работа трения: A = F&middot;S = <span style="color:#16a34a;"><b>+${aFriction} Дж (A &gt; 0)</b></span></div>
+                    <div>Ящик перемещается <b>ВЛЕВО</b>:</div>
+                    <div>Работа двигателя: <span style="color:#16a34a;"><b>A<sub>двиг</sub> &gt; 0 (Положительная)</b></span></div>
+                    <div>Работа трения: <span style="color:#dc2626;"><b>A<sub>трен</sub> &lt; 0 (Отрицательная)</b></span></div>
                 </div>
             `;
         }
@@ -378,7 +388,7 @@
             isDragging = false;
             document.body.style.cursor = 'default';
             sLabel.style.display = "none";
-            mathWork.innerHTML = `Движение остановлено (S = 0 м) &rarr; <span style="color:#475569;"><b>A = 0 Дж</b></span>. Подвигайте снова!`;
+            mathWork.innerHTML = `Движение остановлено (S = 0) &rarr; <span style="color:#475569;"><b>A = 0</b></span>. Подвигайте снова!`;
         }
     });
 
