@@ -164,7 +164,6 @@
                     align-items: flex-end;
                 }
                 
-                /* Деревянный ящик */
                 .draggable-crate {
                     position: absolute;
                     bottom: 0;
@@ -191,7 +190,7 @@
                     position: absolute; bottom: -8px; width: 14px; height: 14px; background: #334155; border-radius: 50%;
                 }
 
-                /* --- ФИКС ВЕКТОРОВ СИЛ: ТЕПЕРЬ ОНИ АВТОМАТИЧЕСКИ ПЕРЕВЕРТЫВАЮТСЯ --- */
+                /* Стили векторов сил с абсолютным позиционированием относительно ящика */
                 .v-engine-box {
                     position: absolute;
                     top: 20px;
@@ -200,9 +199,8 @@
                     font-size: 16px;
                     line-height: 1.1;
                 }
-                /* Начальное положение при движении вправо */
-                .v-engine-right { right: -45px; left: auto; }
-                .v-engine-left { left: -45px; right: auto; }
+                .v-engine-right { right: -45px; left: auto; text-align: left; }
+                .v-engine-left { left: -45px; right: auto; text-align: right; }
 
                 .v-friction-box {
                     position: absolute;
@@ -212,11 +210,10 @@
                     font-size: 16px;
                     line-height: 1.1;
                 }
-                /* Начальное положение при движении вправо */
                 .v-friction-left { left: -45px; right: auto; text-align: right; }
                 .v-friction-right { right: -45px; left: auto; text-align: left; }
 
-                /* Плашка текущего направления перемещения S */
+                /* Плашка перемещения S */
                 .s-indicator-box {
                     position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
                     font-weight: 700; font-size: 15px; padding: 2px 12px; border-radius: 10px; display: none;
@@ -231,17 +228,15 @@
                     <div class="crate-wheel" style="left: 8px;"></div>
                     <div class="crate-wheel" style="right: 8px;"></div>
                     
-                    <!-- Стрелка двигателя: динамические классы добавятся из JS -->
+                    <!-- Стрелка двигателя и трения с динамическим переключением классов -->
                     <div id="arrow-eng" class="v-engine-box v-engine-right"><span id="txt-eng-arrow">➔</span><br><span style="font-size:10px; font-weight:bold;">F<sub>двиг</sub></span></div>
-                    
-                    <!-- Стрелка трения: строго на границе соприкосновения колес и земли -->
                     <div id="arrow-fric" class="v-friction-box v-friction-left"><span id="txt-fric-arrow">◀</span><br><span style="font-size:10px; font-weight:bold;">F<sub>трен</sub></span></div>
                 </div>
             </div>
             
             <div style="font-size: 12px; color: #64748b; text-align: center; width: 90%; font-weight: 500; line-height: 1.4;">
-                💡 <b>Интерактив:</b> Перетаскивай ящик мышкой влево-вправо!<br>
-                Сила двигателя всегда совпадает с ходом тела, а сила трения всегда мешает и направлена против него.
+                💡 <b>Интерактив:</b> Перетаскивай ящик мышкой в любую сторону!<br>
+                Направление силы двигателя всегда совпадает с вектором мгновенного хода, а трение всегда направлено против него.
             </div>
         </div>
 
@@ -318,40 +313,44 @@
     const txtFric = document.getElementById('txt-fric-arrow');
 
     let isDragging = false;
-    let startX = 0;
-    let crateLeftStart = 140;
+    let lastX = 0; // Переменная для записи координаты ПРЕДЫДУЩЕГО кадра движения
 
     crate.addEventListener('mousedown', (e) => {
         isDragging = true;
-        startX = e.clientX;
-        crateLeftStart = parseInt(window.getComputedStyle(crate).left) || 140;
+        lastX = e.clientX; // Фиксируем стартовую точку
         document.body.style.cursor = 'grabbing';
     });
 
     window.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
         
-        let deltaX = e.clientX - startX;
-        let newLeft = crateLeftStart + deltaX;
+        // Считаем мгновенный шаг мыши (текущий кадр минус предыдущий кадр)
+        let instantDeltaX = e.clientX - lastX;
+        
+        // Если движение слишком микроскопическое (дрожание руки) — не обрабатываем
+        if (Math.abs(instantDeltaX) < 1) return;
 
+        let currentLeft = parseInt(window.getComputedStyle(crate).left) || 140;
+        let newLeft = currentLeft + instantDeltaX;
+
+        // Ограничители дороги
         let maxRight = railZone.clientWidth - crate.clientWidth - 10;
         if (newLeft < 10) newLeft = 10;
         if (newLeft > maxRight) newLeft = maxRight;
 
         crate.style.left = newLeft + 'px';
+        
+        // Перезаписываем позицию для следующего кадра анимации
+        lastX = e.clientX;
 
-        if (Math.abs(deltaX) < 4) {
-            // Без перемещения: работа равна нулю
-            sLabel.style.display = "none";
-            mathWork.innerHTML = `Перемещение S = 0 &rarr; <span style="color:#dc2626; font-size:15px;"><b>A<sub>двиг</sub> = 0</b></span> и <span style="color:#dc2626; font-size:15px;"><b>A<sub>трен</sub> = 0</b></span>`;
-        } else if (deltaX > 0) {
-            // --- ТЯНЕМ ВПРАВО ---
-            // Голубая плашка направления движения
+        // ФИЗИЧЕСКИЙ АНАЛИЗ НАПРАВЛЕНИЯ КИНЕМАТИКИ ИЗ ЛЮБОЙ ТОЧКИ ЭКРАНА
+        if (instantDeltaX > 0) {
+            // --- МГНОВЕННОЕ ДВИЖЕНИЕ ВПРАВО (Из любой точки) ---
             sLabel.style.display = "block";
             sLabel.innerText = "Перемещение S ➔";
             sLabel.style.background = "#e0f2fe"; sLabel.style.color = "#0284c7";
 
-            // Силы: Двигатель вправо (совпадает с ходом), Трение влево (сопротивляется)
+            // Двигатель тянет по ходу (вправо), Трение мешает (влево)
             arrowEng.className = "v-engine-box v-engine-right"; txtEng.innerText = "➔";
             arrowFric.className = "v-friction-box v-friction-left"; txtFric.innerText = "◀";
 
@@ -362,14 +361,13 @@
                     <div>Работа трения: <span style="color:#dc2626;"><b>A<sub>трен</sub> &lt; 0 (Отрицательная)</b></span></div>
                 </div>
             `;
-        } else {
-            // --- ТЯНЕМ ВЛЕВО ---
-            // Голубая (розовая для контраста направления) плашка направления движения влево
+        } else if (instantDeltaX < 0) {
+            // --- МГНОВЕННОЕ ДВИЖЕНИЕ ВЛЕВО (Из любой точки) ---
             sLabel.style.display = "block";
             sLabel.innerText = "◀ Перемещение S";
-            sLabel.style.background = "#fee2e2"; sLabel.style.color = "#991b1b";
+            sLabel.style.background = "#e0f2fe"; sLabel.style.color = "#0284c7"; // Строго ГОЛУБАЯ плашка по ТЗ
 
-            // Силы переворачиваются вслед за ходом! Двигатель влево, Трение вправо (сопротивляется)
+            // Двигатель тянет по ходу (влево), Трение мешает (вправо)
             arrowEng.className = "v-engine-box v-engine-left"; txtEng.innerText = "◀";
             arrowFric.className = "v-friction-box v-friction-right"; txtFric.innerText = "➔";
 
