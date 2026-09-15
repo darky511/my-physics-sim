@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Закон Паскаля: Гидравлический удар</title>
+    <style>
+        html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; touch-action: none; position: fixed; }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        .ui-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 400px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 20px; box-sizing: border-box; z-index: 10; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .ui-title { font-size: 16px; font-weight: 600; color: #fff; margin: 0 0 4px 0; text-align: center; letter-spacing: -0.3px; }
+        .ui-subtitle { font-size: 11px; color: #cbd5e1; margin: 0 0 16px 0; text-align: center; line-height: 1.4; }
+        
+        .slider-container { display: flex; flex-direction: column; gap: 8px; }
+        .slider-label { display: flex; justify-content: space-between; font-size: 12px; color: #f1f5f9; font-weight: 500; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #38bdf8; cursor: pointer; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+        
+        .reset-btn { margin-top: 15px; width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 12px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .reset-btn:active { background: rgba(255,255,255,0.2); }
+
+        .hint { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.08); padding: 8px 16px; border-radius: 20px; font-size: 11px; color: #fff; pointer-events: none; z-index: 10; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(5px); text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="hint">Дави на поршень, чтобы увидеть закон Паскаля</div>
+<div id="canvas-container"></div>
+
+<div class="ui-panel">
+    <div class="ui-title" id="statusTitle">Банка цела</div>
+    <div class="ui-subtitle" id="statusDesc">Давление равномерно распределено по всему объему воды.</div>
+    
+    <div class="slider-container">
+        <div class="slider-label">
+            <span>Сила воздействия (Н)</span>
+            <span id="forceVal">0 N</span>
+        </div>
+        <input type="range" id="forceSlider" min="0" max="100" step="1" value="0">
+    </div>
+    
+    <button class="reset-btn" id="resetBtn">Собрать банку заново</button>
+</div>
+
+<script>
+    const container = document.getElementById('canvas-container');
+    const canvas = document.createElement('canvas');
+    container.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    
+    // Адаптивные переменные
+    let dynamicScale = 1.0;
+    let centerY = 0;
+    let centerX = 0;
+
+    function updateDimensions() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        centerX = width / 2;
+        // На мобильных поднимаем центр чуть выше, чтобы было место для панели
+        centerY = height < width ? height * 0.4 : height * 0.5;
+        
+        // Масштаб под экран
+        dynamicScale = Math.min(width, height) / 500; 
+    }
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    // Состояние симуляции
+    let force = 0;
+    let isExploded = false;
+    let explosionTime = 0;
+    
+    // Параметры банки
+    const canWidth = 120;
+    const canHeight = 160;
+    const wallThickness = 4;
+    const maxPressure = 85; // Порог взрыва
+    
+    // Частицы для взрыва
+    const particles = [];
+    const waterDrops = [];
+
+    // Инициализация частиц взрыва
+    function initExplosion() {
+        particles.length = 0;
+        waterDrops.length = 0;
+        
+        // Осколки металла
+        for(let i=0; i<40; i++) {
+            particles.push({
+                x: centerX + (Math.random()-0.5)*canWidth,
+                y: centerY + (Math.random()-0.5)*canHeight,
+                vx: (Math.random()-0.5) * 15,
+                vy: (Math.random()-0.5) * 15,
+                size: Math.random() * 4 + 2,
+                color: '#94a3b8'
+            });
+        }
+        // Капли воды
+        for(let i=0; i<60; i++) {
+            waterDrops.push({
+                x: centerX + (Math.random()-0.5)*(canWidth-10),
+                y: centerY + (Math.random()-0.5)*(canHeight-10),
+                vx: (Math.random()-0.5) * 20,
+                vy: (Math.random()-0.5) * 20,
+                size: Math.random() * 3 + 1,
+                alpha: 1
+            });
+        }
+    }
+
+    // Управление
+    const slider = document.getElementById('forceSlider');
+    const forceVal = document.getElementById('forceVal');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusDesc = document.getElementById('statusDesc');
+    const resetBtn = document.getElementById('resetBtn');
+
+    slider.addEventListener('input', (e) => {
+        if(isExploded) return;
+        force = parseFloat(e.target.value);
+        forceVal.innerText = force + " N";
+        
+        if(force > maxPressure) {
+            explode();
+        } else {
+            updateStatusSafe();
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        isExploded = false;
+        force = 0;
+        slider.value = 0;
+        forceVal.innerText = "0 N";
+        updateStatusSafe();
+    });
+
+    function updateStatusSafe() {
+        statusTitle.innerText = "Банка цела";
+        statusTitle.style.color = "#fff";
+        if(force < 30) {
+            statusDesc.innerText = "Слабое давление. Молекулы воды лишь слегка сжимаются.";
+        } else if (force < 70) {
+            statusDesc.innerText = "Давление растет! По закону Паскаля оно уже давит на все стенки одинаково.";
+        } else {
+            statusDesc.innerText = "Критическое напряжение! Металл на пределе.";
+            statusTitle.style.color = "#fca5a5";
+        }
+    }
+
+    function explode() {
+        isExploded = true;
+        explosionTime = Date.now();
+        statusTitle.innerText = "БА-БАХ! 💥";
+        statusTitle.style.color = "#ef4444";
+        statusDesc.innerText = "Давление превысило прочность стенок. Энергия удара разорвала банку во все стороны сразу!";
+        initExplosion();
+    }
+
+    // Тач-фикс (как в прошлых проектах)
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => {
+        if(e.touches && e.touches[0]) touchStartX = e.touches[0].clientX;
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if(e.target.id === 'forceSlider') return;
+        e.preventDefault(); 
+        // Здесь можно добавить вращение камеры, если захочется, но пока оставим статичный вид для ясности закона
+    }, { passive: false });
+
+    // --- ОТРИСОВКА ---
+
+    function drawArrow(x, y, length, angle, color, label) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(length, 0);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Наконечник
+        ctx.beginPath();
+        ctx.moveTo(length, 0);
+        ctx.lineTo(length - 5, -3);
+        ctx.lineTo(length - 5, 3);
+        ctx.fillStyle = color;
+        ctx.fill();
+        
+        if(label) {
+            ctx.fillStyle = color;
+            ctx.font = "10px sans-serif";
+            ctx.fillText(label, length/2 - 5, -5);
+        }
+        ctx.restore();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, width, height);
+
+        const s = dynamicScale;
+        const cx = centerX;
+        const cy = centerY;
+        const w = canWidth * s;
+        const h = canHeight * s;
+        const pistonY = cy - h/2 - (force * 1.5 * s); // Поршень опускается при силе
+
+        if (!isExploded) {
+            // 1. Рисуем воду внутри
+            ctx.fillStyle = `rgba(56, 189, 248, ${0.3 + (force/200)})`; // Вода становится ярче при давлении
+            ctx.fillRect(cx - w/2 + 2*s, cy - h/2 + 2*s, w - 4*s, h - 4*s);
+
+            // 2. Рисуем стенки банки
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = wallThickness * s;
+            ctx.strokeRect(cx - w/2, cy - h/2, w, h);
+
+            // Цвет стенок меняется от напряжения
+            if(force > 50) {
+                ctx.strokeStyle = `rgb(${148 + (force-50)*2}, ${163 - (force-50)*2}, ${184 - (force-50)*2})`; // Краснеет
+                ctx.strokeRect(cx - w/2, cy - h/2, w, h);
+            }
+
+            // 3. Поршень
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(cx - w/2 - 5*s, pistonY - 10*s, w + 10*s, 10*s);
+            
+            // Шток поршня
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(cx - 5*s, pistonY - 50*s, 10*s, 50*s);
+
+            // 4. Визуализация Закона Паскаля (Стрелки давления)
+            if (force > 5) {
+                const arrowLen = (force * 0.8 * s);
+                const color = force > 70 ? '#ef4444' : '#38bdf8';
+                
+                // Стрелка вниз (от поршня)
+                drawArrow(cx, pistonY + 15*s, arrowLen, Math.PI/2, color);
+                // Стрелка вверх (дно)
+                drawArrow(cx, cy + h/2 - 10*s, arrowLen, -Math.PI/2, color);
+                // Стрелки вбок (стенки)
+                drawArrow(cx - w/2 + 10*s, cy, arrowLen, Math.PI, color);
+                drawArrow(cx + w/2 - 10*s, cy, arrowLen, 0, color);
+                
+                // Диагональные (для объема)
+                drawArrow(cx - w/4, cy - h/4, arrowLen*0.7, Math.PI*1.25, color);
+                drawArrow(cx + w/4, cy - h/4, arrowLen*0.7, Math.PI*0.75, color);
+                drawArrow(cx - w/4, cy + h/4, arrowLen*0.7, Math.PI*0.75, color);
+                drawArrow(cx + w/4, cy + h/4, arrowLen*0.7, Math.PI*1.25, color);
+            }
+
+        } else {
+            // Анимация взрыва
+            const timePassed = (Date.now() - explosionTime) / 1000;
+            
+            // Осколки
+            particles.forEach(p => {
+                p.x += p.vx * s;
+                p.y += p.vy * s;
+                p.vy += 0.5 * s; // Гравитация
+                
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size*s, p.size*s);
+            });
+
+            // Вода
+            waterDrops.forEach(d => {
+                d.x += d.vx * s;
+                d.y += d.vy * s;
+                d.vy += 0.3 * s;
+                d.alpha -= 0.01;
+                
+                ctx.fillStyle = `rgba(56, 189, 248, ${d.alpha})`;
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.size*s, 0, Math.PI*2);
+                ctx.fill();
+            });
+        }
+    }
+
+    animate();
+</script>
+</body>
+</html>
