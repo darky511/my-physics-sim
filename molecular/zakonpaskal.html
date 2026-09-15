@@ -21,7 +21,14 @@
             color: var(--text-main); display: flex; touch-action: none; position: fixed;
         }
 
-        #canvas-container { flex-grow: 1; position: relative; z-index: 1; cursor: crosshair; }
+        /* Область симуляции занимает ВСЁ свободное место слева от панели */
+        #canvas-container { 
+            flex-grow: 1; 
+            position: relative; 
+            z-index: 1; 
+            cursor: crosshair; 
+            background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%);
+        }
 
         .control-sidebar {
             width: 320px; background: var(--sidebar-bg); border-left: 1px solid var(--border);
@@ -57,7 +64,7 @@
             pointer-events: none; z-index: 5; transition: all 0.3s;
         }
 
-        /* Адаптив для мобильных */
+        /* Адаптив для мобильных: панель уходит вниз, канвас занимает верх */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .control-sidebar { 
@@ -106,7 +113,7 @@
     let particles = [];
     
     // Bullet Physics
-    let bullet = { x: 0, y: 0, z: 0, active: false, speed: 12 };
+    let bullet = { x: 0, y: 0, z: 0, active: false, speed: 15 };
     
     // Camera / Scene params
     const scene = {
@@ -115,34 +122,34 @@
         fov: 600
     };
 
-    // ИСПРАВЛЕНИЕ: Функция resize теперь корректно инициализирует сцену
+    // ИСПРАВЛЕНИЕ: Расчет координат ТОЛЬКО по размерам контейнера симуляции
     function resize() {
         width = container.clientWidth;
         height = container.clientHeight;
         canvas.width = width;
         canvas.height = height;
         
-        // Центрируем банку в доступной области Canvas
-        scene.canX = width / 2 - 50; 
+        // Центрируем банку строго в центре CANVAS (а не всего окна)
+        scene.canX = width / 2; 
         scene.canY = height / 2 + 20; 
         
-        // Позиция пистолета справа
-        scene.gunX = width / 2 + 180;
+        // Пистолет справа, но с отступом от края КАНВАСА
+        scene.gunX = width - 120; 
         scene.gunY = height / 2 + 40;
 
-        // АДАПТИВ ДЛЯ МОБИЛЬНЫХ: Если экран узкий, отодвигаем камеру
+        // АДАПТИВ ДЛЯ МОБИЛЬНЫХ
         if (width < height) {
-            scene.fov = 400; // Уменьшаем FOV, чтобы всё влезло
-            scene.canY = height * 0.4; // Поднимаем банку выше
+            scene.fov = 400; 
+            scene.canY = height * 0.4; 
             scene.gunY = height * 0.45;
+            scene.gunX = width - 80; // Ближе к краю на телефоне
         } else {
             scene.fov = 600;
         }
     }
     
     window.addEventListener('resize', resize);
-    // КРИТИЧЕСКИ ВАЖНО: Вызываем resize сразу при загрузке!
-    resize(); 
+    resize(); // Вызываем сразу при загрузке!
 
     // --- 3D MATH UTILS ---
     function project(x, y, z) {
@@ -261,7 +268,8 @@
         if (isShot || bullet.active) return;
         
         bullet.active = true;
-        bullet.x = scene.gunX - 80; // Start at gun barrel tip
+        // Пуля стартует от дула пистолета
+        bullet.x = scene.gunX - 80; 
         bullet.y = scene.gunY - 5;
         bullet.z = scene.gunZ;
         
@@ -381,7 +389,7 @@
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        // Simple hit test for gun area
+        // Simple hit test for gun area (right side of canvas)
         if (x > width * 0.6 && y > height * 0.4) shoot();
     });
 
