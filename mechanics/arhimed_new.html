@@ -93,9 +93,13 @@
             border-color: #0284c7;
             color: #fff;
         }
-        button.active-mode:hover {
-            background: #0369a1;
+        button#mode-btn {
+            background: #64748b;
+            border-color: #64748b;
+            color: #fff;
         }
+        button#mode-btn:hover { background: #475569; }
+        button#mode-btn.active-explain { background: #ea580c; border-color: #ea580c; }
 
         #simulation-container {
             flex: 1;
@@ -119,38 +123,36 @@
             <div id="f-result" class="p-val">Итог: --</div>
         </div>
         <div class="controls">
-            <button id="btn-brick" class="active-mode" onclick="selectMaterial('brick')">🧱 Тяжёлый кирпич (Тонет)</button>
-            <button id="btn-foam" onclick="selectMaterial('foam')">🧼 Легкий пенопласт (Всплывает)</button>
-            <button id="btn-sub" onclick="selectMaterial('sub')">🐟 Рыба / Подлодка (Зависает)</button>
+            <button id="mode-btn" onclick="toggleExplainMode()">Режим: Откуда берется сила? 🔍</button>
+            <button id="btn-brick" class="active-mode" onclick="selectMaterial('brick')">🧱 Кирпич (Тонет)</button>
+            <button id="btn-foam" onclick="selectMaterial('foam')">🧼 Пенопласт (Всплывает)</button>
+            <button id="btn-sub" onclick="selectMaterial('sub')">🐟 Подлодка (Зависает)</button>
         </div>
     </div>
 
     <div id="simulation-container">
         <style>
-            /* Стенд лабораторной установки */
             .archimedes-stand {
                 position: relative;
-                width: 360px;
+                width: 520px; /* Расширили стенд под вывод формулы вычитания */
                 height: 380px;
                 display: flex;
-                flex-direction: column;
-                justify-content: flex-end;
+                align-items: flex-end;
+                justify-content: space-between;
             }
 
-            /* Аквариум */
             .aquarium {
                 position: relative;
-                width: 100%;
+                width: 320px;
                 height: 320px;
                 border-left: 4px solid #475569;
                 border-right: 4px solid #475569;
                 border-bottom: 4px solid #475569;
                 background: transparent;
                 z-index: 1;
-                margin-bottom: 20px; /* Безопасный отступ снизу */
+                margin-bottom: 20px;
             }
             
-            /* Сплошная линия мениска воды */
             .water-volume {
                 position: absolute;
                 bottom: 0; left: 0; right: 0;
@@ -160,7 +162,7 @@
                 z-index: 2;
             }
 
-            /* --- ИССЛЕДУЕМОЕ ТЕЛО --- */
+            /* Исследуемый куб */
             .submerged-body {
                 position: absolute;
                 left: 50%;
@@ -171,7 +173,7 @@
                 border-radius: 6px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.06);
                 z-index: 5;
-                transition: bottom 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+                transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1);
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -182,20 +184,17 @@
             }
             .body-brick { background-color: #b91c1c; }
             .body-foam { background-color: #f1f5f9; border-color: #94a3b8; color: #475569; text-shadow: none; }
-            .body-sub { background-color: #0d9488; border-radius: 20px; }
+            .body-sub { background-color: #0d9488; border-radius: 30px; }
 
-            /* --- СКОРРЕКТИРОВАННЫЕ ВЕКТОРЫ СИЛ ИЗ ЦЕНТРА ТЕЛА --- */
+            /* Центр масс */
             .force-axes-container {
                 position: absolute;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 1px;
-                height: 1px; 
+                width: 1px; height: 1px; 
                 z-index: 10;
                 transition: bottom 1.2s cubic-bezier(0.25, 1, 0.5, 1);
             }
-
-            /* Точка центра масс */
             .center-dot {
                 position: absolute;
                 top: -3px; left: -3px;
@@ -205,57 +204,53 @@
                 z-index: 12;
             }
 
-            /* Черный вектор силы тяжести (укороченный, безопасный масштаб) */
-            .vector-down {
-                position: absolute;
-                top: 0; left: -2px;
-                width: 4px;
-                background-color: #000000;
-                height: var(--h-grav, 45px);
-                transition: height 1.2s ease;
+            /* Главные векторы сил */
+            .vector-down, .vector-up {
+                position: absolute; left: -2px; width: 4px; transition: height 1.2s ease;
             }
+            .vector-down { top: 0; background-color: #000000; height: var(--h-grav, 45px); }
             .vector-down::after {
-                content: '';
-                position: absolute;
-                bottom: -8px; left: 50%;
-                transform: translateX(-50%);
-                border-left: 6px solid transparent;
-                border-right: 6px solid transparent;
-                border-top: 8px solid #000000;
+                content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+                border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #000000;
             }
-            /* Текст перенесен вбок от стрелки, чтобы не улетал вниз */
-            .v-label-grav {
-                position: absolute;
-                bottom: 4px; left: 10px;
-                color: #000000; font-weight: bold; font-size: 13px;
-                white-space: nowrap;
-            }
+            .v-label-grav { position: absolute; bottom: 4px; left: 10px; color: #000000; font-weight: bold; font-size: 13px; }
 
-            /* Зеленый вектор силы Архимеда */
-            .vector-up {
-                position: absolute;
-                bottom: 0; left: -2px;
-                width: 4px;
-                background-color: #16a34a;
-                height: var(--h-arch, 45px);
-                transition: height 1.2s ease;
-            }
+            .vector-up { bottom: 0; background-color: #16a34a; height: var(--h-arch, 45px); }
             .vector-up::after {
-                content: '';
-                position: absolute;
-                top: -8px; left: 50%;
-                transform: translateX(-50%);
-                border-left: 6px solid transparent;
-                border-right: 6px solid transparent;
-                border-bottom: 8px solid #16a34a;
+                content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+                border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 8px solid #16a34a;
             }
-            /* Текст справа от стрелки */
-            .v-label-arch {
-                position: absolute;
-                top: 4px; left: 10px;
-                color: #16a34a; font-weight: bold; font-size: 13px;
-                white-space: nowrap;
+            .v-label-arch { position: absolute; top: 4px; left: 10px; color: #16a34a; font-weight: bold; font-size: 13px; }
+
+            /* --- СТРЕЛКИ ГИДРОСТАТИЧЕСКОГО ДАВЛЕНИЯ НА ГРАНИ (НОВЫЙ РЕЖИМ) --- */
+            .p-arrow {
+                position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; transition: all 1.2s ease; display: none; z-index: 6;
             }
+            .p-arrow-top { color: #0284c7; font-size: 16px; text-align: center; } /* Маленькая сила сверху */
+            .p-arrow-bot { color: #ef4444; font-size: 28px; text-align: center; } /* Огромная сила снизу */
+            
+            /* Боковые уравновешенные стрелки */
+            .p-arrow-side { position: absolute; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 18px; display: none; z-index: 6; transition: all 1.2s ease; }
+            .p-side-l { left: -25px; }
+            .p-side-r { right: -25px; }
+
+            /* --- ИНТЕРАКТИВНАЯ ТЕКСТОВАЯ ВЫНОСКА (МАТЕМАТИКА ВЫЧИТАНИЯ) --- */
+            .explain-math-box {
+                width: 170px;
+                height: 200px;
+                background: #ffffff;
+                border: 1px dashed #cbd5e1;
+                border-radius: 12px;
+                padding: 15px;
+                margin-bottom: 50px;
+                display: none; /* Включается в режиме объяснения */
+                flex-direction: column;
+                gap: 12px;
+                font-size: 13px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            }
+            .math-title { font-weight: bold; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+            .math-row { display: flex; justify-content: space-between; font-weight: 600; }
         </style>
 
         <div class="archimedes-stand">
@@ -264,52 +259,50 @@
 
                 <div id="physics-body" class="submerged-body body-brick" style="bottom: 4px;">Кирпич</div>
 
+                <!-- Главные стрелки сил Fтяж и FА -->
                 <div id="axes-box" class="force-axes-container" style="bottom: 36px;">
                     <div class="center-dot"></div>
+                    <div id="arrow-grav" class="vector-down" style="--h-grav: 48px;"><span class="v-label-grav">F<sub>тяж</sub></span></div>
+                    <div id="arrow-arch" class="vector-up" style="--h-arch: 16px;"><span class="v-label-arch">F<sub>А</sub></span></div>
+                </div>
 
-                    <!-- Сила тяжести (вниз) -->
-                    <div id="arrow-grav" class="vector-down" style="--h-grav: 45px;">
-                        <span class="v-label-grav">F<sub>тяж</sub></span>
-                    </div>
+                <!-- НОВЫЕ ВЕКТОРЫ ДАВЛЕНИЙ НА ГРАНИ (Для режима объяснения откуда берется сила) -->
+                <div id="p-vector-top" class="p-arrow p-arrow-top">F<sub>сверху</sub><br>▼</div>
+                <div id="p-vector-bot" class="p-arrow p-arrow-bot">▲<br>F<sub>снизу</sub></div>
+                <div id="p-vector-l" class="p-arrow-side p-side-l">▶</div>
+                <div id="p-vector-r" class="p-arrow-side p-side-r">◀</div>
+            </div>
 
-                    <!-- Сила Архимеда (вверх) -->
-                    <div id="arrow-arch" class="vector-up" style="--h-arch: 20px;">
-                        <span class="v-label-arch">F<sub>А</sub></span>
-                    </div>
+            <!-- Правая панель разбора формулы вычитания давлений -->
+            <div id="math-panel" class="explain-math-box">
+                <div class="math-title">Разность сил на грани:</div>
+                <div class="math-row" style="color: #ef4444;"><span>Сила снизу:</span><span id="m-bot">45 Н</span></div>
+                <div class="math-row" style="color: #0284c7;"><span>Сила сверху:</span><span id="m-top">15 Н</span></div>
+                <div class="math-row" style="color: #16a34a; border-top: 1px solid #cbd5e1; padding-top: 8px; margin-top: 5px; font-size: 14px;">
+                    <span>F<sub>А</sub> = F<sub>сн</sub> - F<sub>св</sub>:</span><span id="m-res">30 Н</span>
                 </div>
             </div>
         </div>
     </div>
 <script>
-    // Исключили чрезмерно большие пиксельные длины для векторов
+    let currentMode = 'standard'; // 'standard' или 'explain'
+    let currentMaterial = 'brick';
+
     const physicsData = {
-        brick: {
-            name: 'Кирпич',
-            className: 'submerged-body body-brick',
-            bottomPx: 4,               
-            fGrav: 48,                 // Ограничили длину вектора тяжести до 48px (вместо 85px)
-            fArch: 16,                 
-            resultText: 'Тело тонет: Fтяж > FА 🧱'
-        },
-        foam: {
-            name: 'Пенопласт',
-            className: 'submerged-body body-foam',
-            bottomPx: 208,             
-            fGrav: 15,                 
-            fArch: 15,                 
-            resultText: 'Тело всплыло и плавает: Fтяж = FА 🧼'
-        },
-        sub: {
-            name: 'Подлодка',
-            className: 'submerged-body body-sub',
-            bottomPx: 105,             
-            fGrav: 32,                 
-            fArch: 32,
-            resultText: 'Тело плавает внутри воды: Fтяж = FА 🐟'
-        }
+        brick: { name: 'Кирпич', className: 'submerged-body body-brick', bottomPx: 4, fGrav: 48, fArch: 16, fTop: 14, fBot: 46, resultText: 'Тело тонет: Fтяж > FА 🧱' },
+        foam: { name: 'Пенопласт', className: 'submerged-body body-foam', bottomPx: 208, fGrav: 15, fArch: 15, fTop: 0, fBot: 30, resultText: 'Тело всплыло и плавает: Fтяж = FА 🧼' },
+        sub: { name: 'Подлодка', className: 'submerged-body body-sub', bottomPx: 105, fGrav: 32, fArch: 32, fTop: 24, fBot: 66, resultText: 'Тело плавает внутри воды: Fтяж = FА 🐟' }
     };
 
     function selectMaterial(type) {
+        currentMaterial = type;
+        
+        // Блокируем выбор материалов в режиме объяснения для фокуса внимания
+        if (currentMode === 'explain') {
+            currentMaterial = 'sub'; // Оптимальное тело для демонстрации происхождения сил - зависшая подлодка
+            type = 'sub';
+        }
+
         document.getElementById('btn-brick').className = type === 'brick' ? 'active-mode' : '';
         document.getElementById('btn-foam').className = type === 'foam' ? 'active-mode' : '';
         document.getElementById('btn-sub').className = type === 'sub' ? 'active-mode' : '';
@@ -317,20 +310,86 @@
         const data = physicsData[type];
         const body = document.getElementById('physics-body');
 
+        // Смещение куба
         body.className = data.className;
         body.innerText = data.name;
         body.style.bottom = `${data.bottomPx}px`;
 
+        // Дашборд
         document.getElementById('f-grav').innerText = `Сила тяжести Fтяж: ${Math.round(data.fGrav * 0.8)} Н`;
         document.getElementById('f-arch').innerText = `Сила Архимеда FА: ${Math.round(data.fArch * 0.8)} Н`;
         document.getElementById('f-result').innerText = `Итог: ${data.resultText}`;
 
+        // Выравнивание осей сил по центру куба
         let axesBox = document.getElementById('axes-box');
-        let bodyCenterY = data.bottomPx + 32; 
+        let bodyCenterY = data.bottomPx + 32;
         axesBox.style.bottom = `${bodyCenterY}px`;
 
         document.getElementById('arrow-grav').style.setProperty('--h-grav', `${data.fGrav}px`);
         document.getElementById('arrow-arch').style.setProperty('--h-arch', `${data.fArch}px`);
+
+        // Смещение и расчет стрелок давления на грани (Режим объяснения)
+        let pTop = document.getElementById('p-vector-top');
+        let pBot = document.getElementById('p-vector-bot');
+        let pL = document.getElementById('p-vector-l');
+        let pR = document.getElementById('p-vector-r');
+
+        pTop.style.bottom = `${data.bottomPx + 66}px`;
+        pBot.style.bottom = `${data.bottomPx - 44}px`;
+        
+        // Расчет и вывод сил вычитания в правую выносную панель
+        let realArchForce = data.fBot - data.fTop; // разность сил
+        document.getElementById('m-top').innerText = `${data.fTop} Н`;
+        document.getElementById('m-bot').innerText = `${data.fBot} Н`;
+        document.getElementById('m-res').innerText = `${realArchForce} Н`;
+    }
+
+    // ТРИГГЕР СМЕНЫ РЕЖИМА НА ОТДЕЛЬНУЮ КНОПКУ (Пункт 1 из учебника)
+    function toggleExplainMode() {
+        let btn = document.getElementById('mode-btn');
+        let mathPanel = document.getElementById('math-panel');
+        
+        let pTop = document.getElementById('p-vector-top');
+        let pBot = document.getElementById('p-vector-bot');
+        let pL = document.getElementById('p-vector-l');
+        let pR = document.getElementById('p-vector-r');
+        
+        let axesBox = document.getElementById('axes-box');
+
+        if (currentMode === 'standard') {
+            currentMode = 'explain';
+            btn.className = "active-explain";
+            btn.innerText = "Режим: Условия плавания тел (Вернуться) 🔄";
+            
+            // Включаем отображение векторов давлений на грани и математическую панель вычитания сил
+            pTop.style.display = "block";
+            pBot.style.display = "block";
+            pL.style.display = "block";
+            pR.style.display = "block";
+            mathPanel.style.display = "flex";
+
+            // Скрываем главные стрелки тяжести, чтобы они не создавали визуальную кашу
+            axesBox.style.display = "none";
+            
+            // Принудительно переключаем на подлодку (идеальный пример для разности сил)
+            selectMaterial('sub');
+        } else {
+            currentMode = 'standard';
+            btn.className = "";
+            btn.innerText = "Режим: Откуда берется сила? 🔍";
+            
+            // Прячем стрелки граней и выноску формулы
+            pTop.style.display = "none";
+            pBot.style.display = "none";
+            pL.style.display = "none";
+            pR.style.display = "none";
+            mathPanel.style.display = "none";
+
+            // Возвращаем главные осевые стрелки сил
+            axesBox.style.display = "block";
+            
+            selectMaterial('brick');
+        }
     }
 
     window.onload = () => selectMaterial('brick');
