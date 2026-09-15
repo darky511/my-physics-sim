@@ -123,14 +123,48 @@
 
     <div id="simulation-container">
         <style>
-            /* Общий контейнер стенда с жесткими размерами */
             .vessel-stand {
                 position: relative;
                 width: 320px;
-                height: 350px;
+                height: 380px; /* Увеличили под краник */
             }
 
-            /* Внешний контур прибора (левая, правая стенки и дно) */
+            /* --- СТИЛЬ КРАНИКА И СТРУИ --- */
+            .water-tap {
+                position: absolute;
+                top: 0;
+                left: -15px;
+                width: 50px;
+                height: 25px;
+                background: linear-gradient(90deg, #94a3b8, #cbd5e1);
+                border-radius: 4px;
+                border: 2px solid #475569;
+                z-index: 10;
+            }
+            .water-tap::after {
+                content: '';
+                position: absolute;
+                right: 5px;
+                bottom: -12px;
+                width: 12px;
+                height: 12px;
+                background: #64748b;
+                border: 2px solid #475569;
+                border-bottom: none;
+            }
+            .water-stream {
+                position: absolute;
+                top: 35px;
+                left: 21px;
+                width: 4px;
+                height: 0px; /* Анимируется через JS */
+                background: rgba(14, 165, 233, 0.6);
+                box-shadow: 0 0 4px rgba(14, 165, 233, 0.4);
+                z-index: 4;
+                transition: height 0.1s linear;
+            }
+
+            /* Контуры стеклянного сосуда */
             .vessel-outline-main {
                 position: absolute;
                 bottom: 0;
@@ -144,13 +178,12 @@
                 z-index: 3;
             }
 
-            /* Внутренний разделитель: теперь его координаты жестко привязаны к ширине колен (60px) */
             .vessel-inner-divider {
                 position: absolute;
-                top: 50px; /* Начинается на той же высоте, что и внешние стенки */
-                left: 60px; /* Ровно по внутренней границе левого колена */
-                right: 60px; /* Ровно по внутренней границе правого колена */
-                height: 260px; /* Образует проход высотой 40px над общим дном */
+                top: 80px; 
+                left: 60px; 
+                right: 60px; 
+                height: 260px; 
                 border-left: 4px solid #334155;
                 border-right: 4px solid #334155;
                 border-bottom: 4px solid #334155;
@@ -158,10 +191,9 @@
                 z-index: 3;
             }
 
-            /* Левое и правое вертикальные колена для жидкостей */
             .pipe-left, .pipe-right {
                 position: absolute;
-                bottom: 4px; /* Учитываем толщину нижнего стекла */
+                bottom: 4px; 
                 width: 60px;
                 height: 296px;
                 display: flex;
@@ -171,7 +203,6 @@
             .pipe-left { left: 4px; }
             .pipe-right { right: 4px; }
 
-            /* Общий горизонтальный соединительный канал на самом дне */
             .bottom-channel {
                 position: absolute;
                 bottom: 4px; 
@@ -179,11 +210,29 @@
                 right: 64px; 
                 height: 36px;
                 background: transparent;
-                display: flex;
                 z-index: 1;
             }
 
-            /* Интерактивные жидкости */
+            /* Слой воды и масла в донном канале */
+            .channel-water {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: var(--door-pos, 50%); /* Позиция дверцы двигает границу воды */
+                background-color: rgba(14, 165, 233, 0.35);
+                transition: width 0.4s ease;
+            }
+            .channel-oil {
+                position: absolute;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                left: var(--door-pos, 50%);
+                background-color: rgba(234, 179, 8, 0.35);
+                transition: left 0.4s ease;
+            }
+
             .liquid {
                 width: 100%;
                 height: var(--h, 120px);
@@ -192,17 +241,16 @@
             .water-fluid { background-color: rgba(14, 165, 233, 0.35); }
             .oil-fluid { background-color: rgba(234, 179, 8, 0.35); }
 
-            .channel-half { width: 50%; height: 100%; }
-
-            /* Невидимая дверца равновесия */
+            /* --- ПОДВИЖНАЯ ДВЕРЦА --- */
             .invisible-door {
                 position: absolute;
                 bottom: 0;
-                left: 50%;
+                left: var(--door-pos, 50%); /* Позиция плавно меняется из JS */
                 width: 0;
                 height: 36px;
                 border-left: 2px dashed #475569;
                 z-index: 5;
+                transition: left 0.4s ease;
             }
             .door-label {
                 position: absolute;
@@ -215,18 +263,16 @@
                 white-space: nowrap;
             }
 
-            /* Векторы сил давлений */
             .force-arrow {
                 position: absolute;
                 bottom: 8px;
                 font-size: 20px;
                 font-weight: bold;
-                transition: transform 0.4s ease;
+                transition: all 0.4s ease;
             }
-            .arrow-left { left: 35%; color: #0284c7; }
-            .arrow-right { right: 35%; color: #ea580c; }
+            .arrow-left { right: 4px; color: #0284c7; }
+            .arrow-right { left: 4px; color: #ea580c; }
 
-            /* Линия разности высот Δh */
             .delta-line {
                 position: absolute;
                 left: 64px;
@@ -250,27 +296,27 @@
         </style>
 
         <div class="vessel-stand">
-            <!-- Абсолютно герметичные стеклянные контуры прибора без зазоров -->
+            <!-- Краник над левой трубкой -->
+            <div class="water-tap"></div>
+            <div id="stream" class="water-stream"></div>
+
             <div class="vessel-outline-main"></div>
             <div class="vessel-inner-divider"></div>
 
-            <!-- Левый столб (Вода) -->
             <div class="pipe-left"><div id="fluid-l" class="liquid water-fluid" style="--h: 120px;"></div></div>
             
-            <!-- Соединительное дно (канал перетекания) -->
             <div class="bottom-channel">
-                <div class="channel-half water-fluid"></div>
-                <div id="channel-r" class="channel-half water-fluid"></div>
-                <div class="invisible-door"></div>
-                <div class="door-label">«НЕВИДИМАЯ ДВЕРЦА»</div>
-                <div class="force-arrow arrow-left">▶</div>
-                <div id="arrow-r-img" class="force-arrow arrow-right">◀</div>
+                <div class="channel-water"></div>
+                <div id="channel-oil-layer" class="channel-oil"></div>
+                <div class="invisible-door">
+                    <div class="door-label">«НЕВИДИМАЯ ДВЕРЦА»</div>
+                    <div class="force-arrow arrow-left">▶</div>
+                    <div class="force-arrow arrow-right">◀</div>
+                </div>
             </div>
 
-            <!-- Правый столб (Вода или Масло) -->
             <div class="pipe-right"><div id="fluid-r" class="liquid water-fluid" style="--h: 120px;"></div></div>
 
-            <!-- Линия-индикатор Δh -->
             <div id="delta-indicator" class="delta-line" style="bottom: 120px; display: none;">
                 <div id="delta-box" class="delta-arrow-box" style="height: 0px;">
                     <span>↑</span><span>&Delta;h</span><span>↓</span>
@@ -288,37 +334,53 @@
 
     function updateLayout() {
         let leftHeight = currentLeftHeightPx;
-        let rightHeight = activeMode === 'water_only' ? leftHeight : Math.round(leftHeight * (densityWater / densityOil));
+        let rightHeight;
+        let doorPercent;
 
-        // Синхронизируем высоты с блоками
+        if (activeMode === 'water_only') {
+            rightHeight = leftHeight;
+            doorPercent = 50; // В чистой воде дверца строго по центру
+        } else {
+            // В режиме МАСЛА объем масла постоянен (высота столба масла всегда равна 120px).
+            // Долитая вода толкает масло. Рассчитываем смещение дверцы вправо.
+            // Прибавка высоты воды (leftHeight - 120) создает гидростатическое давление, которое сдвигает дверцу вправо.
+            let waterSurplus = leftHeight - 120;
+            
+            // Смещение дверцы вправо в процентах (0% - центр, 100% - правый край канала)
+            doorPercent = 50 + (waterSurplus * 0.45); 
+            if (doorPercent > 96) doorPercent = 96; // ограничитель, чтобы дверца не вылетела из трубы
+
+            // Высота масла остается неизменной (+ выталкивание за счет ухода дверцы вправо)
+            rightHeight = 120 + (waterSurplus * (densityWater / densityOil));
+        }
+
+        // Применяем новые параметры к верстке
         document.getElementById('fluid-l').style.setProperty('--h', `${leftHeight}px`);
         document.getElementById('fluid-r').style.setProperty('--h', `${rightHeight}px`);
+        document.body.style.setProperty('--door-pos', `${doorPercent}%`);
 
-        // Физический расчет Паскалей (высота столба берется строго выше донного канала)
-        let h1_meters = (leftHeight - 36) * 0.01; 
+        // Честный расчет давлений (Паскали строго равны в точке покоя)
+        let h1_meters = (leftHeight - 36) * 0.01;
         if (h1_meters < 0) h1_meters = 0;
-        
         let pLeft = Math.round(densityWater * gravity * h1_meters);
-        let pRight = pLeft; // Идеальное физическое равновесие сообщающихся сосудов p1 = p2
+        let pRight = pLeft; 
 
         document.getElementById('p-left').innerText = `Давление слева (Вода): p = ${pLeft} Па`;
         
         if (activeMode === 'water_only') {
             document.getElementById('p-right').innerText = `Давление справа (Вода): p = ${pRight} Па`;
             document.getElementById('fluid-r').className = "liquid water-fluid";
-            document.getElementById('channel-r').className = "channel-half water-fluid";
-            document.getElementById('arrow-r-img').style.color = "#0284c7";
+            document.getElementById('channel-oil-layer').style.backgroundColor = "rgba(14, 165, 233, 0.35)";
             document.getElementById('delta-indicator').style.display = "none";
         } else {
             document.getElementById('p-right').innerText = `Давление справа (Масло): p = ${pRight} Па`;
             document.getElementById('fluid-r').className = "liquid oil-fluid";
-            document.getElementById('channel-r').className = "channel-half oil-fluid";
-            document.getElementById('arrow-r-img').style.color = "#ea580c";
+            document.getElementById('channel-oil-layer').style.backgroundColor = "rgba(234, 179, 8, 0.35)";
 
-            // Привязка красной стрелочки Delta h строго между менисками
+            // Линия разности уровней
             let deltaIndicator = document.getElementById('delta-indicator');
             deltaIndicator.style.display = "block";
-            deltaIndicator.style.bottom = `${leftHeight + 4}px`; 
+            deltaIndicator.style.bottom = `${leftHeight}px`;
             
             let deltaBox = document.getElementById('delta-box');
             let diff = rightHeight - leftHeight;
@@ -328,9 +390,20 @@
     }
 
     function pourLiquid() {
-        if (currentLeftHeightPx < 250) {
-            currentLeftHeightPx += 30;
-            updateLayout();
+        if (currentLeftHeightPx < 220) {
+            // Включаем струю воды из краника
+            let stream = document.getElementById('stream');
+            let leftHeight = currentLeftHeightPx;
+            let distanceToWater = 300 - leftHeight;
+            
+            stream.style.height = `${distanceToWater}px`;
+
+            // Через 400мс (когда вода «долилась») выключаем струю и обновляем уровни
+            setTimeout(() => {
+                stream.style.height = "0px";
+                currentLeftHeightPx += 25;
+                updateLayout();
+            }, 400);
         }
     }
 
@@ -348,7 +421,7 @@
             activeMode = 'water_only';
             btn.innerText = "Режим: Разнородные жидкости (Вода + Масло) 🔄";
         }
-        currentLeftHeightPx = 120; 
+        currentLeftHeightPx = 120;
         updateLayout();
     }
 
