@@ -137,7 +137,7 @@
                 justify-content: flex-end;
             }
 
-            /* Аквариум: верхняя часть прозрачная (воздух) */
+            /* Аквариум */
             .aquarium {
                 position: relative;
                 width: 100%;
@@ -149,13 +149,13 @@
                 z-index: 1;
             }
             
-            /* ФИКС ВОДЫ: чёткая сплошная линия мениска, голубой цвет налит строго до неё */
+            /* Объём налитой воды */
             .water-volume {
                 position: absolute;
                 bottom: 0; left: 0; right: 0;
-                height: 250px; /* Фиксированный уровень воды */
+                height: 240px; 
                 background-color: rgba(14, 165, 233, 0.16);
-                border-top: 3px solid #0284c7; /* Сплошное зеркало воды */
+                border-top: 3px solid #0284c7; 
                 z-index: 2;
             }
 
@@ -163,157 +163,155 @@
             .submerged-body {
                 position: absolute;
                 left: 50%;
-                width: 80px;
-                height: 60px;
+                width: 90px;
+                height: 64px;
                 transform: translateX(-50%);
                 border: 2px solid #1e293b;
                 border-radius: 6px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.06);
                 z-index: 5;
-                transition: bottom 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+                transition: bottom 1.2s cubic-bezier(0.25, 1, 0.5, 1);
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 font-weight: bold;
-                font-size: 13px;
+                font-size: 14px;
                 color: #fff;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+                text-shadow: 0 1px 2px rgba(0,0,0,0.4);
             }
             .body-brick { background-color: #b91c1c; }
             .body-foam { background-color: #f1f5f9; border-color: #94a3b8; color: #475569; text-shadow: none; }
-            .body-sub { background-color: #0d9488; border-radius: 20px; }
+            .body-sub { background-color: #0d9488; border-radius: 30px; }
 
-            /* --- ДИНАМИЧЕСКИЕ ВЕКТОРЫ СИЛ ИЗ ЦЕНТРА ТЕЛА --- */
-            .force-arrow-container {
+            /* --- АБСОЛЮТНО АККУРАТНЫЕ СТРЕЛКИ ИЗ ЦЕНТРА ТЕЛА --- */
+            .force-axes-container {
                 position: absolute;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 120px;
-                height: 1px; /* Нулевая точка - центр тела */
+                width: 1px;
+                height: 1px; 
                 z-index: 10;
-                transition: bottom 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+                transition: bottom 1.2s cubic-bezier(0.25, 1, 0.5, 1);
             }
 
-            /* Базовый класс для стрелок */
-            .vector-arrow {
+            /* Центральная точка (центр масс) */
+            .center-dot {
                 position: absolute;
-                left: 50%;
-                transform: translateX(-50%);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                transition: height 1.5s ease, top 1.5s ease, bottom 1.5s ease;
-                font-size: 11px;
-                font-weight: bold;
+                top: -3px; left: -3px;
+                width: 6px; height: 6px;
+                background-color: #1e293b;
+                border-radius: 50%;
+                z-index: 12;
             }
 
-            /* Черный вектор силы тяжести (растёт из центра строго вниз) */
-            .arrow-grav-box {
-                top: 0;
+            /* Вектор силы тяжести (всегда строго вниз из центра) */
+            .vector-down {
+                position: absolute;
+                top: 0; left: -2px;
                 width: 4px;
                 background-color: #000000;
-                height: var(--h-grav, 40px);
+                height: var(--h-grav, 50px);
+                transition: height 1.2s ease;
             }
-            .arrow-grav-box::after {
+            .vector-down::after {
                 content: '';
                 position: absolute;
                 bottom: -8px; left: 50%;
                 transform: translateX(-50%);
-                border-left: 7px solid transparent;
-                border-right: 7px solid transparent;
-                border-top: 9px solid #000000;
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-top: 8px solid #000000;
             }
-            .label-grav { position: absolute; bottom: -24px; color: #000000; white-space: nowrap; }
+            .v-label-grav {
+                position: absolute;
+                bottom: -25px; left: 10px;
+                color: #000000; font-weight: bold; font-size: 13px;
+                white-space: nowrap;
+            }
 
-            /* Зеленый вектор силы Архимеда (растёт из центра строго вверх) */
-            .arrow-arch-box {
-                bottom: 0;
+            /* Вектор силы Архимеда (всегда строго вверх из центра) */
+            .vector-up {
+                position: absolute;
+                bottom: 0; left: -2px;
                 width: 4px;
                 background-color: #16a34a;
-                height: var(--h-arch, 40px);
+                height: var(--h-arch, 50px);
+                transition: height 1.2s ease;
             }
-            .arrow-arch-box::after {
+            .vector-up::after {
                 content: '';
                 position: absolute;
                 top: -8px; left: 50%;
                 transform: translateX(-50%);
-                border-left: 7px solid transparent;
-                border-right: 7px solid transparent;
-                border-bottom: 9px solid #16a34a;
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-bottom: 8px solid #16a34a;
             }
-            .label-arch { position: absolute; top: -24px; color: #16a34a; white-space: nowrap; }
-
-            /* Сигнальные стрелки гидростатического давления на грани */
-            .pressure-indicator {
+            .v-label-arch {
                 position: absolute;
-                left: 50%;
-                transform: translateX(-50%);
-                color: #0284c7;
-                font-size: 18px;
-                font-weight: bold;
-                z-index: 4;
-                transition: all 1.5s ease;
+                top: -25px; left: 10px;
+                color: #16a34a; font-weight: bold; font-size: 13px;
+                white-space: nowrap;
             }
-            .p-top { font-size: 14px; } 
-            .p-bottom { font-size: 24px; } 
         </style>
 
         <div class="archimedes-stand">
             <div class="aquarium">
-                <!-- Сплошной объём воды -->
+                <!-- Контур налитой воды -->
                 <div class="water-volume"></div>
 
-                <!-- Физическое тело -->
+                <!-- Физическое тело (Кирпич, пенопласт или подлодка) -->
                 <div id="physics-body" class="submerged-body body-brick" style="bottom: 4px;">Кирпич</div>
 
-                <!-- Единый контейнер осей сил (привязан к геометрическому центру тела) -->
-                <div id="arrows-center" class="force-arrow-container" style="bottom: 34px;">
-                    <!-- Вектор силы Архимеда (вверх) -->
-                    <div id="v-arch" class="arrow-arch-box" style="--h-arch: 30px;">
-                        <span class="label-arch">F<sub>А</sub></span>
+                <!-- Чистая и аккуратная осевая система векторов сил -->
+                <div id="axes-box" class="force-axes-container" style="bottom: 36px;">
+                    <!-- Центральная точка приложения сил -->
+                    <div class="center-dot"></div>
+
+                    <!-- Вектор силы тяжести (Черный, вниз) -->
+                    <div id="arrow-grav" class="vector-down" style="--h-grav: 80px;">
+                        <span class="v-label-grav">F<sub>тяж</sub></span>
                     </div>
-                    <!-- Вектор силы тяжести (вниз) -->
-                    <div id="v-grav" class="arrow-grav-box" style="--h-grav: 70px;">
-                        <span class="label-grav">F<sub>тяж</sub></span>
+
+                    <!-- Вектор силы Архимеда (Зеленый, вверх) -->
+                    <div id="arrow-arch" class="vector-up" style="--h-arch: 30px;">
+                        <span class="v-label-arch">F<sub>А</sub></span>
                     </div>
                 </div>
-
-                <!-- Давление воды на грани -->
-                <div id="press-top" class="pressure-indicator p-top">▼</div>
-                <div id="press-bot" class="pressure-indicator p-bottom">▲</div>
             </div>
         </div>
     </div>
 <script>
-    // Физические параметры динамического пересчета векторов из центра
+    // Физические параметры состояний (размеры векторов в пикселях)
     const physicsData = {
         brick: {
             name: 'Кирпич',
             className: 'submerged-body body-brick',
-            bottomPx: 4,               // Тонет на дно
-            fGrav: 45,                 // Масштаб вектора тяжести в пикселях
-            fArch: 15,                 // Масштаб вектора Архимеда в пикселях
+            bottomPx: 4,               // Падает на самое дно
+            fGrav: 85,                 // Длина черного вектора вниз
+            fArch: 30,                 // Длина зеленого вектора вверх
             resultText: 'Тело тонет: Fтяж > FА 🧱'
         },
         foam: {
             name: 'Пенопласт',
             className: 'submerged-body body-foam',
-            bottomPx: 220,             // Всплывает (наполовину погружен в мениск 250px)
-            fGrav: 12,                 // Крошечный вес
-            fArch: 12,                 // В точке плавания силы идеально уравновешены!
+            bottomPx: 208,             // Плавает, наполовину высунувшись из воды (линия воды 240px)
+            fGrav: 25,                 // Маленький вес
+            fArch: 25,                 // Силы строго равны при плавании на поверхности!
             resultText: 'Тело всплыло и плавает: Fтяж = FА 🧼'
         },
         sub: {
             name: 'Подлодка',
             className: 'submerged-body body-sub',
-            bottomPx: 110,             // Зависает строго по центру толщи воды
-            fGrav: 30,                 // Равновесие сил в глубине
-            fArch: 30,
+            bottomPx: 105,             // Зависает ровно в толще воды
+            fGrav: 55,                 // Силы уравновешены в глубине
+            fArch: 55,
             resultText: 'Тело плавает внутри воды: Fтяж = FА 🐟'
         }
     };
 
     function selectMaterial(type) {
+        // Переключаем активную подсветку кнопок меню
         document.getElementById('btn-brick').className = type === 'brick' ? 'active-mode' : '';
         document.getElementById('btn-foam').className = type === 'foam' ? 'active-mode' : '';
         document.getElementById('btn-sub').className = type === 'sub' ? 'active-mode' : '';
@@ -321,41 +319,27 @@
         const data = physicsData[type];
         const body = document.getElementById('physics-body');
 
-        // 1. Смещаем тело по высоте
+        // 1. Анимируем перемещение тела по высоте
         body.className = data.className;
         body.innerText = data.name;
         body.style.bottom = `${data.bottomPx}px`;
 
-        // 2. Выводим точные Ньютоны в дашборд
-        document.getElementById('f-grav').innerText = `Сила тяжести Fтяж: ${Math.round(data.fGrav * 0.8)} Н`;
-        document.getElementById('f-arch').innerText = `Сила Архимеда FА: ${Math.round(data.fArch * 0.8)} Н`;
+        // 2. Обновляем плашки Ньютонов в шапке
+        document.getElementById('f-grav').innerText = `Сила тяжести Fтяж: ${Math.round(data.fGrav * 0.5)} Н`;
+        document.getElementById('f-arch').innerText = `Сила Архимеда FА: ${Math.round(data.fArch * 0.5)} Н`;
         document.getElementById('f-result').innerText = `Итог: ${data.resultText}`;
 
-        // 3. ФИКС ОСЕВЫХ СТРЕЛОК: привязываем контейнер векторов строго к центру тела
-        let arrowsCenter = document.getElementById('arrows-center');
-        let bodyCenterY = data.bottomPx + 30; // 30px - точный центр тела высотой 60px
-        arrowsCenter.style.bottom = `${bodyCenterY}px`;
+        // 3. Синхронизируем положение центра масс (осевой точки сил) ровно по центру тела
+        let axesBox = document.getElementById('axes-box');
+        let bodyCenterY = data.bottomPx + 32; // 32px - ровно половина высоты тела (64px)
+        axesBox.style.bottom = `${bodyCenterY}px`;
 
-        // 4. Динамически и пропорционально меняем длину стрелок, растущих из центра
-        document.getElementById('v-grav').style.setProperty('--h-grav', `${data.fGrav}px`);
-        document.getElementById('v-arch').style.setProperty('--h-arch', `${data.fArch}px`);
-
-        // 5. Отрисовка гидростатического давления на грани
-        let pTop = document.getElementById('press-top');
-        let pBot = document.getElementById('press-bot');
-
-        if (type === 'foam') {
-            // Пенопласт всплыл: верх на воздухе (давление воды сверху = 0)
-            pTop.style.opacity = "0";
-            pBot.style.bottom = `${data.bottomPx - 22}px`;
-        } else {
-            pTop.style.opacity = "1";
-            pTop.style.bottom = `${data.bottomPx + 63}px`; // Сила сверху на мениск
-            pBot.style.bottom = `${data.bottomPx - 26}px`; // Сила снизу на дно кирпича
-        }
+        // 4. Плавно меняем длины стрелок, растущих строго из этой центральной точки
+        document.getElementById('arrow-grav').style.setProperty('--h-grav', `${data.fGrav}px`);
+        document.getElementById('arrow-arch').style.setProperty('--h-arch', `${data.fArch}px`);
     }
 
-    // Первичный автоматический запуск
+    // Первичный старт симуляции с тяжелого кирпича
     window.onload = () => selectMaterial('brick');
 </script>
 </body>
