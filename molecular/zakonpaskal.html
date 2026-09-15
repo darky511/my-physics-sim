@@ -12,23 +12,23 @@
             height: 100%;
             overflow: hidden;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #0b0e14;
-            color: #fff;
+            background-color: #f4f6f9;
+            color: #333;
             display: flex;
             flex-direction: column;
         }
 
-        /* Премиальная темная панель управления */
+        /* Премиальная аккуратная светлая панель */
         #ui-panel {
-            background: linear-gradient(180deg, #161d2a 0%, #0f141f 100%);
+            background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
             padding: 15px 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid #232d42;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         #ui-panel h2 {
@@ -36,9 +36,8 @@
             font-size: 22px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #00d2ff;
-            text-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+            letter-spacing: 1.5px;
+            color: #1e293b;
         }
 
         .controls {
@@ -47,28 +46,27 @@
             align-items: center;
         }
 
-        /* Кнопки в стиле интерфейсов Sci-Fi */
+        /* Стильные минималистичные кнопки */
         button {
-            background: #1a2333;
-            color: #e2e8f0;
-            border: 1px solid #314361;
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
             padding: 12px 24px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             border-radius: 8px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             gap: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
 
         button:hover {
-            background: #00d2ff;
-            color: #0b0e14;
-            border-color: #00d2ff;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #94a3b8;
             transform: translateY(-1px);
         }
 
@@ -85,15 +83,16 @@
         button#fire-btn:hover {
             background: #ff5588;
             border-color: #ff5588;
-            box-shadow: 0 0 25px rgba(255, 51, 102, 0.6);
+            box-shadow: 0 4px 15px rgba(255, 51, 102, 0.3);
         }
 
+        /* Ненавязчивый светлый фон для самой симуляции */
         #simulation-container {
             flex: 1;
             width: 100%;
             height: 100%;
             position: relative;
-            background: radial-gradient(circle at center, #1a2636 0%, #06090e 100%);
+            background: radial-gradient(circle at center, #ffffff 0%, #e2e8f0 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -128,22 +127,22 @@
     const container = document.getElementById('simulation-container');
     let canvas, ctx;
 
-    // Углы обзора 3D камеры
+    // Углы обзора камеры
     let angleX = 0.25; 
     let angleY = -0.4; 
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
 
-    // Логика состояний симуляции
+    // Состояния физики
     let hasWater = false;
     let waterOpacity = 0;
     let isExploded = false;
     let hasHoles = false;
 
-    // Параметры выстрела
-    let bullet = { x: -350, y: 0, z: 0, active: false, speed: 7 };
+    // Параметры пули и разрушений
+    let bullet = { x: -350, y: 0, z: 0, active: false, speed: 6.5 };
     let particles = []; 
-    let gunScreenPos = { x: 0, y: 0, radius: 40 };
+    let gunScreenPos = { x: 0, y: 0, radius: 45 };
 
     function init() {
         canvas = document.createElement('canvas');
@@ -157,7 +156,7 @@
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
-            const distToGun = Math.hypot(mouseX - gunScreenPos.x, mouseY - gunScreenPos.y);
+            const distToGun = Math.getDistance ? Math.getDistance(mouseX, mouseY) : Math.hypot(mouseX - gunScreenPos.x, mouseY - gunScreenPos.y);
 
             if (distToGun < gunScreenPos.radius) {
                 fireShot();
@@ -207,7 +206,7 @@
         bullet.active = true;
     }
 
-    // Матрица проекции 3D -> 2D перспективы
+    // Проекция 3D -> 2D
     function project(x, y, z) {
         let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
         let x1 = x * cosY - z * sinY;
@@ -227,7 +226,6 @@
         };
     }
 
-    // Отрисовка красивого 3D-диска банки
     function draw3DDisk(y, r, fillColor, strokeColor, lineWidth = 1) {
         ctx.beginPath();
         for (let i = 0; i <= 64; i++) {
@@ -241,21 +239,31 @@
         if (strokeColor) { ctx.strokeStyle = strokeColor; ctx.lineWidth = lineWidth; ctx.stroke(); }
     }
 
-    // Генерация взрыва частиц (по закону Паскаля — во все стороны равномерно)
+    // Мощная генерация разрушения: брызги воды + куски стекла летят во все стороны сферой
     function createExplosion(isWaterExplosion) {
-        const count = isWaterExplosion ? 150 : 30;
+        const count = isWaterExplosion ? 180 : 35; // Больше частиц для гидроудара
         for (let i = 0; i < count; i++) {
             let theta = Math.random() * Math.PI * 2;
             let phi = Math.acos((Math.random() * 2) - 1);
-            let speed = isWaterExplosion ? (2 + Math.random() * 5) : (1 + Math.random() * 3);
+            let speed = isWaterExplosion ? (2.5 + Math.random() * 6) : (1.2 + Math.random() * 3.5);
             
+            // Если банка с водой — создаем микс: 50% воды, 50% крупных кусков банки
+            let type = 'glass';
+            if (isWaterExplosion) {
+                type = Math.random() > 0.5 ? 'water' : 'glass_shard';
+            }
+
             particles.push({
-                x: 0, y: (Math.random() * 1.6 - 0.8), z: 0,
+                x: (Math.random() * 0.4 - 0.2), 
+                y: (Math.random() * 1.4 - 0.7), 
+                z: (Math.random() * 0.4 - 0.2),
                 vx: Math.sin(phi) * Math.cos(theta) * speed,
                 vy: Math.sin(phi) * Math.sin(theta) * speed,
                 vz: Math.cos(phi) * speed,
-                type: isWaterExplosion ? (Math.random() > 0.4 ? 'water' : 'glass') : 'glass',
-                size: Math.random() * 3 + 1,
+                type: type,
+                size: type === 'glass_shard' ? (Math.random() * 8 + 4) : (Math.random() * 3.5 + 1.5), // Осколки крупнее капель
+                rot: Math.random() * Math.PI, // Случайный угол вращения осколка стекла
+                rotSpeed: (Math.random() * 0.4 - 0.2),
                 alpha: 1
             });
         }
@@ -268,15 +276,15 @@
         if (bullet.active) {
             bullet.x += bullet.speed;
 
-            // Касание пулей стенки банки
+            // Столкновение пули со стенкой колбыПаскаля
             if (!isExploded && !hasHoles && bullet.x >= -150 && bullet.x < 0) {
                 if (hasWater) {
                     isExploded = true;
                     hasWater = false;
-                    createExplosion(true);
+                    createExplosion(true); 
                 } else {
                     hasHoles = true;
-                    createExplosion(false);
+                    createExplosion(false); 
                 }
             }
             
@@ -290,16 +298,18 @@
             p.x += p.vx * 0.1;
             p.y += p.vy * 0.1;
             p.z += p.vz * 0.1;
-            p.vy -= 0.05; 
-            p.alpha -= 0.015;
+            p.vy -= 0.06; // Сила тяжести тянет брызги и куски банки к полу
+            p.rot += p.rotSpeed; // Вращение осколков в полете
+            p.alpha -= 0.012;
             if (p.alpha <= 0) particles.splice(index, 1);
         });
     }
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 1. Отрисовка лабораторного стола (Сетка)
-        ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+        // 1. Отрисовка лабораторного стола (Аккуратная светлая сетка)
+        ctx.strokeStyle = 'rgba(0,0,0,0.03)';
+        ctx.lineWidth = 1;
         for(let i = -4; i <= 4; i++) {
             let p1 = project(i*2, -1.2, -2); let p2 = project(i*2, -1.2, 2);
             ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
@@ -307,101 +317,121 @@
             ctx.beginPath(); ctx.moveTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y); ctx.stroke();
         }
 
-        // 2. Основание штатива банки
-        draw3DDisk(-1.1, 1.3, '#1f293d', '#34495e', 2);
-        draw3DDisk(-1.2, 1.3, '#111622', '#1f293d', 1);
+        // 2. Металлическое основание прибора (Тяжелый диск штатива)
+        draw3DDisk(-1.1, 1.3, '#cbd5e1', '#94a3b8', 2);
+        draw3DDisk(-1.2, 1.3, '#f1f5f9', '#cbd5e1', 1);
 
-        // 3. ОТРИСОВКА БАНКИ / КОЛБЫ ПАСКАЛЯ
+        // 3. ОТРИСОВКА БАНКИ
         if (!isExploded) {
-            // Отрисовка воды внутри задним слоем
+            // Вода (отрисовывается внутренним слоем)
             if (waterOpacity > 0) {
-                let gradWater = ctx.createLinearGradient(0, canvas.height/2, canvas.width, canvas.height/2);
-                gradWater.addColorStop(0, `rgba(0, 150, 255, ${waterOpacity * 0.4})`);
-                gradWater.addColorStop(1, `rgba(0, 100, 220, ${waterOpacity * 0.6})`);
+                let gradWater = ctx.createLinearGradient(0, canvas.height/3, canvas.width, canvas.height/1.5);
+                gradWater.addColorStop(0, `rgba(14, 165, 233, ${waterOpacity * 0.45})`);
+                gradWater.addColorStop(1, `rgba(2, 132, 199, ${waterOpacity * 0.65})`);
                 
-                for(let h = -0.8; h <= 0.8; h += 0.05) {
+                for(let h = -0.8; h <= 0.8; h += 0.04) {
                     let rAtH = Math.cos(h) * 1.0;
                     draw3DDisk(h, rAtH * 0.98, gradWater, null);
                 }
             }
 
-            // Слоистее стекло колбы
+            // Корпус стеклянной банки со световыми бликами
             for (let h = -0.8; h <= 0.8; h += 0.1) {
                 let radiusAtH = Math.cos(h) * 1.0;
-                let edgeColor = `rgba(255, 255, 255, ${0.15 + (Math.sin(h)*0.05)})`;
-                draw3DDisk(h, radiusAtH, 'rgba(255,255,255,0.01)', edgeColor, 1.5);
+                let edgeColor = `rgba(148, 163, 184, ${0.25 + (Math.sin(h)*0.08)})`;
+                draw3DDisk(h, radiusAtH, 'rgba(255,255,255,0.05)', edgeColor, 1.5);
             }
             
-            // Горлышко
-            draw3DDisk(0.9, 0.3, 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0.3)', 2);
+            // Стеклянное горлышко банки
+            draw3DDisk(0.9, 0.3, 'rgba(255,255,255,0.3)', 'rgba(148, 163, 184, 0.5)', 2);
 
-            // Отрисовка дырок в сухой банке
+            // Отверстия от пули, если пробита пустая банка
             if (hasHoles) {
                 let pHoleIn = project(-1.0, 0, 0);
                 let pHoleOut = project(1.0, 0, 0);
-                ctx.fillStyle = '#ff3366';
+                ctx.fillStyle = '#ef4444';
                 ctx.beginPath(); ctx.arc(pHoleIn.x, pHoleIn.y, 4, 0, Math.PI*2); ctx.fill();
                 ctx.beginPath(); ctx.arc(pHoleOut.x, pHoleOut.y, 4, 0, Math.PI*2); ctx.fill();
                 
-                ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.moveTo(pHoleIn.x-10, pHoleIn.y); ctx.lineTo(pHoleIn.x+10, pHoleIn.y);ctx.moveTo(pHoleIn.x, pHoleIn.y-10); ctx.lineTo(pHoleIn.x, pHoleIn.y+10);ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(pHoleOut.x-10, pHoleOut.y); ctx.lineTo(pHoleOut.x+10, pHoleOut.y);ctx.moveTo(pHoleOut.x, pHoleOut.y-10); ctx.lineTo(pHoleOut.x, pHoleOut.y+10);ctx.stroke();
+                // Аккуратные трещинки на стекле
+                ctx.strokeStyle = 'rgba(100, 116, 139, 0.6)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(pHoleIn.x-12, pHoleIn.y); ctx.lineTo(pHoleIn.x+12, pHoleIn.y);ctx.moveTo(pHoleIn.x, pHoleIn.y-12); ctx.lineTo(pHoleIn.x, pHoleIn.y+12);ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(pHoleOut.x-12, pHoleOut.y); ctx.lineTo(pHoleOut.x+12, pHoleOut.y);ctx.moveTo(pHoleOut.x, pHoleOut.y-12); ctx.lineTo(pHoleOut.x, pHoleOut.y+12);ctx.stroke();
             }
         }
 
-        // 4. Отрендерить летящие частицы осколков/брызг
+        // 4. ОТРИСОВКА РАЗЛЕТАЮЩИХСЯ ЧАСТИЦ (Капли + Крупные осколки банки)
         particles.forEach(p => {
             let pt = project(p.x, p.y, p.z);
-            ctx.fillStyle = p.type === 'water' ? `rgba(0, 180, 255, ${p.alpha})` : `rgba(255, 255, 255, ${p.alpha * 0.7})`;
-            ctx.beginPath();
-            if(p.type === 'water') {
+            
+            if (p.type === 'water') {
+                // Водяные капли брызг
+                ctx.fillStyle = `rgba(14, 165, 233, ${p.alpha})`;
+                ctx.beginPath();
                 ctx.arc(pt.x, pt.y, p.size, 0, Math.PI*2);
+                ctx.fill();
+            } else if (p.type === 'glass_shard') {
+                // КРУПНЫЕ КУСКИ БАНКИ (Вращающиеся осколки стекла)
+                ctx.save();
+                ctx.translate(pt.x, pt.y);
+                ctx.rotate(p.rot);
+                ctx.fillStyle = `rgba(226, 232, 240, ${p.alpha * 0.6})`;
+                ctx.strokeStyle = `rgba(148, 163, 184, ${p.alpha * 0.8})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                // Генерируем треугольную / четырехугольную форму осколка банки
+                ctx.moveTo(0, -p.size);
+                ctx.lineTo(p.size, p.size * 0.3);
+                ctx.lineTo(-p.size * 0.5, p.size);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
             } else {
-                ctx.moveTo(pt.x, pt.y - p.size);
-                ctx.lineTo(pt.x + p.size, pt.y);
-                ctx.lineTo(pt.x, pt.y + p.size);
-                ctx.lineTo(pt.x - p.size, pt.y);
+                // Мелкое стеклянное крошево для сухой банки
+                ctx.fillStyle = `rgba(148, 163, 184, ${p.alpha * 0.7})`;
+                ctx.fillRect(pt.x - p.size/2, pt.y - p.size/2, p.size, p.size);
             }
-            ctx.fill();
         });
 
-        // 5. КИНЕМАТОГРАФИЧЕСКАЯ ПУЛЯ И ТРЕК
+        // 5. КИНЕМАТОГРАФИЧЕСКАЯ ПУЛЯ
         if (bullet.active) {
             let pBullet = project(bullet.x * 0.01, bullet.y, bullet.z);
-            let pTail = project((bullet.x - 25) * 0.01, bullet.y, bullet.z);
+            let pTail = project((bullet.x - 30) * 0.01, bullet.y, bullet.z);
             
+            // Светящийся огненный след пули
             let bGrad = ctx.createLinearGradient(pTail.x, pTail.y, pBullet.x, pBullet.y);
-            bGrad.addColorStop(0, 'rgba(255, 51, 102, 0)');
-            bGrad.addColorStop(1, 'rgba(255, 210, 0, 0.8)');
-            ctx.strokeStyle = bGrad; ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.moveTo(pTail.x, pTail.y); ctx.lineTo(pBullet.x, pBullet.y); ctx.stroke();
+            bGrad.addColorStop(0, 'rgba(239, 68, 68, 0)');
+            bGrad.addColorStop(1, 'rgba(245, 158, 11, 0.8)');
+            ctx.strokeStyle = bGrad; ctx.lineWidth = 3.5;
+            ctx.beginPath(); ctx.moveTo(pTail.x, pTail.y); ctx.lineTo(pBullet.x, pBullet.y); stroke = ctx.stroke();
 
-            ctx.fillStyle = '#ffcc00';
-            ctx.shadowBlur = 15; ctx.shadowColor = '#ff3366';
-            ctx.beginPath(); ctx.arc(pBullet.x, pBullet.y, 4, 0, Math.PI*2); ctx.fill();
-            ctx.shadowBlur = 0; 
+            // Золотая пуля
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath(); ctx.arc(pBullet.x, pBullet.y, 4.5, 0, Math.PI*2); ctx.fill();
         }
 
-        // 6. ИНТЕРАКТИВНЫЙ 3D ПИСТОЛЕТ
+        // 6. ИНТЕРАКТИВНЫЙ 3D ПИСТОЛЕТ (Слева)
         let pGunBase = project(-2.2, 0.2, 0);
         gunScreenPos.x = pGunBase.x;
         gunScreenPos.y = pGunBase.y;
 
         ctx.save();
         ctx.translate(pGunBase.x, pGunBase.y);
-        ctx.fillStyle = 'rgba(0, 210, 255, 0.04)';
+        
+        // Зона наведения на пистолет
+        ctx.fillStyle = 'rgba(14, 165, 233, 0.04)';
         ctx.beginPath(); ctx.arc(0, 0, gunScreenPos.radius, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = 'rgba(0, 210, 255, 0.2)'; 
+        ctx.strokeStyle = 'rgba(14, 165, 233, 0.3)'; 
         ctx.stroke();
 
-        let gGrad = ctx.createLinearGradient(-30, -10, 20, 10);
-        gGrad.addColorStop(0, '#2c3e50'); gGrad.addColorStop(1, '#0f171e');
-        ctx.fillStyle = gGrad;
-        ctx.fillRect(-30, -6, 50, 12); 
+        // Ствол и рукоятка
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(-30, -5, 50, 10); 
         ctx.fillStyle = '#ff3366';
-        ctx.fillRect(-25, 6, 12, 22); 
-        ctx.fillStyle = '#111';
-        ctx.fillRect(15, -4, 10, 8); 
+        ctx.fillRect(-23, 5, 11, 20); 
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(15, -3, 8, 6); 
         ctx.restore();
     }
 
