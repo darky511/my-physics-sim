@@ -138,7 +138,7 @@
     const container = document.getElementById('simulation-container');
     let canvas, ctx;
 
-    // Глобальное состояние симуляции
+    // Глобальное состояние
     let currentMode = 'water_only'; 
     let targetLeftWaterHeight = 120;
     let currentLeftHeight = 120;
@@ -148,8 +148,10 @@
     const rhoOil = 920;
     const g = 9.8;
     function resizeCanvas() {
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
+        if (canvas) {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
     }
 
     function draw2DArrow(x1, y1, x2, y2, color, width = 2.5) {
@@ -200,14 +202,13 @@
         let leftPipeX = centerX - pipeDist / 2;
         let rightPipeX = centerX + pipeDist / 2;
 
-        // Плавная интерполяция высот столбов жидкостей
+        // Плавная интерполяция высот
         currentLeftHeight += (targetLeftWaterHeight - currentLeftHeight) * 0.08;
 
         let targetRightHeight;
         if (currentMode === 'water_only') {
             targetRightHeight = currentLeftHeight;
         } else {
-            // Закон сообщающихся сосудов: h2 = h1 * (rho1 / rho2)
             targetRightHeight = currentLeftHeight * (rhoWater / rhoOil);
         }
         currentRightHeight += (targetRightHeight - currentRightHeight) * 0.08;
@@ -216,7 +217,7 @@
         let rightSurfaceY = centerY - currentRightHeight;
         let channelTopY = centerY; 
 
-        // Расчет и вывод давлений на дно
+        // Расчет давлений на дно
         let h1_meters = currentLeftHeight * 0.015; 
         let pLeftVal = Math.round(rhoWater * g * h1_meters);
         
@@ -228,16 +229,16 @@
             `Давление справа (Вода): p = ${pRightVal} Па` : `Давление справа (Масло): p = ${pRightVal} Па`;
 
         // --- 1. ОТРИСОВКА ЖИДКОСТЕЙ ---
-        ctx.fillStyle = 'rgba(14, 165, 233, 0.25)'; // Вода слева
+        ctx.fillStyle = 'rgba(14, 165, 233, 0.25)'; 
         ctx.fillRect(leftPipeX - pipeWidth/2, leftSurfaceY, pipeWidth, baseFloorY - leftSurfaceY);
         ctx.fillRect(leftPipeX - pipeWidth/2, channelTopY, pipeDist / 2 + pipeWidth/2, baseFloorY - channelTopY);
 
         if (currentMode === 'water_only') {
-            ctx.fillStyle = 'rgba(14, 165, 233, 0.25)'; // Вода справа
+            ctx.fillStyle = 'rgba(14, 165, 233, 0.25)'; 
             ctx.fillRect(rightPipeX - pipeWidth/2, rightSurfaceY, pipeWidth, baseFloorY - rightSurfaceY);
             ctx.fillRect(centerX, channelTopY, pipeDist/2 + pipeWidth/2, baseFloorY - channelTopY);
         } else {
-            ctx.fillStyle = 'rgba(234, 179, 8, 0.25)'; // Золотистое масло справа
+            ctx.fillStyle = 'rgba(234, 179, 8, 0.25)'; 
             ctx.fillRect(rightPipeX - pipeWidth/2, rightSurfaceY, pipeWidth, baseFloorY - rightSurfaceY);
             ctx.fillRect(centerX, channelTopY, pipeDist/2 + pipeWidth/2, baseFloorY - channelTopY);
         }
@@ -258,11 +259,11 @@
         ctx.lineTo(rightPipeX - pipeWidth/2, centerY - 240);
         ctx.stroke();
 
-        // --- 3. ИНДИКАЦИЯ ЛИНЕЕК h ---
+        // --- 3. ЛИНЕЙКИ ВЫСОТ h ---
         drawHeightDimension(leftPipeX - pipeWidth/2 - 25, channelTopY, leftSurfaceY, 'h₁', '#0284c7');
         drawHeightDimension(rightPipeX + pipeWidth/2 + 25, channelTopY, rightSurfaceY, 'h₂', currentMode === 'water_only' ? '#0284c7' : '#b45309');
 
-        // Выноска дельты высот Delta h для режима Вода+Масло
+        // Выноска дельты высот Delta h
         if (currentMode === 'mixed') {
             ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5; ctx.setLineDash();
             ctx.beginPath(); ctx.moveTo(leftPipeX + pipeWidth/2, leftSurfaceY); ctx.lineTo(rightPipeX - pipeWidth/2 - 15, leftSurfaceY); ctx.stroke();
@@ -276,7 +277,7 @@
             ctx.fillText("\u0394h", midDeltaX + 10, leftSurfaceY + (rightSurfaceY - leftSurfaceY) / 2);
         }
 
-        // --- 4. ПЕРЕГОРОДКА НА ДНЕ С СИЛАМИ ДАВЛЕНИЯ ---
+        // --- 4. НЕВИДИМАЯ ДВЕРЦА НА ДНЕ С СИЛАМИ ---
         ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.setLineDash();
         ctx.beginPath(); ctx.moveTo(centerX, channelTopY); ctx.lineTo(centerX, baseFloorY); ctx.stroke();
         ctx.setLineDash([]);
@@ -296,8 +297,8 @@
         requestAnimationFrame(animate);
     }
 
-    // Точка входа: инициализируем холст и ЖЕСТКО вешаем клики кнопок, когда DOM готов
-    window.onload = function() {
+    // Финальная точка сборки: вешаем события напрямую на кнопки без посредников
+    window.addEventListener('DOMContentLoaded', () => {
         canvas = document.createElement('canvas');
         container.appendChild(canvas);
         ctx = canvas.getContext('2d');
@@ -305,20 +306,18 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Кнопка долива жидкости
-        document.getElementById('add-btn').onclick = () => {
+        // Принудительная и точная привязка кликов к кнопкам в DOM
+        document.getElementById('add-btn').addEventListener('click', () => {
             if (targetLeftWaterHeight < 220) {
                 targetLeftWaterHeight += 30;
             }
-        };
+        });
 
-        // Кнопка сброса
-        document.getElementById('reset-btn').onclick = () => {
+        document.getElementById('reset-btn').addEventListener('click', () => {
             targetLeftWaterHeight = 120;
-        };
+        });
 
-        // Кнопка смены режимов
-        document.getElementById('mode-btn').onclick = () => {
+        document.getElementById('mode-btn').addEventListener('click', () => {
             const btn = document.getElementById('mode-btn');
             if (currentMode === 'water_only') {
                 currentMode = 'mixed';
@@ -327,11 +326,11 @@
                 currentMode = 'water_only';
                 btn.innerText = "Режим: Разнородные жидкости (Вода + Масло) 🔄";
             }
-            targetLeftWaterHeight = 120; // мягкий сброс уровней для красоты анимации переключения
-        };
+            targetLeftWaterHeight = 120; 
+        });
 
         animate();
-    };
+    });
 </script>
 </body>
 </html>
