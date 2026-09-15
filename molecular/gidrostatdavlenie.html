@@ -214,6 +214,8 @@
         ctx.textBaseline = 'middle';
         ctx.fillText(label, x + 15, yStart + (yEnd - yStart) / 2);
     }
+</script>
+<script>
     function draw2DAcrobat(x, y, scaleX = 1, scaleY = 1, isStraining = false) {
         ctx.save();
         ctx.translate(x, y);
@@ -240,8 +242,9 @@
 
     function drawAcrobatTower(centerX, floorY, liquidType) {
         let isWater = liquidType === 'water';
-        let sizeX = isWater ? 1.25 : 0.85;
-        let sizeY = isWater ? 1.15 : 0.85;
+        // ИЗМЕНЕНО: Теперь у ВОДЫ человечки поменьше (0.85), а у МАСЛА — крупнее по размеру (1.25)
+        let sizeX = isWater ? 0.85 : 1.25;
+        let sizeY = isWater ? 0.85 : 1.15;
         let stepHeight = 45 * sizeY;
 
         let multiplier = isWater ? 1.0 : (1000 / 920);
@@ -263,7 +266,6 @@
         ctx.fillText(isWater ? "АКРОБАТЫ (ВОДА)" : "АКРОБАТЫ (МАСЛО)", centerX, floorY + 25);
     }
 
-    // Возвращает точную Y координату центра куба для выноски дельты
     function drawAquarium(centerX, floorY, waterTopY, liquidType) {
         let isWater = liquidType === 'water';
         let aqW = 160;
@@ -297,7 +299,7 @@
         ctx.fillStyle = '#64748b'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(isWater ? "РЕЗЕРВУАР С ВОДОЙ" : "РЕЗЕРВУАР С МАСЛОМ", centerX, floorY + 25);
 
-        return sensorCenterY; // Отдаем координату наружу
+        return sensorCenterY;
     }
 
     function render() {
@@ -319,33 +321,27 @@
 
             let midX = canvas.width / 2;
 
-            // Левая половина: Акробаты
             drawAcrobatTower(midX * 0.35, floorY, 'water');
             drawAcrobatTower(midX * 0.75, floorY, 'oil');
 
             ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(midX, 0); ctx.lineTo(midX, canvas.height); ctx.stroke();
 
-            // Правая половина: Аквариумы (и ловим их Y-координаты центров кубиков)
             let waterCubeY = drawAquarium(midX + midX * 0.25, floorY, waterTopY, 'water');
             let oilCubeY = drawAquarium(midX + midX * 0.65, floorY, waterTopY, 'oil');
 
-            // --- ДОБАВЛЕНИЕ ЛИНЕЙКИ ДЕЛЬТЫ (МЕЖДУ БАКАМИ) ---
-            let startDeltaX = midX + midX * 0.25 + 80; // Правый край бака с водой
-            let endDeltaX = midX + midX * 0.65 - 80;   // Левый край бака с маслом
+            let startDeltaX = midX + midX * 0.25 + 80; 
+            let endDeltaX = midX + midX * 0.65 - 80;   
             let midDeltaX = (startDeltaX + endDeltaX) / 2;
 
-            // Пунктирные линии-выноски от нижних граней кубиков
-            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5; ctx.setLineDash();
             ctx.beginPath(); ctx.moveTo(startDeltaX - 30, waterCubeY); ctx.lineTo(midDeltaX + 15, waterCubeY); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(endDeltaX + 30, oilCubeY); ctx.lineTo(midDeltaX - 15, oilCubeY); ctx.stroke();
-            ctx.setLineDash([]); // Сброс пунктира
+            ctx.setLineDash([]); 
 
-            // Красная стрелка разницы высот Delta h
             draw2DArrow(midDeltaX, waterCubeY + (oilCubeY - waterCubeY)/2 - 1, midDeltaX, oilCubeY, '#ef4444', 2);
             draw2DArrow(midDeltaX, waterCubeY + (oilCubeY - waterCubeY)/2 + 1, midDeltaX, waterCubeY, '#ef4444', 2);
 
-            // Текст "Delta h" рядом со стрелкой
             ctx.fillStyle = '#ef4444';
             ctx.font = 'bold 15px sans-serif';
             ctx.textAlign = 'left';
