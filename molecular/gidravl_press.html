@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гидравлический пресс: Как поднять грузовик</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #ui-panel {
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+            padding: 15px 25px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        #ui-panel h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #0f172a;
+        }
+
+        #ui-panel h2 span.formula {
+            color: #0284c7;
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+        }
+
+        .dashboard {
+            display: flex;
+            gap: 20px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .p-val {
+            padding: 4px 15px;
+            border-radius: 20px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        #f-left { background: #fee2e2; color: #991b1b; }
+        #f-right { background: #dcfce7; color: #166534; }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        button {
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        button:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+
+        button#press-btn { background: #2563eb; border-color: #2563eb; color: #fff; }
+        button#press-btn:hover { background: #1d4ed8; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        button#reset-btn { background: #ef4444; border-color: #ef4444; color: #fff; }
+        button#reset-btn:hover { background: #dc2626; }
+
+        #simulation-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <h2>Гидравлический пресс: <span class="formula">F<sub>2</sub> / F<sub>1</sub> = S<sub>2</sub> / S<sub>1</sub></span></h2>
+        <div class="dashboard">
+            <div id="f-left" class="p-val">Сила человека F₁: 0 Н</div>
+            <div id="f-right" class="p-val">Выталкивающая сила F₂: 0 Н</div>
+        </div>
+        <div class="controls">
+            <button id="press-btn" onclick="activatePress()">Человечек давит вниз (10 Н) 🔽</button>
+            <button id="reset-btn" onclick="resetPress()">Вернуть в исходное положение 🔄</button>
+        </div>
+    </div>
+
+    <div id="simulation-container">
+        <style>
+            /* Стенд всей гидравлической установки */
+            .press-stand {
+                position: relative;
+                width: 480px;
+                height: 380px;
+                display: flex;
+                align-items: flex-end;
+            }
+
+            /* Прорисовка цельного П-образного гидравлического контура */
+            .press-outline {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 240px;
+                border-left: 4px solid #334155;
+                border-right: 4px solid #334155;
+                border-bottom: 4px solid #334155;
+                pointer-events: none;
+                z-index: 4;
+            }
+            .press-divider {
+                position: absolute;
+                top: 140px;
+                left: 40px;
+                right: 200px;
+                height: 200px;
+                border-left: 4px solid #334155;
+                border-right: 4px solid #334155;
+                border-bottom: 4px solid #334155;
+                pointer-events: none;
+                z-index: 4;
+            }
+
+            /* Левый узкий цилиндр S1 */
+            .cylinder-left {
+                position: absolute;
+                bottom: 4px;
+                left: 4px;
+                width: 36px;
+                height: 236px;
+                background: transparent;
+                display: flex;
+                align-items: flex-end;
+                z-index: 1;
+            }
+
+            /* Правый широкий цилиндр S2 */
+            .cylinder-right {
+                position: absolute;
+                bottom: 4px;
+                right: 4px;
+                width: 196px;
+                height: 236px;
+                background: transparent;
+                display: flex;
+                align-items: flex-end;
+                z-index: 1;
+            }
+
+            /* Соединительный масляный канал на дне пресса */
+            .oil-base-channel {
+                position: absolute;
+                bottom: 4px;
+                left: 40px;
+                right: 200px;
+                height: 40px;
+                background-color: rgba(234, 179, 8, 0.25); /* Масло по учебнику */
+                z-index: 1;
+            }
+
+            /* Подвижные столбы масла (высота меняется из JS) */
+            .oil-fluid {
+                width: 100%;
+                height: var(--h, 120px);
+                background-color: rgba(234, 179, 8, 0.25);
+                transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+            }
+
+            /* Поршни, лежащие строго на масле */
+            .piston {
+                position: absolute;
+                top: -10px;
+                left: 0;
+                right: 0;
+                height: 10px;
+                background: #475569;
+                border-top: 2px solid #1e293b;
+                z-index: 5;
+            }
+
+            /* --- РИСУЕМ ЧЕЛОЧЕЧКА (Слева) --- */
+            .character-box {
+                position: absolute;
+                top: -65px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 30px;
+                height: 55px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                transition: top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .char-head { width: 12px; height: 12px; background: #475569; border-radius: 50%; }
+            .char-body { width: 3px; height: 22px; background: #334155; position: relative; }
+            .char-body::before, .char-body::after {
+                content: ''; position: absolute; top: 2px; width: 14px; height: 3px; background: #334155;
+            }
+            .char-body::before { left: -14px; transform: rotate(15deg); }
+            .char-body::after { right: -14px; transform: rotate(-15deg); }
+            .char-legs { display: flex; justify-content: space-between; width: 16px; height: 16px; margin-top: -2px; }
+            .char-leg { width: 3px; height: 100%; background: #334155; }
+            .char-leg-l { transform: rotate(20deg); }
+            .char-leg-r { transform: rotate(-20deg); }
+
+            /* --- РИСУЕМ ГРУЗОВИК (Справа) --- */
+            .truck-box {
+                position: absolute;
+                top: -66px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 140px;
+                height: 56px;
+                transition: top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            /* Кузов */
+            .truck-body {
+                position: absolute;
+                top: 0; left: 0; width: 95px; height: 42px; background: #0284c7; border-radius: 4px;
+            }
+            /* Кабина */
+            .truck-cabin {
+                position: absolute;
+                bottom: 14px; right: 2px; width: 38px; height: 32px; background: #ef4444; border-radius: 4px;
+            }
+            .truck-window {
+                position: absolute; top: 4px; right: 4px; width: 16px; height: 12px; background: #e2e8f0; border-radius: 2px;
+            }
+            /* Колёса */
+            .truck-wheel {
+                position: absolute; bottom: 0; width: 22px; height: 22px; background: #1e293b; border: 3px solid #64748b; border-radius: 50%; z-index: 6;
+            }
+            .wheel-1 { left: 15px; }
+            .wheel-2 { left: 45px; }
+            .wheel-3 { right: 15px; }
+
+            /* Подписи площадей под цилиндрами */
+            .area-label {
+                position: absolute; bottom: -30px; font-weight: bold; color: #64748b; font-size: 13px; text-align: center;
+            }
+            .label-l { left: 4px; width: 36px; }
+            .label-r { right: 4px; width: 196px; }
+
+            /* Красивые стрелки векторов сил */
+            .force-arrow {
+                position: absolute; font-weight: bold; text-align: center; font-size: 18px; transition: all 0.5s ease; opacity: 0;
+            }
+            .f1-arrow { color: #dc2626; width: 36px; left: 4px; top: -110px; }
+            .f2-arrow { color: #16a34a; width: 196px; right: 4px; }
+        </style>
+
+        <div class="press-stand">
+            <!-- Металлические рамки пресса -->
+            <div class="press-outline"></div>
+            <div class="press-divider"></div>
+
+            <!-- Левый узкий поршень -->
+            <div class="cylinder-left">
+                <div id="oil-l" class="oil-fluid" style="--h: 150px;">
+                    <div class="piston"></div>
+                    <!-- Человечек прямо на поршне -->
+                    <div id="char" class="character-box">
+                        <div class="char-head"></div>
+                        <div class="char-body"></div>
+                        <div class="char-legs"><div class="char-leg char-leg-l"></div><div class="char-leg char-leg-r"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Общий соединительный донный канал -->
+            <div class="oil-base-channel"></div>
+
+            <!-- Правый широкий поршень -->
+            <div class="cylinder-right">
+                <div id="oil-r" class="oil-fluid" style="--h: 50px;">
+                    <div class="piston"></div>
+                    <!-- Грузовик прямо на поршне -->
+                    <div id="truck" class="truck-box">
+                        <div class="truck-body"></div>
+                        <div class="truck-cabin"><div class="truck-window"></div></div>
+                        <div class="truck-wheel wheel-1"></div>
+                        <div class="truck-wheel wheel-2"></div>
+                        <div class="truck-wheel wheel-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Векторные стрелки сил F1 и F2 -->
+            <div id="arrow-f1" class="force-arrow f1-arrow">F₁=10Н<br>▼</div>
+            <div id="arrow-f2" class="force-arrow f2-arrow">▲<br>F₂=1000Н</div>
+
+            <!-- Подписи к площадям поршней -->
+            <div class="area-label label-l">S₁<br>1 см²</div>
+            <div class="area-label label-r">S₂<br>100 см²</div>
+        </div>
+    </div>
+<script>
+    // Исходное состояние пресса: левый поршень высоко, правый низко
+    let isPressed = false;
+
+    function activatePress() {
+        if (isPressed) return;
+        isPressed = true;
+
+        // Физика гидравлического соотношения:
+        // Так как правый поршень шире в 10 раз по ширине (в 100 раз по площади S),
+        // левое масло опускается на 100 пикселей, а правое масло поднимается ВСЕГО на 1 пиксель!
+        // Для наглядности на экране масштабируем ход поршня: левый падает на 100px, правый растет на 20px.
+        document.getElementById('oil-l').style.setProperty('--h', '50px');
+        document.getElementById('oil-r').style.setProperty('--h', '70px');
+
+        // Выводим силы Паскаля в дашборд пресса
+        document.getElementById('f-left').innerText = "Сила человека F₁: 10 Н";
+        document.getElementById('f-right').innerText = "Выталкивающая сила F₂: 1000 Н";
+
+        // Плавно включаем и позиционируем стрелки векторов сил
+        let f1Arrow = document.getElementById('arrow-f1');
+        f1Arrow.style.opacity = "1";
+        f1Arrow.style.top = "-5px"; // Стрелка следует за опустившимся человечком
+
+        let f2Arrow = document.getElementById('arrow-f2');
+        f2Arrow.style.opacity = "1";
+        f2Arrow.style.bottom = "85px"; // Мощная стрелка подпирает поднявшийся грузовик
+    }
+
+    function resetPress() {
+        isPressed = false;
+
+        // Возвращаем поршни в начальное положение покоя
+        document.getElementById('oil-l').style.setProperty('--h', '150px');
+        document.getElementById('oil-r').style.setProperty('--h', '50px');
+
+        // Сбрасываем дашборд силы
+        document.getElementById('f-left').innerText = "Сила человека F₁: 0 Н";
+        document.getElementById('f-right').innerText = "Выталкивающая сила F₂: 0 Н";
+
+        // Прячем стрелки сил
+        document.getElementById('arrow-f1').style.opacity = "0";
+        document.getElementById('arrow-f1').style.top = "-110px";
+        
+        document.getElementById('arrow-f2').style.opacity = "0";
+    }
+
+    // Первичный холостой сброс при открытии файла
+    resetPress();
+</script>
+</body>
+</html>
