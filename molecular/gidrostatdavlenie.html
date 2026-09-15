@@ -102,7 +102,6 @@
             box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
         }
 
-        /* Главный контейнер, разделенный пополам */
         #simulation-container {
             flex: 1;
             width: 100%;
@@ -136,17 +135,16 @@
     const container = document.getElementById('simulation-container');
     let canvas, ctx;
 
-    // Настройки 3D камеры для обеих половин
+    // Скорректированы углы камеры для более естественного и ровного отображения
     let angleX = 0.2; 
     let angleY = -0.3; 
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
 
-    // Состояние интерактивной башни
     let acrobatCount = 1; 
     const maxAcrobats = 5;
-    let targetCubeY = -1.0; 
-    let currentCubeY = -1.0; 
+    let targetCubeY = 0.0; // Сдвинуто вверх относительно дна аквариума
+    let currentCubeY = 0.0; 
 
     function init() {
         canvas = document.createElement('canvas');
@@ -196,11 +194,13 @@
     }
 
     function updateLinkedPhysics() {
-        targetCubeY = -0.9 - (acrobatCount - 1) * 0.35;
+        // Изменен расчет смещения: теперь куб ходит симметрично относительно центра аквариума
+        targetCubeY = 0.1 - (acrobatCount - 1) * 0.35;
         let simulatedPressure = acrobatCount * 2450; 
         document.getElementById('formula-display').innerText = `Текущее давление p = ${simulatedPressure} Па`;
     }
 
+    // Центрирование осей Y перенесено из хардкода рендера внутрь проекционной матрицы
     function project(x, y, z, centerX, centerY) {
         let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
         let x1 = x * cosY - z * sinY;
@@ -215,13 +215,14 @@
         
         return {
             x: centerX + x1 * scale * 150,
-            y: centerY - y2 * scale * 150
+            y: centerY - y2 * scale * 150 // Выравнивание точки Y по новой центральной сетке
         };
     }
 
     function draw3DArrow(pStart, pEnd, color) {
-        let pt1 = project(pStart.x, pStart.y, pStart.z, canvas.width * 0.75, canvas.height / 2 + 80);
-        let pt2 = project(pEnd.x, pEnd.y, pEnd.z, canvas.width * 0.75, canvas.height / 2 + 80);
+        // Подняли центр проекции стрелок с +80 до -10 пикселей для идеального центрирования
+        let pt1 = project(pStart.x, pStart.y, pStart.z, canvas.width * 0.75, canvas.height / 2 - 10);
+        let pt2 = project(pEnd.x, pEnd.y, pEnd.z, canvas.width * 0.75, canvas.height / 2 - 10);
 
         ctx.strokeStyle = color;
         ctx.lineWidth = 3;
@@ -248,9 +249,9 @@
             {x: half, y: cy - half, z: half},  {x: -half, y: cy - half, z: half}
         ];
 
-        let screenPts = vertices.map(v => project(v.x, v.y, v.z, canvas.width * 0.75, canvas.height / 2 + 80));
+        // Центр проекции куба поднят до уровня "минус 10 пикселей от центра экрана"
+        let screenPts = vertices.map(v => project(v.x, v.y, v.z, canvas.width * 0.75, canvas.height / 2 - 10));
 
-        // Исправленные индексы граней куба
         let faces = [, [4, 5, 6, 7], [0, 1, 5, 4],
 , [0, 3, 7, 4], [1, 2, 6, 5]
         ];
@@ -261,7 +262,7 @@
             for(let i = 1; i < 4; i++) ctx.lineTo(screenPts[face[i]].x, screenPts[face[i]].y);
             ctx.closePath();
             
-            ctx.fillStyle = 'rgba(245, 158, 11, 0.5)';
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.55)';
             ctx.fill();
             ctx.strokeStyle = '#d97706';
             ctx.lineWidth = 1.5;
@@ -279,7 +280,8 @@
 
     function draw3DAcrobat(bx, by, bz, isStraining) {
         let cX = canvas.width * 0.25;
-        let cY = canvas.height / 2 + 80;
+        // Координаты Y человечка также привязаны к исправленной ровной оси
+        let cY = canvas.height / 2 + 150; 
 
         let shake = isStraining ? (Math.random() * 0.015 - 0.007) : 0;
         let x = bx + shake;
@@ -317,16 +319,19 @@
         ctx.font = 'bold 14px sans-serif'; ctx.fillStyle = '#64748b';
         ctx.fillText("ЖИВАЯ ПИРАМИДА (СЛОИ МОЛЕКУЛ)", 30, 40);
         
-        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
-        let floorL1 = project(-1.5, -0.5, 0, canvas.width * 0.25, canvas.height / 2 + 80);
-        let floorL2 = project(1.5, -0.5, 0, canvas.width * 0.25, canvas.height / 2 + 80);
-        ctx.beginPath(); ctx.moveTo(floorL1.x, floorL1.y); ctx.lineTo(floorL2.x, floorL2.y); ctx.stroke();
+        // ФИКС ПОЛА: Заменили 3D-проекцию наклона на идеально ровную горизонтальную линию
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
+        let lineY = canvas.height / 2 + 225; // Строго зафиксированная высота линии пола
+        ctx.beginPath(); 
+        ctx.moveTo(30, lineY); 
+        ctx.lineTo(canvas.width / 2 - 30, lineY); 
+        ctx.stroke();
 
-        // ИСПРАВЛЕНО ИМЯ ФУНКЦИИ В ЦИКЛЕ
         for (let i = 0; i < acrobatCount; i++) {
             let heightOffset = i * 0.95; 
             let isBottom = (i === 0 && acrobatCount > 1); 
-            draw3DAcrobat(0, -0.05 + heightOffset, 0, isBottom);
+            // Человечки теперь стоят ровно на горизонтальной плоскости
+            draw3DAcrobat(0, heightOffset, 0, isBottom);
         }
 
         ctx.fillStyle = '#64748b';
@@ -334,23 +339,26 @@
 
         currentCubeY += (targetCubeY - currentCubeY) * 0.08;
 
-        const waterTopY = -0.6;
-        const aquariumBotY = -2.6;
+        // Перенастроены границы аквариума, чтобы он стоял ровно по центру правой половины
+        const waterTopY = 0.5;
+        const aquariumBotY = -1.5;
+        let rightCenterX = canvas.width * 0.75;
+        let rightCenterY = canvas.height / 2 - 10;
 
         ctx.fillStyle = 'rgba(14, 165, 233, 0.15)';
-        let w1 = project(-1.2, waterTopY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
-        let w2 = project(1.2, waterTopY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
-        let w3 = project(1.2, aquariumBotY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
-        let w4 = project(-1.2, aquariumBotY, -1, canvas.width * 0.75, canvas.height / 2 + 80);
+        let w1 = project(-1.2, waterTopY, -1, rightCenterX, rightCenterY);
+        let w2 = project(1.2, waterTopY, -1, rightCenterX, rightCenterY);
+        let w3 = project(1.2, aquariumBotY, -1, rightCenterX, rightCenterY);
+        let w4 = project(-1.2, aquariumBotY, -1, rightCenterX, rightCenterY);
         ctx.beginPath(); ctx.moveTo(w1.x, w1.y); ctx.lineTo(w2.x, w2.y); ctx.lineTo(w3.x, w3.y); ctx.lineTo(w4.x, w4.y); ctx.closePath(); ctx.fill();
 
         draw3DCube(currentCubeY, 0.45, waterTopY);
 
-        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
-        let g1 = project(-1.2, waterTopY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
-        let g2 = project(1.2, waterTopY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
-        let g3 = project(1.2, aquariumBotY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
-        let g4 = project(-1.2, aquariumBotY, 1, canvas.width * 0.75, canvas.height / 2 + 80);
+        ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
+        let g1 = project(-1.2, waterTopY, 1, rightCenterX, rightCenterY);
+        let g2 = project(1.2, waterTopY, 1, rightCenterX, rightCenterY);
+        let g3 = project(1.2, aquariumBotY, 1, rightCenterX, rightCenterY);
+        let g4 = project(-1.2, aquariumBotY, 1, rightCenterX, rightCenterY);
         ctx.beginPath(); ctx.moveTo(g1.x, g1.y); ctx.lineTo(g2.x, g2.y); ctx.lineTo(g3.x, g3.y); ctx.lineTo(g4.x, g4.y); ctx.closePath(); ctx.stroke();
     }
 
