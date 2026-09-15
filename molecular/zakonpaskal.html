@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Закон Паскаля: 3D Симуляция</title>
     <style>
+        /* Обнуляем отступы для полного экрана */
         body, html {
             margin: 0;
             padding: 0;
@@ -12,30 +13,32 @@
             height: 100%;
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a;
+            background-color: #0b0f19;
             color: #fff;
             display: flex;
             flex-direction: column;
         }
 
+        /* Панель управления строго сверху */
         #ui-panel {
-            background: rgba(40, 40, 40, 0.95);
+            background: rgba(20, 27, 45, 0.95);
             padding: 15px 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
             z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 10px;
-            border-bottom: 2px solid #444;
+            border-bottom: 2px solid #1f293d;
         }
 
         #ui-panel h2 {
             margin: 0;
             font-size: 20px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             color: #00d2ff;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
         }
 
         .controls {
@@ -44,15 +47,16 @@
             align-items: center;
         }
 
+        /* Кнопки управления */
         button {
-            background: #333;
+            background: #151d30;
             color: #fff;
-            border: 2px solid #555;
-            padding: 10px 20px;
+            border: 2px solid #2c3a57;
+            padding: 10px 22px;
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 6px;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
@@ -61,9 +65,9 @@
 
         button:hover {
             background: #00d2ff;
-            color: #111;
+            color: #0b0f19;
             border-color: #00d2ff;
-            box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
         }
 
         button#fire-btn {
@@ -74,25 +78,32 @@
         button#fire-btn:hover {
             background: #ff5588;
             border-color: #ff5588;
-            box-shadow: 0 0 15px rgba(255, 51, 102, 0.6);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.5);
         }
 
+        /* Главный контейнер симуляции по центру экрана */
         #simulation-container {
             flex: 1;
             width: 100%;
             height: 100%;
             position: relative;
-            background: radial-gradient(circle, #1a2634 0%, #0a0a0f 100%);
+            background: radial-gradient(circle at center, #16222f 0%, #070a12 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         canvas {
             display: block;
             width: 100%;
             height: 100%;
+            cursor: grab;
+        }
+        
+        canvas:active {
+            cursor: grabbing;
         }
     </style>
-    <script src="https://cloudflare.com"></script>
-    <script src="https://jsdelivr.net"></script>
 </head>
 <body>
 
@@ -104,222 +115,241 @@
             <button id="fire-btn">ВЫСТРЕЛ 🔫</button>
         </div>
     </div>
+
+    <div id="simulation-container">
+        <!-- Холст Canvas будет создан динамически -->
+    </div>
 <script>
     const container = document.getElementById('simulation-container');
-    let scene, camera, renderer, controls;
-    let flask, water, piston, gun;
-    let waterStreams = [];
+    let canvas, ctx;
+
+    // Параметры 3D камеры и вращения
+    let angleX = 0.4; // наклон сверху
+    let angleY = 0.5; // поворот вокруг оси
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+
+    // Состояния физики
+    let waterLevel = 0;      // 0 - пусто, 1 - полная колба
+    let targetWaterLevel = 0;
+    let pistonY = -100;      // Координата Y поршня
+    let shotProgress = 0;    // Прогресс выстрела и струй
     let isFiring = false;
 
+    // Инициализация сцены
     function init() {
-        scene = new THREE.Scene();
+        canvas = document.createElement('canvas');
+        container.appendChild(canvas);
+        ctx = canvas.getContext('2d');
 
-        // Берем точные размеры контейнера, когда он гарантированно отрисован
-        const width = container.clientWidth || window.innerWidth;
-        const height = container.clientHeight || (window.innerHeight - 90);
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
-        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-        camera.position.set(0, 4, 12);
+        // Интерактив: вращение сцены мышкой во все стороны (псевдо-3D)
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
 
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(width, height);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        
-        container.innerHTML = '';
-        container.appendChild(renderer.domElement);
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
 
-        controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
+            angleY += deltaX * 0.007;
+            angleX = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, angleX + deltaY * 0.007));
 
-        // Освещение (сделали ярче, чтобы всё было видно)
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-        scene.add(ambientLight);
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
 
-        const dirLight = new THREE.DirectionalLight(0x00d2ff, 1.0);
-        dirLight.position.set(10, 20, 10);
-        scene.add(dirLight);
+        window.addEventListener('mouseup', () => isDragging = false);
 
-        const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
-        fillLight.position.set(-10, 10, -10);
-        scene.add(fillLight);
+        // Привязка кнопок
+        document.getElementById('water-btn').onclick = () => { targetWaterLevel = 1; };
+        document.getElementById('reset-btn').onclick = () => { targetWaterLevel = 0; isFiring = false; shotProgress = 0; };
+        document.getElementById('fire-btn').onclick = () => {
+            if (waterLevel < 0.2) { alert("Сначала налей воду 💧!"); return; }
+            if (!isFiring) isFiring = true;
+        };
 
-        createPhysicsScene();
-
-        window.addEventListener('resize', onWindowResize);
-
-        document.getElementById('water-btn').onclick = () => fillWater();
-        document.getElementById('reset-btn').onclick = () => resetSimulation();
-        document.getElementById('fire-btn').onclick = () => fireShot();
+        // Запуск бесконечного цикла отрисовки
+        animate();
     }
 
-    function createPhysicsScene() {
-        // Сетка пола
-        const grid = new THREE.GridHelper(20, 20, 0x00d2ff, 0x333333);
-        grid.position.y = -3;
-        scene.add(grid);
+    function resizeCanvas() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+    }
 
-        // --- ШАР ПАСКАЛЯ (Колба с отверстиями) ---
-        flask = new THREE.Group();
-        flask.position.set(0, 0, 0);
-        scene.add(flask);
+    // Математическая функция проекции 3D точки (X, Y, Z) на 2D экран
+    function project(x, y, z) {
+        // Вращение по оси Y
+        let cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+        let x1 = x * cosY - z * sinY;
+        let z1 = x * sinY + z * cosY;
 
-        // Стеклянное тело прибора
-        const bodyGeo = new THREE.CylinderGeometry(1.5, 1.5, 4, 32, 1, true);
-        const glassMat = new THREE.MeshPhysicalMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.25,
-            transmission: 0.9,
-            roughness: 0.1,
-            side: THREE.DoubleSide
-        });
-        const bodyMesh = new THREE.Mesh(bodyGeo, glassMat);
-        flask.add(bodyMesh);
+        // Вращение по оси X
+        let cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+        let y2 = y * cosX - z1 * sinX;
+        let z2 = y * sinX + z1 * cosX;
 
-        // Сферический наконечник снизу (где отверстия)
-        const sphereGeo = new THREE.SphereGeometry(1.5, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
-        const sphereMesh = new THREE.Mesh(sphereGeo, glassMat);
-        sphereMesh.position.y = -2;
-        flask.add(sphereMesh);
+        // Эффект перспективы и масштабирование под центр экрана
+        const scale = 400 / (400 + z2); 
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2 + 50;
 
-        // Отверстия в сфере для вылета струй
-        const holeGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.1, 8);
-        const holeMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-        
-        // Генерируем 6 отверстий по окружности сферы
-        for(let i = 0; i < 6; i++) {
-            const angle = (i / 6) * Math.PI * 2;
-            const hole = new THREE.Mesh(holeGeo, holeMat);
-            hole.position.set(Math.cos(angle) * 1.45, -2.5, Math.sin(angle) * 1.45);
-            hole.rotation.z = -angle - Math.PI/2;
-            flask.add(hole);
+        return {
+            x: centerX + x1 * scale * 1.8,
+            y: centerY - y2 * scale * 1.8,
+            visible: z2 > -400
+        };
+    }
 
-            // Создаем скрытые заготовки для будущих водяных струй
-            const streamGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 8);
-            const streamMat = new THREE.MeshStandardMaterial({ color: 0x00aaff, transparent: true, opacity: 0 });
-            const stream = new THREE.Mesh(streamGeo, streamMat);
-            // Смещаем центр геометрии, чтобы рос в длину
-            streamGeo.translate(0, 0.05, 0);
-            stream.position.copy(hole.position);
-            stream.rotation.z = angle - Math.PI/2;
-            scene.add(stream);
-            waterStreams.push(stream);
+    // Рисование объемного 3D эллипса (сечения цилиндра)
+    function draw3DCircle(y, radius, strokeColor, fillColor = null) {
+        ctx.beginPath();
+        const segments = 64;
+        for (let i = 0; i <= segments; i++) {
+            let angle = (i / segments) * Math.PI * 2;
+            let px = Math.cos(angle) * radius;
+            let pz = Math.sin(angle) * radius;
+            let pt = project(px, y, pz);
+            if (i === 0) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.closePath();
+        if (fillColor) {
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+        }
+        if (strokeColor) {
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+    }
+
+    // Отрисовка всей физической лаборатории
+    function renderScene() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Рисуем сетку пола для ощущения глубины пространства
+        ctx.strokeStyle = 'rgba(0, 210, 255, 0.07)';
+        ctx.lineWidth = 1;
+        for (let i = -5; i <= 5; i++) {
+            ctx.beginPath();
+            let p1 = project(i * 50, -180, -250);
+            let p2 = project(i * 50, -180, 250);
+            ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+
+            ctx.beginPath();
+            let p3 = project(-250, -180, i * 50);
+            let p4 = project(250, -180, i * 50);
+            ctx.moveTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y);
+            ctx.stroke();
         }
 
-        // --- ПОРШЕНЬ ---
-        const pistonGeo = new THREE.CylinderGeometry(1.45, 1.45, 0.4, 32);
-        const pistonMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.8, roughness: 0.2 });
-        piston = new THREE.Mesh(pistonGeo, pistonMat);
-        piston.position.y = 1.8;
-        flask.add(piston);
+        const radius = 60;
+        const baseBotY = -120;
+        const baseTopY = 120;
 
-        // --- ВОДА (внутри колбы) ---
-        const waterGeo = new THREE.CylinderGeometry(1.42, 1.42, 3.8, 32);
-        const waterMat = new THREE.MeshStandardMaterial({ color: 0x00aaff, transparent: true, opacity: 0.0 });
-        water = new THREE.Mesh(waterGeo, waterMat);
-        water.position.y = -0.1;
-        flask.add(water);
+        // Расчет анимаций движения жидкостей и поршня
+        waterLevel += (targetWaterLevel - waterLevel) * 0.1;
+        let currentWaterY = baseBotY + (baseTopY - baseBotY) * 0.6 * waterLevel;
 
-        // --- МОДЕЛЬ ПИСТОЛЕТА / РУКОЯТКИ ДАВЛЕНИЯ ---
-        gun = new THREE.Group();
-        gun.position.set(0, 3.5, 0); // Ставим прямо над поршнем
-        flask.add(gun);
-
-        // Рычаг/шток поршня
-        const rodGeo = new THREE.CylinderGeometry(0.15, 0.15, 2, 16);
-        const rod = new THREE.Mesh(rodGeo, pistonMat);
-        rod.position.y = -0.5;
-        gun.add(rod);
-
-        // Рукоятка пистолетного типа
-        const gripGeo = new THREE.BoxGeometry(0.4, 1.2, 0.6);
-        const gripMat = new THREE.MeshStandardMaterial({ color: 0xff3366, roughness: 0.5 });
-        const grip = new THREE.Mesh(gripGeo, gripMat);
-        grip.position.set(0, 0.6, 0);
-        gun.add(grip);
-        
-        const triggerGeo = new THREE.BoxGeometry(0.3, 0.4, 0.2);
-        const trigger = new THREE.Mesh(triggerGeo, holeMat);
-        trigger.position.set(0, 0.4, 0.3);
-        gun.add(trigger);
-    }
-
-    function onWindowResize() {
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
-    }
-
-    function fillWater() {
-        water.material.opacity = 0.5;
-        piston.position.y = 1.8;
-        gun.position.y = 3.5;
-    }
-
-    function resetSimulation() {
-        water.material.opacity = 0.0;
-        piston.position.y = 1.8;
-        gun.position.y = 3.5;
-        isFiring = false;
-        waterStreams.forEach(stream => {
-            stream.scale.set(1, 1, 1);
-            stream.material.opacity = 0;
-        });
-    }
-
-    function fireShot() {
-        if(water.material.opacity < 0.1) {
-            alert("Сначала налей воду 💧!");
-            return;
-        }
-        if(isFiring) return;
-        isFiring = true;
-
-        // Анимация укола/удара пистолета вниз
-        let startTime = Date.now();
-        function animateShot() {
-            let elapsed = (Date.now() - startTime) / 300; // анимация длится 300мс
-            if (elapsed > 1) elapsed = 1;
-
-            // Движение поршня и пистолета вниз
-            let drop = Math.sin(elapsed * Math.PI) * 0.6;
-            piston.position.y = 1.8 - drop;
-            gun.position.y = 3.5 - drop;
-
-            // По закону Паскаля струи бьют во ВСЕ стороны одинаково!
-            waterStreams.forEach(stream => {
-                stream.material.opacity = 0.7 * Math.sin(elapsed * Math.PI);
-                let length = drop * 8; // Длина струи зависит от силы нажатия
-                stream.scale.set(1, length + 1, 1);
-            });
-
-            if (elapsed < 1) {
-                requestAnimationFrame(animateShot);
-            } else {
+        if (isFiring) {
+            shotProgress += 0.08;
+            if (shotProgress > Math.PI) {
+                shotProgress = 0;
                 isFiring = false;
             }
         }
-        animateShot();
+        let currentShotOffset = Math.sin(shotProgress) * 25;
+        pistonY = (waterLevel > 0.1 ? currentWaterY : baseTopY - 20) - currentShotOffset;
+
+        // 2. Отрисовка ЗАДНИХ водяных струй (по закону Паскаля во все стороны одинаково!)
+        if (shotProgress > 0) {
+            ctx.strokeStyle = 'rgba(0, 170, 255, 0.8)';
+            ctx.lineWidth = 4;
+            const numStreams = 8;
+            for (let i = 0; i < numStreams; i++) {
+                let ang = (i / numStreams) * Math.PI * 2 + angleY;
+                // Струи сзади рисуются первыми
+                if (Math.sin(ang) < 0) {
+                    let streamLen = Math.sin(shotProgress) * 90;
+                    let pStart = project(Math.cos(ang) * radius, baseBotY, Math.sin(ang) * radius);
+                    let pEnd = project(Math.cos(ang) * (radius + streamLen), baseBotY - streamLen*0.2, Math.sin(ang) * (radius + streamLen));
+                    ctx.beginPath(); ctx.moveTo(pStart.x, pStart.y); ctx.lineTo(pEnd.x, pEnd.y); ctx.stroke();
+                }
+            }
+        }
+
+        // 3. Рисуем объёмную воду (цилиндр внутри колбы)
+        if (waterLevel > 0.01) {
+            for (let y = baseBotY; y < currentWaterY; y += 4) {
+                let alpha = 0.25 * (1 - (currentWaterY - y) / (currentWaterY - baseBotY));
+                draw3DCircle(y, radius - 1, null, `rgba(0, 140, 255, ${alpha})`);
+            }
+            draw3DCircle(currentWaterY, radius - 1, 'rgba(0, 210, 255, 0.5)', 'rgba(0, 170, 255, 0.4)');
+        }
+
+        // 4. Стеклянный прибор (корпус колбы)
+        // Задние ребра стенок
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        draw3DCircle(baseBotY, radius, 'rgba(255, 255, 255, 0.25)');
+        draw3DCircle(baseTopY, radius, 'rgba(255, 255, 255, 0.2)');
+
+        // Вертикальные направляющие ребра колбы
+        const sides = [0, Math.PI/2, Math.PI, Math.PI*1.5];
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        sides.forEach(s => {
+            let pBot = project(Math.cos(s)*radius, baseBotY, Math.sin(s)*radius);
+            let pTop = project(Math.cos(s)*radius, baseTopY, Math.sin(s)*radius);
+            ctx.beginPath(); ctx.moveTo(pBot.x, pBot.y); ctx.lineTo(pTop.x, pTop.y); ctx.stroke();
+        });
+
+        // 5. Металлический Поршень
+        draw3DCircle(pistonY, radius - 2, '#444', '#777');
+        draw3DCircle(pistonY + 12, radius - 2, '#333', '#555');
+
+        // 6. Пистолетная Рукоятка Нагнетания Давления
+        let gunY = pistonY + 12;
+        let pHandleBot = project(0, gunY, 0);
+        let pHandleTop = project(0, gunY + 60, 0);
+        
+        ctx.strokeStyle = '#888'; ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.moveTo(pHandleBot.x, pHandleBot.y); ctx.lineTo(pHandleTop.x, pHandleTop.y); ctx.stroke();
+
+        let pGripEnd = project(25, gunY + 80, 0);
+        ctx.strokeStyle = '#ff3366'; ctx.lineWidth = 14;
+        ctx.beginPath(); ctx.moveTo(pHandleTop.x, pHandleTop.y); ctx.lineTo(pGripEnd.x, pGripEnd.y); ctx.stroke();
+
+        // 7. Отрисовка ПЕРЕДНИХ водяных струй (перекрывают колбу)
+        if (shotProgress > 0) {
+            ctx.strokeStyle = 'rgba(0, 190, 255, 0.9)';
+            ctx.lineWidth = 4;
+            const numStreams = 8;
+            for (let i = 0; i < numStreams; i++) {
+                let ang = (i / numStreams) * Math.PI * 2 + angleY;
+                if (Math.sin(ang) >= 0) { // Струи, летящие вперед на зрителя
+                    let streamLen = Math.sin(shotProgress) * 90;
+                    let pStart = project(Math.cos(ang) * radius, baseBotY, Math.sin(ang) * radius);
+                    let pEnd = project(Math.cos(ang) * (radius + streamLen), baseBotY - streamLen*0.2, Math.sin(ang) * (radius + streamLen));
+                    ctx.beginPath(); ctx.moveTo(pStart.x, pStart.y); ctx.lineTo(pEnd.x, pEnd.y); ctx.stroke();
+                }
+            }
+        }
     }
 
+    // Игровой цикл обновлений
     function animate() {
+        renderScene();
         requestAnimationFrame(animate);
-        if (controls) controls.update();
-        renderer.render(scene, camera);
     }
 
-    // Запускаем только после полной готовности DOM дерева
-    window.onload = function() {
-        init();
-        animate();
-        // Принудительный вызов ресайза для фиксации геометрии
-        setTimeout(onWindowResize, 100);
-    };
+    // Старт движка при полной готовности страницы
+    window.onload = init;
 </script>
 </body>
 </html>
-
-    <div id="simulation-container"></div>
