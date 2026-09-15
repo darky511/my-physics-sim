@@ -38,7 +38,6 @@
             color: #0f172a;
         }
 
-        /* Кнопки переключения ТРЕХ независимых режимов */
         .mode-selector {
             display: flex;
             gap: 10px;
@@ -60,7 +59,7 @@
 
         .dashboard {
             width: 100%;
-            max-width: 800px;
+            max-width: 850px;
             padding: 10px 15px;
             border-radius: 12px;
             font-weight: bold;
@@ -83,7 +82,6 @@
             align-items: center;
         }
 
-        /* Стили для экранов режимов */
         .sim-screen {
             position: absolute;
             width: 100%;
@@ -100,7 +98,7 @@
 <body>
 
     <div id="ui-panel">
-        <h2>БЛОК: Простые механизмы (Рычаг, Блок, КПД)</h2>
+        <h2>Простые механизмы: Правило моментов и Золотое правило механики</h2>
         
         <div class="mode-selector">
             <button id="btn-m1" class="mode-btn active" onclick="switchMode(1)">1. Баланс Рычага ⚖️</button>
@@ -108,130 +106,149 @@
             <button id="btn-m3" class="mode-btn" onclick="switchMode(3)">3. Расчет КПД 📐</button>
         </div>
 
-        <div id="main-dash" class="dashboard">Момент слева: 0 Н·м | Момент справа: 0 Н·м</div>
+        <div id="main-dash" class="dashboard">Загрузка данных...</div>
     </div>
 
     <div id="simulation-container">
-        <!-- РЕЖИМ 1: РЫЧАГ И МОМЕНТЫ СИЛ -->
+        <!-- РЕЖИМ 1: РЫЧАГ С ЗАСЕЧКАМИ И ТОЧНОЙ ПРИВЯЗКОЙ К ОПОРЕ -->
         <div id="screen-1" class="sim-screen active-screen">
             <style>
                 .lever-arena { position: relative; width: 500px; height: 260px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
-                .lever-support { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 35px solid #475569; z-index: 4; }
+                .lever-support { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 35px solid #475569; z-index: 2; }
                 
-                /* Качели-доска (угол вращения var(--rot) меняется из JS) */
-                .lever-plank {
-                    position: absolute; bottom: 33px; width: 440px; height: 10px; background: #854d0e; border: 2px solid #451a03; border-radius: 4px; z-index: 3;
+                .lever-pivot-node {
+                    position: absolute;
+                    bottom: 33px; 
+                    width: 440px;
+                    height: 0;
+                    z-index: 4;
                     transform: rotate(var(--rot, 0deg));
-                    transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-                    display: flex; justify-content: center;
+                    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
                 }
-                
-                /* Подвижные персонажи на качелях */
-                .heavy-man, .light-boy {
-                    position: absolute; bottom: 10px; width: 40px; height: 60px; display: flex; flex-direction: column; align-items: center; cursor: grab; user-select: none;
-                }
-                .heavy-man:active, .light-boy:active { cursor: grabbing; }
-                
-                .man-body { width: 24px; height: 36px; background: #1e3a8a; border-radius: 4px; color: #fff; font-size: 10px; font-weight: bold; text-align: center; line-height: 36px; }
-                .boy-body { width: 16px; height: 28px; background: #10b981; border-radius: 4px; color: #fff; font-size: 9px; font-weight: bold; text-align: center; line-height: 28px; margin-top: 8px; }
-                .head-round { width: 14px; height: 14px; background: #475569; border-radius: 50%; }
 
+                .lever-plank {
+                    position: absolute;
+                    top: -6px; left: 0; right: 0;
+                    height: 12px;
+                    background: #854d0e;
+                    border: 2px solid #451a03;
+                    border-radius: 4px;
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 0 10px;
+                    box-sizing: border-box;
+                }
+                .notch-line { width: 2px; height: 100%; background-color: rgba(255,255,255,0.4); }
+
+                .heavy-man, .light-boy {
+                    position: absolute; bottom: 6px; width: 40px; height: 60px; display: flex; flex-direction: column; align-items: center; cursor: grab; user-select: none;
+                }
+                .man-body { width: 26px; height: 36px; background: #1e3a8a; border-radius: 4px; color: #fff; font-size: 10px; font-weight: bold; text-align: center; line-height: 36px; }
+                .boy-body { width: 18px; height: 26px; background: #10b981; border-radius: 4px; color: #fff; font-size: 9px; font-weight: bold; text-align: center; line-height: 26px; margin-top: 10px; }
+                .head-round { width: 14px; height: 14px; background: #475569; border-radius: 50%; }
                 .lever-ground { width: 100%; height: 4px; background: #94a3b8; }
             </style>
             
             <div class="lever-arena">
-                <div id="plank" class="lever-plank" style="--rot: -12deg;">
-                    <!-- Мужчина (100 кг) слева от центра (отрицательный инкремент) -->
-                    <div id="man" class="heavy-man" style="left: 120px;">
+                <div id="pivot-container" class="lever-pivot-node" style="--rot: -8deg;">
+                    <div class="lever-plank">
+                        <div class="notch-line"></div><div class="notch-line"></div><div class="notch-line"></div><div class="notch-line"></div><div class="notch-line"></div>
+                        <div class="notch-line" style="background:#fff; width:3px;"></div>
+                        <div class="notch-line"></div><div class="notch-line"></div><div class="notch-line"></div><div class="notch-line"></div><div class="notch-line"></div>
+                    </div>
+                    
+                    <div id="man" class="heavy-man" style="left: 130px;">
                         <div class="head-round"></div><div class="man-body">100кг</div>
                     </div>
-                    <!-- Мальчик (25 кг) справа от центра -->
                     <div id="boy" class="light-boy" style="right: 40px;">
                         <div class="head-round"></div><div class="boy-body">25кг</div>
                     </div>
                 </div>
                 <div class="lever-support"></div>
                 <div class="lever-ground"></div>
-                <div style="font-size:12px; color:#64748b; margin-top:15px; font-weight:500; text-align:center;">
-                    🤸‍♂️ <b>Интерактив:</b> Перетаскивай Мужчину и Мальчика влево-вправо вдоль доски!<br>Чтобы уравновесить качели, мальчик должен сидеть в 4 раза дальше от центра, чем мужчина.
-                </div>
             </div>
         </div>
 
-        <!-- РЕЖИМ 2: ПОДВИЖНЫЙ И НЕПОДВИЖНЫЙ БЛОКИ -->
+        <!-- РЕЖИМ 2: БЛОКИ С ПРОРИСОВАННЫМИ ВЕРЕВКАМИ И ВЕРХНИМИ СЛАЙДЕРАМИ -->
         <div id="screen-2" class="sim-screen">
             <style>
-                .blocks-arena { width: 550px; height: 280px; display: flex; justify-content: space-around; align-items: flex-end; }
-                .block-column { width: 220px; height: 100%; position: relative; border-bottom: 3px solid #64748b; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+                .blocks-arena { width: 560px; height: 320px; display: flex; justify-content: space-around; align-items: flex-end; position: relative; }
+                .block-column { width: 240px; height: 240px; position: relative; border-bottom: 3px solid #64748b; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
                 
-                .ceiling-mount { position: absolute; top: 0; width: 100px; height: 6px; background: #334155; }
-                .pulley-wheel { width: 40px; height: 40px; border: 3px solid #475569; border-radius: 50%; background: #cbd5e1; position: absolute; }
+                .ceiling-mount { position: absolute; top: 0; width: 120px; height: 6px; background: #334155; }
+                .pulley-wheel { width: 40px; height: 40px; border: 3px solid #475569; border-radius: 50%; background: #cbd5e1; position: absolute; box-sizing: border-box; z-index: 5; }
+                .weight-box { width: 46px; height: 40px; background: #475569; border-radius: 4px; color: #fff; font-weight: bold; font-size: 11px; text-align: center; line-height: 40px; position: absolute; z-index: 6; }
                 
-                .weight-box { width: 45px; height: 40px; background: #475569; border-radius: 4px; color: #fff; font-weight: bold; font-size: 11px; text-align: center; line-height: 40px; position: absolute; transition: bottom 0.4s ease; }
-                
-                /* Интерактивный ползунок веревки */
-                .rope-control { position: absolute; top: 60px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: bold; color: #64748b; }
-                .rope-control input { width: 140px; }
+                .rope-line { position: absolute; width: 2px; background-color: #f59e0b; border-left: 1px solid #b45309; z-index: 3; }
+
+                .top-rope-control {
+                    position: absolute; top: -70px; left: 50%; transform: translateX(-50%);
+                    display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: bold; color: #475569; width: 150px;
+                }
+                .top-rope-control input { width: 100%; cursor: pointer; }
             </style>
             
             <div class="blocks-arena">
-                <!-- Левый: Неподвижный блок -->
+                <!-- Неподвижный блок -->
                 <div class="block-column">
                     <div class="ceiling-mount"></div>
-                    <div class="pulley-wheel" style="top: 6px; left: 90px;"></div>
-                    <div id="weight-fix" class="weight-box" style="left: 65px; bottom: 40px;">100 кг</div>
-                    <div class="rope-control" style="left: 40px;">
-                        <span>Тяни веревку (F)</span>
+                    <div class="top-rope-control">
+                        <span>Тяни веревку (F) ➔</span>
                         <input id="slider-fix" type="range" min="0" max="100" value="0" oninput="calcPulleyPhysics()">
                     </div>
-                    <div style="font-size:11px; color:#64748b; margin-top:8px; text-align:center; font-weight:600;">НЕПОДВИЖНЫЙ БЛОК<br><span style="color:#0284c7;">Выигрыша в силе нет (F = P)</span></div>
+                    <div class="pulley-wheel" style="top: 6px; left: 100px;"></div>
+                    
+                    <div id="rope-fix-left" class="rope-line" style="left: 100px; top: 26px; height: 174px;"></div>
+                    <div id="rope-fix-right" class="rope-line" style="left: 138px; top: 26px; height: 174px;"></div>
+
+                    <div id="weight-fix" class="weight-box" style="left: 78px; bottom: 40px;">100 кг</div>
+                    <div style="font-size:11px; color:#64748b; margin-top:8px; text-align:center; font-weight:600;">НЕПОДВИЖНЫЙ БЛОК</div>
                 </div>
 
-                <!-- Правый: Подвижный блок -->
+                <!-- Подвижный блок -->
                 <div class="block-column">
                     <div class="ceiling-mount"></div>
-                    <!-- Колесо подвижного блока висит на веревке и ходит вместе с грузом -->
-                    <div id="wheel-mov" class="pulley-wheel" style="bottom: 80px; left: 90px; transition: bottom 0.4s ease;"></div>
-                    <div id="weight-mov" class="weight-box" style="left: 88px; bottom: 40px; background:#0284c7; transition: bottom 0.4s ease;">100 кг</div>
-                    <div class="rope-control" style="right: 40px;">
-                        <span>Тяни веревку (F)</span>
+                    <div class="top-rope-control">
+                        <span>Тяни веревку (F) ➔</span>
                         <input id="slider-mov" type="range" min="0" max="100" value="0" oninput="calcPulleyPhysics()">
                     </div>
-                    <div style="font-size:11px; color:#64748b; margin-top:8px; text-align:center; font-weight:600;">ПОДВИЖНЫЙ БЛОК<br><span style="color:#10b981;">Выигрыш в силе в 2 раза!</span></div>
+
+                    <div id="rope-mov-left" class="rope-line" style="left: 100px; top: 6px; height: 154px;"></div>
+                    <div id="rope-mov-right" class="rope-line" style="left: 138px; top: 6px; height: 154px;"></div>
+
+                    <div id="wheel-mov" class="pulley-wheel" style="bottom: 80px; left: 100px;"></div>
+                    <div id="weight-mov" class="weight-box" style="left: 97px; bottom: 40px; background:#0284c7;">100 кг</div>
+                    <div style="font-size:11px; color:#64748b; margin-top:8px; text-align:center; font-weight:600;">ПОДВИЖНЫЙ БЛОК</div>
                 </div>
             </div>
         </div>
 
-        <!-- РЕЖИМ 3: КОЭФФИЦИЕНТ ПОЛЕЗНОГО ДЕЙСТВИЯ (КПД) -->
+        <!-- РЕЖИМ 3: КПД БЕЗ НАЛОЖЕНИЯ КНОПОК -->
         <div id="screen-3" class="sim-screen">
             <style>
-                .kpd-arena { width: 480px; height: 260px; position: relative; }
-                /* Наклонная плоскость треугольником */
-                .slope-triangle { position: absolute; bottom: 40px; left: 40px; width: 340px; height: 140px; border-bottom: 4px solid #475569; border-right: 4px solid #475569; background: linear-gradient(158deg, transparent 50%, rgba(0,0,0,0.03) 50%); }
+                .kpd-arena { width: 500px; height: 260px; position: relative; }
+                .slope-triangle { position: absolute; bottom: 30px; left: 30px; width: 320px; height: 140px; border-bottom: 4px solid #475569; border-right: 4px solid #475569; background: linear-gradient(158deg, transparent 50%, rgba(14,165,233,0.03) 50%); }
                 
                 .kpd-crate {
-                    position: absolute; width: 50px; height: 40px; background: #d97706; border: 2px solid #78350f; border-radius: 4px; color: #fff; font-weight: bold; font-size: 12px; text-align: center; line-height: 40px;
-                    bottom: 44px; left: 35px;
+                    position: absolute; width: 52px; height: 40px; background: #d97706; border: 2px solid #78350f; border-radius: 4px; color: #fff; font-weight: bold; font-size: 12px; text-align: center; line-height: 40px;
+                    bottom: 34px; left: 24px;
                     transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    z-index: 5;
                 }
-                
-                .kpd-btn-zone { position: absolute; right: 10px; top: 40%; display: flex; flex-direction: column; gap: 10px; }
+                .kpd-safe-btn-zone { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
             </style>
             
             <div class="kpd-arena">
                 <div class="slope-triangle">
-                    <!-- Высота h -->
                     <div style="position:absolute; right:-35px; top:40%; font-weight:bold; color:#0284c7; font-size:13px;">h = 2 м</div>
-                    <!-- Длина плоскости S -->
-                    <div style="position:absolute; left:40%; top:30%; font-weight:bold; color:#475569; font-size:13px; transform:rotate(-22deg)">Длина пути S = 5 м</div>
+                    <div style="position:absolute; left:35%; top:30%; font-weight:bold; color:#475569; font-size:13px; transform:rotate(-22deg)">Длина пути S = 5 м</div>
                 </div>
                 
-                <!-- Груз на плоскости -->
                 <div id="kpd-box" class="kpd-crate">150Н</div>
                 
-                <div class="kpd-btn-zone">
-                    <button class="mode-btn active" style="background:#10b981; border-color:#10b981; color:#fff;" onclick="runKpdSimulation()">Запустить подъем 🚀</button>
-                    <button class="mode-btn" onclick="resetKpdSimulation()">Сброс 🔄</button>
+                <div class="kpd-safe-btn-zone">
+                    <button style="background:#10b981; border-color:#10b981; color:#fff;" onclick="runKpdSimulation()">Запустить подъем 🚀</button>
+                    <button onclick="resetKpdSimulation()">Сброс 🔄</button>
                 </div>
             </div>
         </div>
@@ -239,13 +256,13 @@
 <script>
     let activeModeId = 1;
 
-    // --- НАСТРОЙКА РЕЖИМА 1: РЫЧАГ И МЫШКА ---
-    const plank = document.getElementById('plank');
+    // --- ЛОГИКА РЕЖИМА 1: РЫЧАГ С ФОРМУЛОЙ ---
+    const pivotContainer = document.getElementById('pivot-container');
     const man = document.getElementById('man');
     const boy = document.getElementById('boy');
 
-    let currentManX = -100; // координата относительно центра в пикселях
-    let currentBoyX = 160;
+    let currentManX = -90; 
+    let currentBoyX = 150;
 
     setupDragAndDrop(man, true);
     setupDragAndDrop(boy, false);
@@ -268,12 +285,11 @@
             let deltaX = e.clientX - startX;
             let newLeft = startLeft + deltaX;
 
-            // Границы движения по доске качелей
             if (isMan) {
                 if (newLeft < 10) newLeft = 10;
                 if (newLeft > 190) newLeft = 190;
                 element.style.left = newLeft + 'px';
-                currentManX = newLeft - 220 + 20; // перевод в координату от центра вращения
+                currentManX = newLeft - 220 + 20; 
             } else {
                 if (newLeft < 230) newLeft = 230;
                 if (newLeft > 400) newLeft = 400;
@@ -293,106 +309,106 @@
     }
 
     function calcLeverPhysics() {
-        let fMan = 100 * 9.8; // 980 Н
-        let fBoy = 25 * 9.8;  // 245 Н
+        let fMan = 100 * 9.8; 
+        let fBoy = 25 * 9.8;  
 
-        // Превращаем пиксели плеч в условные метры
         let lMan = Math.abs(currentManX) * 0.02;
         let lBoy = Math.abs(currentBoyX) * 0.02;
 
         let mLeft = Math.round(fMan * lMan);
         let mRight = Math.round(fBoy * lBoy);
 
-        document.getElementById('main-dash').innerHTML = `Мочевой момент слева (Мужчина): <b>M₁ = ${mLeft} Н·м</b> | Момент справа (Мальчик): <b>M₂ = ${mRight} Н·м</b>`;
+        document.getElementById('main-dash').innerHTML = `
+            Формула момента сил: <b>M = F &middot; l</b> | 
+            Слева: M₁ = ${Math.round(fMan)}Н &middot; ${lMan.toFixed(2)}м = <b>${mLeft} Н·м</b> | 
+            Справа: M₂ = ${Math.round(fBoy)}Н &middot; ${lBoy.toFixed(2)}м = <b>${mRight} Н·м</b>
+        `;
 
-        // Условие равновесия моментов: M1 должно быть примерно равно M2
         if (Math.abs(mLeft - mRight) < 25) {
-            plank.style.setProperty('--rot', '0deg');
+            pivotContainer.style.setProperty('--rot', '0deg');
             document.getElementById('main-dash').innerHTML += ` &rarr; <span style="color:#10b981">⚖️ РАВНОВЕСИЕ ДОСТИГНУТО!</span>`;
         } else if (mLeft > mRight) {
-            plank.style.setProperty('--rot', '-9deg'); // перевес влево
+            pivotContainer.style.setProperty('--rot', '-7deg'); 
         } else {
-            plank.style.setProperty('--rot', '9deg');  // перевес вправо
+            pivotContainer.style.setProperty('--rot', '7deg');  
         }
     }
 
-    // --- НАСТРОЙКА РЕЖИМА 2: ПОДВИЖНЫЙ И НЕПОДВИЖНЫЙ БЛОК ---
+    // --- ЛОГИКА РЕЖИМА 2: ДИНАМИКА ТЯГИ НИТЕЙ И БЛОКОВ ---
     function calcPulleyPhysics() {
         let sFix = document.getElementById('slider-fix').value;
         let sMov = document.getElementById('slider-mov').value;
 
-        // Неподвижный блок: сколько вытянул веревки (sFix), на столько и поднялся груз!
-        document.getElementById('weight-fix').style.bottom = (40 + sFix * 1.2) + 'px';
+        let fixWeightBottom = 40 + sFix * 1.2;
+        document.getElementById('weight-fix').style.bottom = fixWeightBottom + 'px';
+        
+        document.getElementById('rope-fix-left').style.height = (174 - sFix * 1.2) + 'px';
+        document.getElementById('rope-fix-right').style.height = '174px'; 
 
-        // Подвижный блок: закон Золотого правила механики! 
-        // Чтобы поднять груз на высоту, веревку нужно вытянуть В 2 РАЗА ДЛИННЕЕ!
-        // То есть высота подъема груза равна половине хода ползунка веревки
-        let movHeight = sMov * 0.6;
-        document.getElementById('weight-mov').style.bottom = (40 + movHeight) + 'px';
-        document.getElementById('wheel-mov').style.bottom = (80 + movHeight) + 'px';
+        let movWeightBottom = 40 + sMov * 0.6;
+        document.getElementById('weight-mov').style.bottom = movWeightBottom + 'px';
+        document.getElementById('wheel-mov').style.bottom = (80 + sMov * 0.6) + 'px';
 
-        let pWeight = 100 * 9.8; // Вес груза 980 Н
+        document.getElementById('rope-mov-left').style.height = (154 + sMov * 0.6) + 'px';
+        document.getElementById('rope-mov-right').style.height = (154 - sMov * 0.6) + 'px';
+
+        let pWeight = 100 * 9.8; 
         let fFix = pWeight;
-        let fMov = pWeight / 2; // Выигрыш в силе в 2 раза!
+        let fMov = pWeight / 2; 
 
         document.getElementById('main-dash').innerHTML = `
-            Неподвижный: Сила F = <b>${Math.round(fFix)} Н</b>, Путь веревки = ${(sFix*0.02).toFixed(1)} м | 
-            Подвижный: Сила F = <span style="color:#10b981;"><b>${Math.round(fMov)} Н (В 2 раза меньше!)</b></span>, Путь веревки = <span style="color:#ef4444;"><b>${(sMov*0.04).toFixed(1)} м (В 2 раза длиннее!)</b></span>
+            Неподвижный: Сила F = <b>${Math.round(fFix)} Н</b>, Веревка = ${(sFix*0.02).toFixed(1)} м | 
+            Подвижный: Сила F = <span style="color:#10b981;"><b>${Math.round(fMov)} Н (В 2 раза легче!)</b></span>, Веревка = <span style="color:#ef4444;"><b>${(sMov*0.04).toFixed(1)} м (В 2 раза длиннее!)</b></span>
         `;
     }
 
-    // --- НАСТРОЙКА РЕЖИМА 3: КОЭФФИЦИЕНТ ПОЛЕЗНОГО ДЕЙСТВИЯ (КПД) ---
+    // --- ЛОГИКА РЕЖИМА 3: КПД ---
     function runKpdSimulation() {
         let box = document.getElementById('kpd-box');
-        // Анимируем подъем груза по гипотенузе наклонной плоскости
-        box.style.bottom = '180px';
-        box.style.left = '350px';
+        box.style.bottom = '170px';
+        box.style.left = '334px';
 
-        let F_useful = 150; // Вес тела
-        let h = 2;          // Высота подъема
-        let S_path = 5;     // Длина плоскости
-        let F_pull = 80;    // Сила тяги с учетом трения
+        let F_useful = 150; 
+        let h = 2;          
+        let S_path = 5;     
+        let F_pull = 80;    
 
-        let A_useful = F_useful * h; // Полезная работа (поднять вертикально на h) = 300 Дж
-        let A_total = F_pull * S_path; // Затраченная полная работа = 400 Дж
+        let A_useful = F_useful * h; 
+        let A_total = F_pull * S_path; 
         let kpdValue = Math.round((A_useful / A_total) * 100);
 
         setTimeout(() => {
             document.getElementById('main-dash').innerHTML = `
                 <span style="color:#0f172a">Полезная работа: A<sub>п</sub> = ${A_useful} Дж | Затраченная работа: A<sub>з</sub> = ${A_total} Дж</span> &rarr; 
-                <span style="color:#10b981">Коэффициент полезного действия: &eta; = (${A_useful}/${A_total})&middot;100% = <b>${kpdValue}%</b></span>
+                <span style="color:#10b981">КПД: &eta; = (A<sub>п</sub> / A<sub>з</sub>)&middot;100% = <b>${kpdValue}%</b> (Всегда меньше 100%!)</span>
             `;
-        }, 1200);
+        }, 1250);
     }
 
     function resetKpdSimulation() {
         let box = document.getElementById('kpd-box');
-        box.style.bottom = '44px';
-        box.style.left = '35px';
+        box.style.bottom = '34px';
+        box.style.left = '24px';
         document.getElementById('main-dash').innerText = "Груз возвращен в начало наклонной плоскости.";
     }
 
-    // --- ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМОВ СТЕНДА ---
+    // --- СЕРВИСНЫЙ ПЕРЕКЛЮЧАТЕЛЬ ЭКРАНОВ ---
     function switchMode(id) {
         activeModeId = id;
         
-        // Сбрасываем активные классы кнопок меню
         document.getElementById('btn-m1').className = "mode-btn" + (id === 1 ? " active" : "");
         document.getElementById('btn-m2').className = "mode-btn" + (id === 2 ? " active" : "");
         document.getElementById('btn-m3').className = "mode-btn" + (id === 3 ? " active" : "");
 
-        // Переключаем видимость экранов симуляции
         document.getElementById('screen-1').className = "sim-screen" + (id === 1 ? " active-screen" : "");
         document.getElementById('screen-2').className = "sim-screen" + (id === 2 ? " active-screen" : "");
         document.getElementById('screen-3').className = "sim-screen" + (id === 3 ? " active-screen" : "");
 
-        // Обновляем стартовую информацию в дашборде под выбранный режим
         if (id === 1) calcLeverPhysics();
         if (id === 2) calcPulleyPhysics();
         if (id === 3) document.getElementById('main-dash').innerText = "Наклонная плоскость готова к работе. Нажмите кнопку запуска.";
     }
 
-    // Старт симулятора
     switchMode(1);
 </script>
 </body>
