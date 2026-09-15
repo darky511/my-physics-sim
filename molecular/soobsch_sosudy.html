@@ -126,14 +126,14 @@
             .vessel-stand {
                 position: relative;
                 width: 320px;
-                height: 380px; /* Увеличили под краник */
+                height: 380px;
             }
 
-            /* --- СТИЛЬ КРАНИКА И СТРУИ --- */
+            /* Металлический краник над левой трубкой */
             .water-tap {
                 position: absolute;
-                top: 0;
-                left: -15px;
+                top: 20px;
+                left: 8px;
                 width: 50px;
                 height: 25px;
                 background: linear-gradient(90deg, #94a3b8, #cbd5e1);
@@ -154,17 +154,17 @@
             }
             .water-stream {
                 position: absolute;
-                top: 35px;
-                left: 21px;
+                top: 55px;
+                left: 44px;
                 width: 4px;
-                height: 0px; /* Анимируется через JS */
+                height: 0px; 
                 background: rgba(14, 165, 233, 0.6);
                 box-shadow: 0 0 4px rgba(14, 165, 233, 0.4);
                 z-index: 4;
                 transition: height 0.1s linear;
             }
 
-            /* Контуры стеклянного сосуда */
+            /* Стеклянные границы */
             .vessel-outline-main {
                 position: absolute;
                 bottom: 0;
@@ -213,13 +213,12 @@
                 z-index: 1;
             }
 
-            /* Слой воды и масла в донном канале */
             .channel-water {
                 position: absolute;
                 left: 0;
                 top: 0;
                 bottom: 0;
-                width: var(--door-pos, 50%); /* Позиция дверцы двигает границу воды */
+                width: var(--door-pos, 50%); 
                 background-color: rgba(14, 165, 233, 0.35);
                 transition: width 0.4s ease;
             }
@@ -241,11 +240,11 @@
             .water-fluid { background-color: rgba(14, 165, 233, 0.35); }
             .oil-fluid { background-color: rgba(234, 179, 8, 0.35); }
 
-            /* --- ПОДВИЖНАЯ ДВЕРЦА --- */
+            /* Дверца на дне */
             .invisible-door {
                 position: absolute;
                 bottom: 0;
-                left: var(--door-pos, 50%); /* Позиция плавно меняется из JS */
+                left: var(--door-pos, 50%); 
                 width: 0;
                 height: 36px;
                 border-left: 2px dashed #475569;
@@ -273,6 +272,7 @@
             .arrow-left { right: 4px; color: #0284c7; }
             .arrow-right { left: 4px; color: #ea580c; }
 
+            /* Линия дельты высот */
             .delta-line {
                 position: absolute;
                 left: 64px;
@@ -296,7 +296,6 @@
         </style>
 
         <div class="vessel-stand">
-            <!-- Краник над левой трубкой -->
             <div class="water-tap"></div>
             <div id="stream" class="water-stream"></div>
 
@@ -329,7 +328,8 @@
     let currentLeftHeightPx = 120;
 
     const densityWater = 1000;
-    const densityOil = 920;
+    // ИЗМЕНЕНО: Для максимальной визуальной наглядности утрируем разницу плотностей (масло стало легче)
+    const densityOilVisual = 720; 
     const gravity = 9.8;
 
     function updateLayout() {
@@ -339,27 +339,24 @@
 
         if (activeMode === 'water_only') {
             rightHeight = leftHeight;
-            doorPercent = 50; // В чистой воде дверца строго по центру
+            doorPercent = 50; 
         } else {
-            // В режиме МАСЛА объем масла постоянен (высота столба масла всегда равна 120px).
-            // Долитая вода толкает масло. Рассчитываем смещение дверцы вправо.
-            // Прибавка высоты воды (leftHeight - 120) создает гидростатическое давление, которое сдвигает дверцу вправо.
             let waterSurplus = leftHeight - 120;
             
-            // Смещение дверцы вправо в процентах (0% - центр, 100% - правый край канала)
+            // Дверца уходит вправо в зависимости от давления воды
             doorPercent = 50 + (waterSurplus * 0.45); 
-            if (doorPercent > 96) doorPercent = 96; // ограничитель, чтобы дверца не вылетела из трубы
+            if (doorPercent > 96) doorPercent = 96; 
 
-            // Высота масла остается неизменной (+ выталкивание за счет ухода дверцы вправо)
-            rightHeight = 120 + (waterSurplus * (densityWater / densityOil));
+            // Масло выталкивается наверх по новой, утрированной пропорции для яркого визуала!
+            rightHeight = 120 + (waterSurplus * (densityWater / densityOilVisual));
         }
 
-        // Применяем новые параметры к верстке
+        // Синхронизация с CSS
         document.getElementById('fluid-l').style.setProperty('--h', `${leftHeight}px`);
         document.getElementById('fluid-r').style.setProperty('--h', `${rightHeight}px`);
         document.body.style.setProperty('--door-pos', `${doorPercent}%`);
 
-        // Честный расчет давлений (Паскали строго равны в точке покоя)
+        // Идеальный расчет Паскалей для дашборда
         let h1_meters = (leftHeight - 36) * 0.01;
         if (h1_meters < 0) h1_meters = 0;
         let pLeft = Math.round(densityWater * gravity * h1_meters);
@@ -377,7 +374,7 @@
             document.getElementById('fluid-r').className = "liquid oil-fluid";
             document.getElementById('channel-oil-layer').style.backgroundColor = "rgba(234, 179, 8, 0.35)";
 
-            // Линия разности уровней
+            // Отрисовка огромной, контрастной стрелки Delta h
             let deltaIndicator = document.getElementById('delta-indicator');
             deltaIndicator.style.display = "block";
             deltaIndicator.style.bottom = `${leftHeight}px`;
@@ -391,14 +388,12 @@
 
     function pourLiquid() {
         if (currentLeftHeightPx < 220) {
-            // Включаем струю воды из краника
             let stream = document.getElementById('stream');
             let leftHeight = currentLeftHeightPx;
-            let distanceToWater = 300 - leftHeight;
+            let distanceToWater = 280 - leftHeight;
             
             stream.style.height = `${distanceToWater}px`;
 
-            // Через 400мс (когда вода «долилась») выключаем струю и обновляем уровни
             setTimeout(() => {
                 stream.style.height = "0px";
                 currentLeftHeightPx += 25;
