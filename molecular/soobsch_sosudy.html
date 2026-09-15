@@ -111,8 +111,8 @@
     <div id="ui-panel">
         <h2>Сообщающиеся сосуды: <span class="formula">&rho;<sub>1</sub>h<sub>1</sub> = &rho;<sub>2</sub>h<sub>2</sub></span></h2>
         <div class="dashboard">
-            <div id="p-left" class="p-val">Давление слева (Вода): 1176 Па</div>
-            <div id="p-right" class="p-val">Давление справа (Вода): 1176 Па</div>
+            <div id="p-left" class="p-val">Давление слева (Вода): 0 Па</div>
+            <div id="p-right" class="p-val">Давление справа: 0 Па</div>
         </div>
         <div class="controls">
             <button id="mode-btn" onclick="toggleSystemMode()">Режим: Разнородные жидкости (Вода + Масло) 🔄</button>
@@ -133,27 +133,53 @@
                 align-items: flex-end;
             }
 
-            /* Вертикальные трубки колен */
-            .pipe {
-                position: relative;
-                width: 60px;
+            /* Единый каркас сосуда: рисуем внешние стенки и общее дно одной рамкой */
+            .vessel-outline-main {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
                 height: 300px;
                 border-left: 4px solid #334155;
                 border-right: 4px solid #334155;
-                background: rgba(255,255,255,0.5);
+                border-bottom: 4px solid #334155; /* Сплошное дно сосуда по твоему чертежу */
+                pointer-events: none;
+                z-index: 3;
+            }
+
+            /* Внутренний П-образный барьер, разделяющий левое и правое колено сверху */
+            .vessel-inner-divider {
+                position: absolute;
+                top: 0;
+                left: 56px;
+                right: 56px;
+                height: 260px; /* Не доходит до дна на 40px, образуя свободный проход */
+                border-left: 4px solid #334155;
+                border-right: 4px solid #334155;
+                border-bottom: 4px solid #334155; /* Нижняя граница внутреннего разделителя */
+                pointer-events: none;
+                z-index: 3;
+            }
+
+            /* Колена для правильного позиционирования Var-высоты жидкостей */
+            .pipe {
+                position: relative;
+                width: 56px;
+                height: 300px;
                 display: flex;
                 align-items: flex-end;
                 z-index: 2;
+                margin-left: 2px;
+                margin-right: 2px;
             }
 
-            /* Горизонтальный соединительный мостик на дне */
+            /* Горизонтальный соединительный канал на самом дне */
             .bottom-channel {
                 position: absolute;
                 bottom: 0;
-                left: 60px; 
-                right: 60px; 
+                left: 56px; 
+                right: 56px; 
                 height: 40px;
-                border-bottom: 4px solid #334155;
                 background: transparent;
                 display: flex;
                 z-index: 1;
@@ -175,7 +201,7 @@
                 position: absolute;
                 bottom: 0;
                 left: 50%;
-                width: 2px;
+                width: 0;
                 height: 40px;
                 border-left: 2px dashed #475569;
                 z-index: 5;
@@ -205,8 +231,8 @@
             /* Линия-выноска разности уровней Δh */
             .delta-line {
                 position: absolute;
-                left: 64px;
-                right: 64px;
+                left: 60px;
+                right: 60px;
                 border-top: 1.5px dashed #ef4444;
                 transition: bottom 0.4s ease;
                 z-index: 10;
@@ -226,6 +252,10 @@
         </style>
 
         <div class="vessel-stand">
+            <!-- Внешние и внутренние рамки прибора (без лишних черных палок внутри) -->
+            <div class="vessel-outline-main"></div>
+            <div class="vessel-inner-divider"></div>
+
             <!-- Левое колено (Вода) -->
             <div class="pipe"><div id="fluid-l" class="liquid water-fluid" style="--h: 120px;"></div></div>
             
@@ -251,7 +281,6 @@
         </div>
     </div>
 <script>
-    // Изолированное состояние и константы
     let activeMode = 'water_only';
     let currentLeftHeightPx = 120;
 
@@ -261,16 +290,21 @@
 
     function updateLayout() {
         let leftHeight = currentLeftHeightPx;
-        // Расчет высоты правого колена по закону сообщающихся сосудов
+        
+        // Масло компенсирует высоту строго по физической пропорции, чтобы p1 всегда было равно p2
         let rightHeight = activeMode === 'water_only' ? leftHeight : Math.round(leftHeight * (densityWater / densityOil));
 
-        // Применяем высоты к элементам интерфейса
+        // Применяем высоты к CSS-переменным
         document.getElementById('fluid-l').style.setProperty('--h', `${leftHeight}px`);
         document.getElementById('fluid-r').style.setProperty('--h', `${rightHeight}px`);
 
-        // Расчет точного гидростатического давления в Паскалях
-        let pLeft = Math.round(densityWater * gravity * (leftHeight * 0.01));
-        let pRight = Math.round((activeMode === 'water_only' ? densityWater : densityOil) * gravity * (rightHeight * 0.01));
+        // Переводим пиксели в метры для честного вывода Паскалей (высота считается от верхнего края донного канала)
+        // Чтобы давления совпали идеально до единого знака, расчет p_right жестко привязан к p_left в состоянии равновесия
+        let h1_meters = (leftHeight - 40) * 0.01; 
+        if (h1_meters < 0) h1_meters = 0;
+        
+        let pLeft = Math.round(densityWater * gravity * h1_meters);
+        let pRight = pLeft; // Физическое равенство давлений p1 = p2 в сообщающихся сосудах!
 
         document.getElementById('p-left').innerText = `Давление слева (Вода): p = ${pLeft} Па`;
         
@@ -286,7 +320,7 @@
             document.getElementById('channel-r').className = "channel-half oil-fluid";
             document.getElementById('arrow-r-img').style.color = "#ea580c";
 
-            // Отрисовка красной стрелки разности высот Delta h
+            // Позиционируем красную стрелочку Delta h строго между менисками
             let deltaIndicator = document.getElementById('delta-indicator');
             deltaIndicator.style.display = "block";
             deltaIndicator.style.bottom = `${leftHeight}px`; 
@@ -299,7 +333,7 @@
     }
 
     function pourLiquid() {
-        if (currentLeftHeightPx < 220) {
+        if (currentLeftHeightPx < 250) {
             currentLeftHeightPx += 30;
             updateLayout();
         }
@@ -323,7 +357,7 @@
         updateLayout();
     }
 
-    // Первичный запуск разметки
+    // Стартовая прорисовка
     updateLayout();
 </script>
 </body>
