@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Закон Паскаля: 3D Симуляция</title>
     <style>
         :root {
@@ -17,8 +17,8 @@
 
         body {
             margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden;
-            background-color: var(--bg-color); font-family: 'Inter', sans-serif; color: var(--text-main);
-            display: flex; touch-action: none;
+            background-color: var(--bg-color); font-family: 'Inter', -apple-system, sans-serif; 
+            color: var(--text-main); display: flex; touch-action: none; position: fixed;
         }
 
         #canvas-container { flex-grow: 1; position: relative; z-index: 1; cursor: crosshair; }
@@ -54,12 +54,17 @@
             background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px);
             padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid var(--border);
-            pointer-events: none; z-index: 5;
+            pointer-events: none; z-index: 5; transition: all 0.3s;
         }
 
+        /* Адаптив для мобильных */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            .control-sidebar { width: 100%; height: auto; max-height: 35vh; border-left: none; border-top: 1px solid var(--border); order: 2; padding: 16px; }
+            .control-sidebar { 
+                width: 100%; height: auto; max-height: 35vh; 
+                border-left: none; border-top: 1px solid var(--border); 
+                order: 2; padding: 16px; 
+            }
             #canvas-container { order: 1; height: 65vh; }
             .btn-grid { grid-template-columns: 1fr; }
         }
@@ -87,7 +92,7 @@
     const container = document.getElementById('canvas-container');
     container.appendChild(canvas);
 
-    // UI
+    // UI Элементы
     const shootBtn = document.getElementById('shootBtn');
     const fillBtn = document.getElementById('fillBtn');
     const resetBtn = document.getElementById('resetBtn');
@@ -110,20 +115,34 @@
         fov: 600
     };
 
+    // ИСПРАВЛЕНИЕ: Функция resize теперь корректно инициализирует сцену
     function resize() {
         width = container.clientWidth;
         height = container.clientHeight;
         canvas.width = width;
         canvas.height = height;
         
-        // Centering logic
-        scene.canX = width / 2 - 50; // Slightly left to make room for gun
-        scene.canY = height / 2 + 20;
+        // Центрируем банку в доступной области Canvas
+        scene.canX = width / 2 - 50; 
+        scene.canY = height / 2 + 20; 
+        
+        // Позиция пистолета справа
         scene.gunX = width / 2 + 180;
         scene.gunY = height / 2 + 40;
+
+        // АДАПТИВ ДЛЯ МОБИЛЬНЫХ: Если экран узкий, отодвигаем камеру
+        if (width < height) {
+            scene.fov = 400; // Уменьшаем FOV, чтобы всё влезло
+            scene.canY = height * 0.4; // Поднимаем банку выше
+            scene.gunY = height * 0.45;
+        } else {
+            scene.fov = 600;
+        }
     }
+    
     window.addEventListener('resize', resize);
-    setTimeout(resize, 50);
+    // КРИТИЧЕСКИ ВАЖНО: Вызываем resize сразу при загрузке!
+    resize(); 
 
     // --- 3D MATH UTILS ---
     function project(x, y, z) {
@@ -276,13 +295,12 @@
             const distToCan = Math.abs(bullet.x - scene.canX);
             if (distToCan < 40 && !isShot) {
                 isShot = true;
-                bullet.active = false; // Stop bullet visually or let it pass? 
+                bullet.active = false; 
                 
                 if (!isWaterFilled) {
                     // Empty can: Bullet passes through
                     statusBadge.innerText = "Локальное повреждение";
                     infoText.innerText = "Пуля пробила стенку и вылетела с другой стороны. Энергия ушла только в точку входа.";
-                    // Create a small hole particle effect
                     createExplosion(scene.canX - 35, scene.canY, 'metal');
                 } else {
                     // Full can: Pascal's Law Explosion
@@ -388,7 +406,21 @@
         fillBtn.style.opacity = 1;
     });
 
+    // БРОНЕБОЙНЫЙ ТАЧ-ФИКС ДЛЯ МОБИЛЬНЫХ (из истории с северным сиянием)
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => {
+        if(e.touches && e.touches[0]) touchStartX = e.touches[0].clientX;
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        // Если пользователь крутит ползунок слайдера — не мешаем ему
+        if(e.target.id === 'solarSlider') return;
+        e.preventDefault(); // Полностью запрещаем Telegram двигать саму страницу Web App!
+    }, { passive: false });
+
+    // Запуск анимации
     draw();
+
 </script>
 </body>
 </html>
