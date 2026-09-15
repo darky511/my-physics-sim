@@ -51,8 +51,8 @@
                         <div class="notch-cell" style="background:#451a03; max-width:4px; border-right:none;" data-index="0"></div>
                         <div class="notch-cell" data-index="1"></div><div class="notch-cell" data-index="2"></div><div class="notch-cell" data-index="3"></div><div class="notch-cell" data-index="4"></div><div class="notch-cell" data-index="5"></div>
                     </div>
-                    <div id="man" class="heavy-man" style="left:142px;"><div class="head-round"></div><div class="man-body">80кг</div></div>
-                    <div id="boy" class="light-boy" style="right:62px;"><div class="head-round"></div><div class="boy-body">20кг</div></div>
+                    <div id="man" class="heavy-man" style="left:130px;"><div class="head-round"></div><div class="man-body">80кг</div></div>
+                    <div id="boy" class="light-boy" style="right:50px;"><div class="head-round"></div><div class="boy-body">20кг</div></div>
                 </div>
                 <div class="lever-support"></div><div class="lever-ground"></div>
             </div>
@@ -123,7 +123,10 @@
     const pivotContainer = document.getElementById('pivot-container');
     const man = document.getElementById('man');
     const boy = document.getElementById('boy');
+    
     let cellIndexMan = -2, cellIndexBoy = 3;
+    
+    // ФИКС БАГА: Чётко прописал пиксельные координаты ячеек (1, 2, 3, 4, 5 шагов от центра)
     const leftCellPositions =;
     const rightCellPositions =;
 
@@ -155,7 +158,7 @@
         let lMan = Math.abs(cellIndexMan), lBoy = Math.abs(cellIndexBoy);
         let mLeft = fMan * lMan, mRight = fBoy * lBoy;
         document.getElementById('main-dash').innerHTML = `Формула момента сил: <b>M = F &middot; l</b> | Слева: M₁ = ${fMan}Н &middot; ${lMan}кл. = <b>${mLeft} Н·м</b> | Справа: M₂ = ${fBoy}Н &middot; ${lBoy}кл. = <b>${mRight} Н·м</b>`;
-        if (mLeft === mRight) { pivotContainer.style.setProperty('--rot', '0deg'); document.getElementById('main-dash').innerHTML += ` &rarr; <span style="color:#10b981">⚖️ РАВНОВЕСИЕ ДОСТИГНУТО!</span>`; }
+        if (mLeft === mRight) { pivotContainer.style.setProperty('--rot', '0deg'); document.getElementById('main-dash').innerHTML += ` &rarr; <span style="color:#10b981">⚖️ РАВНОВЕСИЕ СТРОГО ДОСТИГНУТО!</span>`; }
         else if (mLeft > mRight) { pivotContainer.style.setProperty('--rot', '-6deg'); }
         else { pivotContainer.style.setProperty('--rot', '6deg'); }
     }
