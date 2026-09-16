@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Закон сохранения механической энергии</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; user-select: none; }
+        body { background-color: #f8fafc; color: #1e293b; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 900px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; padding: 24px; }
+        
+        .info-header { background: #0f172a; color: #38bdf8; padding: 14px 20px; border-radius: 12px; font-size: 13px; line-height: 1.5; border-left: 4px solid #38bdf8; margin-bottom: 20px; }
+        .info-header b { color: #ffffff; }
+
+        .workbench { width: 100%; height: 420px; display: flex; gap: 20px; position: relative; }
+        .left-controls { width: 260px; display: flex; flex-direction: column; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 12px; flex-shrink: 0; }
+        .right-stage { flex-grow: 1; background: #f1f5f9; border: 1px dashed #cbd5e1; border-radius: 12px; position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 40px; }
+        
+        .control-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 4px; }
+        .slider-box { display: flex; flex-direction: column; background: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .slider-box label { font-size: 12px; font-weight: 600; color: #475569; }
+        .slider-box input { width: 100%; margin-top: 6px; cursor: pointer; }
+        
+        .btn { background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; text-align: center; width: 100%; }
+        .btn:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="info-header">
+        <b>БЛОК 7. Энергия (Потенциальная, Кинетическая и их превращения)</b><br>
+        Энергия не может исчезнуть или появиться из ниоткуда. При движении скейтера вниз его потенциальная энергия высоты (\(Eп\)) превращается в кинетическую энергию скорости (\(Eк\)), но их полная сумма всегда остаётся неизменной!
+    </div>
+    <div class="workbench">
+        <!-- ЛЕВАЯ ПАНЕЛЬ С ЖИВЫМИ ДИАГРАММАМИ СОХРАНЕНИЯ -->
+        <style>
+            .energy-monitor { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+            .bar-container { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; color: #475569; }
+            .bar-label { width: 35px; font-family: monospace; font-weight: 700; }
+            .bar-track { flex-grow: 1; height: 16px; background: #e2e8f0; border-radius: 4px; overflow: hidden; position: relative; }
+            .bar-fill { height: 100%; width: 0%; transition: width 0.05s linear; }
+            .bar-num { position: absolute; right: 6px; top: 1px; font-size: 10px; font-weight: 800; color: #0f172a; }
+            .live-formula { background: #0f172a; color: #38bdf8; font-family: monospace; font-size: 11px; padding: 8px; border-radius: 6px; border-left: 3px solid #38bdf8; text-align: center; margin-top: 4px; }
+        </style>
+        
+        <div class="left-controls">
+            <div class="slider-box">
+                <label>Масса скейтера (m): <span id="m-text">60</span> кг</label>
+                <input type="range" id="m-slider" min="40" max="80" value="60" step="10" oninput="updateMass()">
+            </div>
+            <div style="display:flex; gap: 6px;">
+                <button class="btn" id="play-btn" onclick="togglePlay()">Пауза ⏸</button>
+                <button class="btn" style="background:#cbd5e1; color:#475569;" onclick="resetTrack()">Сброс 🔄</button>
+            </div>
+            
+            <div class="control-title" style="margin-top: 6px;">Потоки механической энергии:</div>
+            <div class="energy-monitor">
+                <div class="bar-container">
+                    <span class="bar-label" style="color:#059669;">Eп:</span>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="fill-ep" style="background:#10b981;"></div>
+                        <span class="bar-num" id="num-ep">0 Дж</span>
+                    </div>
+                </div>
+                <div class="bar-container">
+                    <span class="bar-label" style="color:#1d4ed8;">Eк:</span>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="fill-ek" style="background:#2563eb;"></div>
+                        <span class="bar-num" id="num-ek">0 Дж</span>
+                    </div>
+                </div>
+                <div style="border-top:1px dashed #cbd5e1; margin: 4px 0;"></div>
+                <div class="bar-container">
+                    <span class="bar-label" style="color:#0f172a; width:45px;">Eполн:</span>
+                    <div class="bar-track" style="background:#cbd5e1;">
+                        <div class="bar-fill" id="fill-etotal" style="background:#475569;"></div>
+                        <span class="bar-num" id="num-etotal">0 Дж</span>
+                    </div>
+                </div>
+                <div class="live-formula" id="formula-text">Eп + Eк = Eполн</div>
+            </div>
+        </div>
+        <!-- ПРАВАЯ РАБОЧАЯ ЗОНА С ТРЕКОМ-РАМПОЙ -->
+        <style>
+            /* Геометрически выверенная U-образная рампа толщиной 6px */
+            .skate-ramp { width: 500px; height: 250px; border-bottom: 6px solid #334155; border-left: 6px solid #334155; border-right: 6px solid #334155; border-bottom-left-radius: 160px; border-bottom-right-radius: 160px; position: relative; background: transparent; }
+            
+            /* Скейтер, позиционируемый по тригонометрической траектории рампы */
+            .skater { width: 32px; height: 40px; position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); z-index: 5; font-size: 32px; line-height: 1; text-align: center; }
+            
+            /* Наклейка высоты h */
+            .height-line { position: absolute; left: calc(50% - 1px); top: 0; width: 2px; height: 250px; border-left: 2px dashed #94a3b8; z-index: 1; }
+            .height-tag { position: absolute; left: calc(50% + 8px); font-size: 11px; font-weight: 700; color: #64748b; background: rgba(241,245,249,0.9); padding: 1px 4px; border-radius: 4px; }
+            
+            /* Динамические векторы сил над головой движущегося скейтера */
+            .skater-energy-bars { position: absolute; width: 40px; height: 60px; top: -75px; left: calc(50% - 20px); display: flex; justify-content: space-around; align-items: flex-end; background: rgba(255,255,255,0.7); padding: 2px; border-radius: 4px; border: 1px solid #e2e8f0; }
+            .mini-bar { width: 14px; height: 0%; border-radius: 2px; transition: height 0.05s linear; position: relative; }
+        </style>
+
+        <div class="right-stage">
+            <div class="skate-ramp" id="ramp">
+                <!-- Осевая линия высоты для наглядности замера h -->
+                <div class="height-line"></div>
+                <div class="height-tag" id="h-tag" style="top: 0px;">h = 5.0 м</div>
+
+                <!-- Объект "Скейтер" с индикаторами сил прямо над головой -->
+                <div class="skater" id="skater-node">
+                    <div class="skater-energy-bars">
+                        <div class="mini-bar" id="mbar-ep" style="background:#10b981;" title="Потенциальная"></div>
+                        <div class="mini-bar" id="mbar-ek" style="background:#2563eb;" title="Кинетическая"></div>
+                    </div>
+                    🛹
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <script>
+        var animId = null;
+        var isPlaying = true;
+        
+        // Физические параметры системы
+        var mass = 60; 
+        var g = 10;
+        var maxH = 5.0; // Высота рампы в виртуальных метрах
+        
+        // Математические параметры маятникового скольжения по дуге окружности
+        var angleRad = Math.PI / 2; // Текущая угловая координата скейтера (от -PI/2 до +PI/2)
+        var angleSpeed = 0.0;       // Угловая скорость
+        var angleAccel = 0.0;       // Угловое ускорение
+        
+        var r_px = 160;   // Радиус закругления рампы в пикселях
+        var straight_px = 180; // Длина центрального плоского участка (500 - 2*160 = 180px)
+
+        function updateMass() {
+            mass = parseFloat(document.getElementById('m-slider').value);
+            document.getElementById('m-text').textContent = mass;
+            updateEnergyBars(angleRad);
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('play-btn').textContent = isPlaying ? 'Пауза ⏸' : 'Старт ▶';
+            if (isPlaying && !animId) animateFrame();
+        }
+
+        function resetTrack() {
+            if (animId) { cancelAnimationFrame(animId); animId = null; }
+            isPlaying = true;
+            document.getElementById('play-btn').textContent = 'Пауза ⏸';
+            
+            // Сброс в начальную точку (левая верхняя вершина рампы)
+            angleRad = -Math.PI / 2;
+            angleSpeed = 0.0;
+            
+            updateEnergyBars(angleRad);
+            drawSkater(angleRad);
+            
+            if (isPlaying) animateFrame();
+        }
+        function animateFrame() {
+            if (!isPlaying) { animId = null; return; }
+            
+            // Моделирование физики математического маятника (движение по дуге без трения)
+            // Угловое ускорение пропорционально сине угла наклона поверхности: a = -(g/R)*sin(alpha)
+            // Коэффициент 0.0007 подобран для идеальной плавности анимации кадра
+            angleAccel = -0.0016 * Math.sin(angleRad);
+            angleSpeed += angleAccel;
+            angleRad += angleSpeed;
+            
+            drawSkater(angleRad);
+            updateEnergyBars(angleRad);
+            
+            animId = requestAnimationFrame(animateFrame);
+        }
+
+        function drawSkater(angle) {
+            var skater = document.getElementById('skater-node');
+            
+            // Расчёт физических координат X и Y внутри контейнера рампы шириной 500px и высотой 250px
+            var x_px = 0;
+            var y_px = 0;
+            
+            if (angle < -Math.PI/4) {
+                // Левая закруглённая дуга рампы
+                var phi = angle + Math.PI/2;
+                x_px = 160 - 160 * Math.cos(phi);
+                y_px = 250 - 160 * Math.sin(phi);
+            } else if (angle > Math.PI/4) {
+                // Правая закруглённая дуга рампы
+                var phi = angle - Math.PI/4;
+                x_px = 340 + 160 * Math.sin(phi);
+                y_px = 90 + 160 * Math.cos(phi);
+            } else {
+                // Центральная плоская зона дна рампы (h = 0)
+                // Линейно интерполируем прохождение плоского дна шириной 180px
+                var factor = (angle + Math.PI/4) / (Math.PI/2);
+                x_px = 160 + straight_px * factor;
+                y_px = 250;
+            }
+            
+            skater.style.left = x_px + 'px';
+            skater.style.top = y_px + 'px';
+        }
+
+        function updateEnergyBars(angle) {
+            // Расчёт текущей виртуальной высоты h над точкой нуля (дном рампы) от 0 до 5.0м
+            var h = 0;
+            if (angle < -Math.PI/4) {
+                var phi = angle + Math.PI/2;
+                h = maxH * (1 - Math.sin(phi));
+            } else if (angle > Math.PI/4) {
+                var phi = angle - Math.PI/4;
+                h = maxH * (1 - Math.cos(phi));
+            } else {
+                h = 0; // На дне рампы высота равна нулю
+            }
+            
+            // Если скейтер вылетает за верхние границы из-за округления, гасим погрешность
+            if (h > maxH) h = maxH;
+            if (h < 0) h = 0;
+            
+            // 1. Потенциальная энергия: Eп = mgh
+            var E_pot = mass * g * h;
+            
+            // 2. Полная механическая энергия на вершине: Eполн = m * g * maxH
+            var E_total = mass * g * maxH;
+            
+            // 3. Кинетическая энергия (по закону сохранения энергии): Eк = Eполн - Eп
+            var E_kin = E_total - E_pot;
+            if (E_kin < 0) E_kin = 0;
+
+            // Обновление тега текущей высоты h на центральной оси
+            var hTag = document.getElementById('h-tag');
+            hTag.style.top = (250 - (h * 48)) + 'px'; // 48px на 1 метр высоты
+            hTag.textContent = 'h = ' + h.toFixed(1) + ' м';
+
+            // Нормализатор высоты шкал для интерфейса (максимум полной энергии 4000 Дж)
+            var maxScale = 4000;
+            var pctEp = (E_pot / maxScale) * 100;
+            var pctEk = (E_kin / maxScale) * 100;
+            var pctEt = (E_total / maxScale) * 100;
+
+            // Наполнение боковых гистограмм
+            document.getElementById('fill-ep').style.width = pctEp + '%';
+            document.getElementById('fill-ek').style.width = pctEk + '%';
+            document.getElementById('fill-etotal').style.width = pctEt + '%';
+            
+            document.getElementById('num-ep').textContent = E_pot.toFixed(0) + ' Дж';
+            document.getElementById('num-ek').textContent = E_kin.toFixed(0) + ' Дж';
+            document.getElementById('num-etotal').textContent = E_total.toFixed(0) + ' Дж';
+            
+            // Наполнение динамических шкал над головой скейтера
+            document.getElementById('mbar-ep').style.height = (E_pot / E_total * 100) + '%';
+            document.getElementById('mbar-ek').style.height = (E_kin / E_total * 100) + '%';
+            
+            // Строковый вывод формулы закона сохранения
+            document.getElementById('formula-text').innerHTML = E_pot.toFixed(0) + ' + ' + E_kin.toFixed(0) + ' = ' + E_total.toFixed(0) + ' Дж';
+        }
+
+        window.onload = function() {
+            resetTrack();
+        };
+    </script>
+</body>
+</html>
