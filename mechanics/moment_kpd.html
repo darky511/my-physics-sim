@@ -16,7 +16,7 @@
         .tab-content.active { display: block; }
         .arrow-btn { width: 32px; height: 26px; border-radius: 4px; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; font-weight: 700; display: flex; align-items: center; justify-content: center; }
         .arrow-btn:hover { background: #e2e8f0; }
-        .vector-s { background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; position: absolute; }
+        .vector-s { background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; position: absolute; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -104,18 +104,17 @@
         </div>
     </div>
     <style>
-        /* Сцена блоков расширена во всю ширину, так как боковой панели больше нет */
-        .blocks-stage { width: 100%; height: 100%; display: flex; justify-content: space-around; align-items: flex-end; padding-bottom: 50px; }
-        .block-column { width: 45%; height: 90%; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; position: relative; display: flex; justify-content: center; }
-        .column-title { position: absolute; top: 12px; width: 100%; text-align: center; font-size: 14px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        .blocks-stage { width: 100%; height: 100%; display: flex; justify-content: space-around; align-items: flex-start; padding-top: 20px; }
+        .block-column { width: 46%; height: 500px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; position: relative; }
+        .column-title { position: absolute; top: 14px; width: 100%; text-align: center; font-size: 14px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        .beam { width: 160px; height: 8px; background: #475569; position: absolute; top: 50px; border-radius: 4px; }
+        .beam { width: 160px; height: 8px; background: #475569; position: absolute; top: 50px; left: calc(50% - 80px); border-radius: 4px; }
         .pulley-wheel { width: 40px; height: 40px; border: 2px solid #475569; border-radius: 50%; position: absolute; background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 3; }
         .pulley-wheel::after { content: ''; position: absolute; width: 6px; height: 6px; background: #475569; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         
-        /* Прочная металлическая тяга от оси ролика к грузу */
-        .load-hanger { width: 4px; background: #ef4444; position: absolute; z-index: 2; }
-        .block-load { width: 54px; height: 44px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 6px; position: absolute; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.15); z-index: 4; }
+        /* Тяга подвеса строго из центральной оси вниз к грузу */
+        .load-hanger { width: 4px; background: #ef4444; position: absolute; z-index: 2; left: calc(50% - 12px); }
+        .block-load { width: 54px; height: 44px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 6px; position: absolute; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.15); z-index: 4; left: calc(50% - 37px); }
         
         .dynamometer { width: 18px; height: 55px; background: #e2e8f0; border: 1.5px solid #64748b; border-radius: 3px; position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4px; z-index: 4; }
         .dynamo-scale { width: 100%; font-size: 8px; text-align: center; font-weight: 700; color: #ef4444; }
@@ -128,50 +127,54 @@
     <div id="tab-blocks" class="tab-content">
         <div class="blocks-stage">
             <!-- НЕПОДВИЖНЫЙ БЛОК -->
-            <div class="block-column">
+            <div class="block-column" id="col-fix">
                 <div class="column-title">Неподвижный блок</div>
                 <div class="beam"></div>
                 <div class="pulley-wheel" style="top: 54px; left: calc(50% - 20px);"></div>
-                <div class="rope" id="rope-fix-l" style="top: 74px; left: calc(50% - 20px); height: 240px;"></div>
-                <div class="rope" id="rope-fix-r" style="top: 74px; left: calc(50% + 20px); height: 140px;"></div>
-                <div class="block-load" id="load-fix" style="bottom: 110px; left: calc(50% - 47px);">40 кг</div>
-                <div class="dynamometer" id="dyn-fix" style="top: 214px; left: calc(50% + 11px);">
+                
+                <div class="rope" id="rope-fix-l" style="top: 74px; left: calc(50% - 20px); height: 206px;"></div>
+                <div class="rope" id="rope-fix-r" style="top: 74px; left: calc(50% + 20px); height: 175px;"></div>
+                
+                <div class="block-load" id="load-fix" style="top: 280px; left: calc(50% - 47px);">40 кг</div>
+                <div class="dynamometer" id="dyn-fix" style="top: 249px; left: calc(50% + 11px);">
                     <div class="dynamo-scale">400Н</div>
                 </div>
-                <div class="drag-ring" id="ring-fix" style="top: 269px; left: calc(50% + 12px);"></div>
-                <div class="vector-s" id="v-fix-h" style="left: 20px; bottom: 110px;">h груза = 0.0м</div>
-                <div class="vector-s" id="v-fix-s" style="right: 20px; bottom: 170px; border-color:#38bdf8;">S руки = 0.0м</div>
+                <div class="drag-ring" id="ring-fix" style="top: 304px; left: calc(50% + 11px);"></div>
+                
+                <div class="vector-s" id="v-fix-h" style="left: 20px; top: 290px;">h груза = 0.0м</div>
+                <div class="vector-s" id="v-fix-s" style="right: 20px; top: 220px; border-color:#38bdf8;">S руки = 0.0м</div>
             </div>
 
-            <!-- ПОДВИЖНЫЙ БЛОК (КАНОНИЧЕСКАЯ ФИЗИЧЕСКАЯ СХЕМА) -->
-            <div class="block-column">
+            <!-- ПОДВИЖНЫЙ БЛОК (ИСПРАВЛЕННАЯ СХЕМА ТАНГЕНЦИАЛЬНЫХ НИТЕЙ) -->
+            <div class="block-column" id="col-mov">
                 <div class="column-title">Подвижный блок</div>
                 <div class="beam"></div>
-                <!-- Верхний направляющий неподвижный ролик справа -->
+                
+                <!-- Верхний фиксированный ролик справа -->
                 <div class="pulley-wheel" style="top: 54px; left: calc(50% + 10px);"></div>
-                <!-- Нижний подвижный ролик -->
-                <div class="pulley-wheel" id="wheel-mov" style="bottom: 150px; left: calc(50% - 30px);"></div>
+                <!-- Нижний подвижный ролик слева -->
+                <div class="pulley-wheel" id="wheel-mov" style="top: 260px; left: calc(50% - 30px);"></div>
                 
-                <!-- Точная нитяная топология по чертежу -->
-                <div class="rope" id="rope-mov-l" style="top: 58px; left: calc(50% - 30px); height: 226px;"></div> <!-- Анкер к балке -->
-                <div class="rope" id="rope-mov-m" style="top: 54px; left: calc(50% - 10px); height: 230px;"></div> <!-- От подвижного к неподвижному -->
-                <div class="rope" id="rope-mov-r" style="top: 74px; left: calc(50% + 50px); height: 140px;"></div> <!-- От неподвижного в руку -->
+                <!-- Нити подвеса, облегающие колеса тютелька в тютельку -->
+                <div class="rope" id="rope-mov-l" style="top: 58px; left: calc(50% - 30px); height: 222px;"></div> <!-- Левый анкер к балке -->
+                <div class="rope" id="rope-mov-m" style="top: 74px; left: calc(50% + 10px); height: 206px;"></div> <!-- Идеальный правый тангенс снизу/левый сверху -->
+                <div class="rope" id="rope-mov-r" style="top: 74px; left: calc(50% + 50px); height: 175px;"></div> <!-- От верхнего колеса в руку -->
                 
-                <!-- Соединительный подвес: жестко от оси ролика вниз к грузу -->
-                <div class="load-hanger" id="hanger-mov" style="bottom: 110px; left: calc(50% - 12px); height: 42px;"></div>
-                <div class="block-load" id="load-mov" style="bottom: 66px; left: calc(50% - 37px);">40 кг</div>
+                <!-- Соединительный подвес: СТРОГО из центральной оси нижнего ролика вниз к грузу -->
+                <div class="load-hanger" id="hanger-mov" style="top: 300px; left: calc(50% - 12px); height: 30px;"></div>
+                <div class="block-load" id="load-mov" style="top: 330px;">40 кг</div>
                 
-                <div class="dynamometer" id="dyn-mov" style="top: 214px; left: calc(50% + 41px);">
+                <div class="dynamometer" id="dyn-mov" style="top: 249px; left: calc(50% + 41px);">
                     <div class="dynamo-scale">200Н</div>
                 </div>
-                <div class="drag-ring" id="ring-mov" style="top: 269px; left: calc(50% + 42px);"></div>
+                <div class="drag-ring" id="ring-mov" style="top: 304px; left: calc(50% + 41px);"></div>
                 
-                <div class="vector-s" id="v-mov-h" style="left: 20px; bottom: 66px;">h груза = 0.0м</div>
-                <div class="vector-s" id="v-mov-s" style="right: 15px; bottom: 170px; border-color:#38bdf8;">S руки = 0.0м</div>
+                <div class="vector-s" id="v-mov-h" style="left: 20px; top: 340px;">h груза = 0.0м</div>
+                <div class="vector-s" id="v-mov-s" style="right: 15px; top: 220px; border-color:#38bdf8;">S руки = 0.0м</div>
             </div>
         </div>
     </div>
-</div> <!-- Конец .container -->
+</div>
     <script>
         function switchTab(evt, tabId) {
             var contents = document.querySelectorAll('.tab-content');
@@ -214,9 +217,9 @@
             var txt = 'M1 = F1 · l1 | M2 = F2 · l2<br>Условие равновесия: M1 = M2<br>Текущие моменты сил: ' + M1 + ' Н·м == ' + M2 + ' Н·м';
             document.getElementById('lever-formula').innerHTML = txt;
         }
-        /* --- JS ДВИЖОК БЛОКОВ (ИНТЕРАКТИВНЫЙ ТЯГ) --- */
+        /* --- JS ДВИЖОК БЛОКОВ (БЕЗУПРЕЧНАЯ СИНХРОННАЯ МАТЕМАТИКА ОТ TOP) --- */
         var activeRing = null; var startY = 0; var startTop = 0;
-        var maxDrag = 140; // Предел хода кольца в пикселях
+        var maxDrag = 120; 
 
         function initBlocksDrag() {
             var rings = ['ring-fix', 'ring-mov'];
@@ -224,7 +227,7 @@
                 var el = document.getElementById(id);
                 el.addEventListener('mousedown', function(e) {
                     activeRing = id; startY = e.clientY;
-                    startTop = parseInt(el.style.top) || 269;
+                    startTop = parseInt(el.style.top) || 304;
                     document.body.style.cursor = 'ns-resize';
                 });
             });
@@ -234,45 +237,59 @@
                 var deltaY = e.clientY - startY;
                 var newTop = startTop + deltaY;
                 
-                if (newTop < 269) newTop = 269;
-                if (newTop > 269 + maxDrag) newTop = 269 + maxDrag;
+                if (newTop < 304) newTop = 304;
+                if (newTop > 304 + maxDrag) newTop = 304 + maxDrag;
                 
-                var currentS_px = newTop - 269;
-                var S_m = currentS_px / 50; // Масштабирование перемещения в метры
+                var currentS_px = newTop - 304;
+                var S_m = currentS_px / 40; 
 
                 document.getElementById(activeRing).style.top = newTop + 'px';
                 
                 if (activeRing === 'ring-fix') {
-                    // Неподвижный блок
+                    // Неподвижный блок: h = S
                     var h_m = S_m;
-                    document.getElementById('dyn-fix').style.top = (214 + currentS_px) + 'px';
-                    document.getElementById('load-fix').style.bottom = (110 + currentS_px) + 'px';
-                    document.getElementById('rope-fix-l').style.height = (240 - currentS_px) + 'px';
-                    document.getElementById('rope-fix-r').style.height = (140 + currentS_px) + 'px';
-                    document.getElementById('v-fix-h').style.bottom = (110 + currentS_px) + 'px';
-                    document.getElementById('v-fix-h').textContent = 'h груза = ' + h_m.toFixed(1) + 'м';
+                    var Y_load = 280 - currentS_px;
+                    
+                    document.getElementById('dyn-fix').style.top = (249 + currentS_px) + 'px';
+                    document.getElementById('load-fix').style.top = Y_load + 'px';
+                    
+                    document.getElementById('rope-fix-l').style.height = (Y_load + 20 - 74) + 'px';
+                    document.getElementById('rope-fix-r').style.height = (175 + currentS_px) + 'px';
+                    
+                    var vH = document.getElementById('v-fix-h');
+                    vH.style.top = (Y_load + 10) + 'px';
+                    vH.textContent = 'h груза = ' + h_m.toFixed(1) + 'м';
                     document.getElementById('v-fix-s').textContent = 'S руки = ' + S_m.toFixed(1) + 'м';
                 } else {
-                    // Подвижный блок: точный пересчёт нитей и подвесов
+                    // Подвижный блок: h = S / 2 (Строгое каноническое сопряжение)
                     var h_m = S_m / 2;
                     var currentH_px = currentS_px / 2;
                     
-                    document.getElementById('dyn-mov').style.top = (214 + currentS_px) + 'px';
+                    var Y_wheel = 260 - currentH_px;
+                    var Y_hanger = 300 - currentH_px;
+                    var Y_load_mov = 330 - currentH_px;
                     
-                    // Подвижный ролик, металлическая тяга и чёрный брусок синхронно идут вверх
-                    document.getElementById('wheel-mov').style.bottom = (150 + currentH_px) + 'px';
-                    document.getElementById('hanger-mov').style.bottom = (110 + currentH_px) + 'px';
-                    document.getElementById('load-mov').style.bottom = (66 + currentH_px) + 'px';
+                    document.getElementById('dyn-mov').style.top = (249 + currentS_px) + 'px';
                     
-                    // Левая анкерная нить и средняя нить укорачиваются на величину h_груза
-                    document.getElementById('rope-mov-l').style.height = (226 - currentH_px) + 'px';
-                    document.getElementById('rope-mov-m').style.height = (230 - currentH_px) + 'px';
+                    // Подвижный ролик, центральный подвес и груз смещаются вверх на h
+                    document.getElementById('wheel-mov').style.top = Y_wheel + 'px';
+                    document.getElementById('hanger-mov').style.top = Y_hanger + 'px';
+                    document.getElementById('load-mov').style.top = Y_load_mov + 'px';
                     
-                    // Правая нить в руке удлиняется на величину S_руки
-                    document.getElementById('rope-mov-r').style.height = (140 + currentS_px) + 'px';
+                    // Левая нить идет от балки (58px) до оси колеса (Y_wheel + 20px)
+                    document.getElementById('rope-mov-l').style.height = (Y_wheel + 20 - 58) + 'px';
                     
-                    document.getElementById('v-mov-h').style.bottom = (66 + currentH_px) + 'px';
-                    document.getElementById('v-mov-h').textContent = 'h груза = ' + h_m.toFixed(1) + 'м';
+                    // Средняя нить идет от оси колеса (Y_wheel + 20px) до оси верхнего ролика (74px)
+                    var rMid = document.getElementById('rope-mov-m');
+                    rMid.style.top = '74px';
+                    rMid.style.height = (Y_wheel + 20 - 74) + 'px';
+                    
+                    // Правая тяговая нить удлиняется на величину S_руки
+                    document.getElementById('rope-mov-r').style.height = (175 + currentS_px) + 'px';
+                    
+                    var vMovH = document.getElementById('v-mov-h');
+                    vMovH.style.top = (Y_load_mov + 10) + 'px';
+                    vMovH.textContent = 'h груза = ' + h_m.toFixed(1) + 'м';
                     document.getElementById('v-mov-s').textContent = 'S руки = ' + S_m.toFixed(1) + 'м';
                 }
             });
@@ -283,19 +300,21 @@
         }
 
         function resetBlocksDrag() {
-            document.getElementById('ring-fix').style.top = '269px';
-            document.getElementById('ring-mov').style.top = '269px';
-            document.getElementById('dyn-fix').style.top = '214px';
-            document.getElementById('dyn-mov').style.top = '214px';
-            document.getElementById('load-fix').style.bottom = '110px';
-            document.getElementById('load-mov').style.bottom = '66px';
-            document.getElementById('wheel-mov').style.bottom = '150px';
-            document.getElementById('hanger-mov').style.bottom = '110px';
-            document.getElementById('rope-fix-l').style.height = '240px';
-            document.getElementById('rope-fix-r').style.height = '140px';
-            document.getElementById('rope-mov-l').style.height = '226px';
-            document.getElementById('rope-mov-m').style.height = '230px';
-            document.getElementById('rope-mov-r').style.height = '140px';
+            document.getElementById('ring-fix').style.top = '304px';
+            document.getElementById('ring-mov').style.top = '304px';
+            document.getElementById('dyn-fix').style.top = '249px';
+            document.getElementById('dyn-mov').style.top = '249px';
+            document.getElementById('load-fix').style.top = '280px';
+            document.getElementById('load-mov').style.top = '330px';
+            document.getElementById('wheel-mov').style.top = '260px';
+            document.getElementById('hanger-mov').style.top = '300px';
+            document.getElementById('rope-fix-l').style.height = '226px';
+            document.getElementById('rope-fix-r').style.height = '175px';
+            document.getElementById('rope-mov-l').style.height = '222px';
+            document.getElementById('rope-mov-m').style.height = '206px';
+            document.getElementById('rope-mov-r').style.height = '175px';
+            document.getElementById('v-fix-h').style.top = '290px';
+            document.getElementById('v-mov-h').style.top = '340px';
             document.getElementById('v-fix-h').textContent = 'h груза = 0.0м'; document.getElementById('v-fix-s').textContent = 'S руки = 0.0м';
             document.getElementById('v-mov-h').textContent = 'h груза = 0.0м'; document.getElementById('v-mov-s').textContent = 'S руки = 0.0м';
         }
