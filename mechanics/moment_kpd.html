@@ -28,33 +28,37 @@
         <button class="tab-btn" onclick="switchTab(event, 'tab-blocks')">🎡 2. Синхронные Блоки</button>
     </nav>
     <style>
-        /* Широкая горизонтальная изолированная панель сверху */
         .horizontal-panel { width: 100%; background: rgba(248, 250, 252, 0.95); border: 1px solid #e2e8f0; padding: 14px 20px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .horizontal-formula { flex-grow: 1; background: #0f172a; color: #38bdf8; padding: 10px 16px; border-radius: 8px; font-family: monospace; font-size: 12px; border-left: 3px solid #38bdf8; line-height: 1.4; }
         .horizontal-controls { display: flex; flex-direction: column; gap: 6px; min-width: 260px; }
         .control-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; background: #ffffff; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
         
-        /* Приподнятая сцена рычага с безопасными отступами */
-        .lever-stage { width: 100%; height: calc(100% - 80px); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 120px; position: relative; margin-top: 20px; }
-        .lever-system { width: 640px; height: 160px; position: relative; display: flex; justify-content: center; align-items: flex-end; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); transform-origin: 320px 160px; }
-        .board { width: 100%; height: 12px; background: linear-gradient(90deg, #64748b 0%, #475569 50%, #64748b 100%); border-radius: 6px; position: absolute; bottom: 0; left: 0; }
+        /* Сцена поднята строго в центр за счет flex-выравнивания содержимого */
+        .lever-stage { width: 100%; height: calc(100% - 80px); display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; margin-top: 10px; }
+        .lever-system { width: 640px; height: 160px; position: relative; display: flex; justify-content: center; align-items: flex-end; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); transform-origin: 320px 148px; }
+        .board { width: 100%; height: 12px; background: linear-gradient(90deg, #64748b 0%, #475569 50%, #64748b 100%); border-radius: 6px; position: absolute; top: 142px; left: 0; }
         .ticks-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; justify-content: space-between; padding: 0; }
         .tick-mark { width: 2px; height: 8px; background: #94a3b8; position: absolute; top: 12px; }
         .tick-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748b; }
-        .fulcrum { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 36px solid #0f172a; position: absolute; bottom: 84px; left: 50%; transform: translateX(-50%); z-index: 2; }
-        .human { position: absolute; bottom: 12px; display: flex; flex-direction: column; align-items: center; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); }
-        .human-sprite { font-size: 44px; line-height: 1; position: relative; }
-        .human-label { background: rgba(15, 23, 42, 0.85); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
-        .gravity-arrow { position: absolute; width: 4px; background: #ef4444; left: calc(50% - 2px); top: 25px; transform-origin: top center; }
+        
+        /* Точка опоры пересчитана под новую центральную высоту балки */
+        .fulcrum { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 36px solid #0f172a; position: absolute; top: 226px; left: 50%; transform: translateX(-50%); z-index: 2; }
+        
+        /* Персонажи и их векторы, опущенные строго ПОД ноги */
+        .human { position: absolute; top: 92px; display: flex; flex-direction: column; align-items: center; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); height: 160px; }
+        .human-sprite { font-size: 44px; line-height: 1; position: relative; width: 44px; text-align: center; }
+        .human-label { background: rgba(15, 23, 42, 0.85); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 4px; z-index: 5; }
+        
+        /* Вектор силы тяжести: выходит из центра тела и уходит глубоко вниз */
+        .gravity-arrow { position: absolute; width: 4px; background: #ef4444; left: calc(50% - 2px); top: 22px; z-index: 1; }
         .gravity-arrow::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid #ef4444; }
         .gravity-text { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: #ef4444; white-space: nowrap; }
     </style>
 
     <div id="tab-lever" class="tab-content active">
-        <!-- Горизонтальная панель во всю ширину -->
         <div class="horizontal-panel">
             <div class="horizontal-formula" id="lever-formula">
-                M1 = F1 · l1 | M2 = F2 · l2<br>Условие равновесия: M1 = M2<br>Текущие моменты: 0 Н·м == 0 Н·м
+                M1 = F1 · l1 | M2 = F2 · l2<br>Условие равновесия: M1 = M2<br>Текущие моменты сил: 0 Н·м == 0 Н·м
             </div>
             <div class="horizontal-controls">
                 <div class="control-row">
@@ -93,18 +97,14 @@
                     </div>
                 </div>
                 <div class="human" id="human-left">
-                    <div class="human-sprite">
-                        👨
-                        <div class="gravity-arrow" style="height: 50px;"><span class="gravity-text">F1 = 800Н</span></div>
-                    </div>
+                    <div class="human-sprite">👨</div>
                     <div class="human-label">Плечо: <span id="l1-val">3</span></div>
+                    <div class="gravity-arrow" style="height: 100px;"><span class="gravity-text">F1 = 800Н</span></div>
                 </div>
                 <div class="human" id="human-right">
-                    <div class="human-sprite">
-                        👦
-                        <div class="gravity-arrow" style="height: 25px;"><span class="gravity-text">F2 = 200Н</span></div>
-                    </div>
+                    <div class="human-sprite">👦</div>
                     <div class="human-label">Плечо: <span id="l2-val">3</span></div>
+                    <div class="gravity-arrow" style="height: 50px;"><span class="gravity-text">F2 = 200Н</span></div>
                 </div>
             </div>
         </div>
@@ -169,7 +169,7 @@
             </div>
         </div>
     </div>
-</div> <!-- Конец .container -->
+</div> <!-- Конец контейнера -->
     <script>
         function switchTab(evt, tabId) {
             var contents = document.querySelectorAll('.tab-content');
