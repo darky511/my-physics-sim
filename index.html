@@ -125,6 +125,11 @@
         .section-pane.active {
             display: grid;
         }
+        .sim-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
         .sim-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -212,89 +217,129 @@
         <div class="grid-container">
             <!-- ПАНЕЛЬ: МЕХАНИКА -->
             <div class="section-pane active" id="pane-mechanics">
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">🪂</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Свободное падение</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">⏳</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Маятник</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">⚖</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Мера инертности (масса)</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">🧱</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Плотность материалов</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">🍏</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Сила тяжести и вес</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">🪓</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Сила упругости</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">🚙</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Сила трения</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">💨</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Давление твердых тел</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">💧</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Сила Архимеда</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">🚢</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Сила Архимеда 2 (Плавание тел)</div>
-                </div>
-                <div class="sim-card theme-mechanics">
-                    <div class="card-top"><div class="card-icon">⚡</div><div class="card-tag">7 класс</div></div>
-                    <div class="card-title">Работа и мощность</div>
-                </div>
-                <div class="sim-card theme-mechanics" style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border-color: #10b981;">
-                    <div class="card-top">
-                        <div class="card-icon" style="background: #10b981; color: white;">🏋️‍♂️</div>
-                        <div class="card-tag" style="background: #10b981; color: white;">7-8 класс</div>
+                <a href="mechanics/ball.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">🪂</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Свободное падение</div>
                     </div>
-                    <div class="card-title" style="color: #065f46; font-weight: 700;">Рычаг, блок, КПД (Простые механизмы)</div>
-                </div>
+                </a>
+                <a href="mechanics/math_pendulum.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">⏳</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Маятник</div>
+                    </div>
+                </a>
+                <a href="mechanics/inertia.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">⚖</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Мера инертности (масса)</div>
+                    </div>
+                </a>
+                <a href="mechanics/plotnost.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">🧱</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Плотность материалов</div>
+                    </div>
+                </a>
+                <a href="mechanics/gravity.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">🍏</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Сила тяжести и вес</div>
+                    </div>
+                </a>
+                <a href="mechanics/guk.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">🪓</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Сила упругости</div>
+                    </div>
+                </a>
+                <a href="mechanics/trenie.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">🚙</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Сила трения</div>
+                    </div>
+                </a>
+                <a href="mechanics/davlenie.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">💨</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Давление твердых тел</div>
+                    </div>
+                </a>
+                <a href="mechanics/arhimed.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">💧</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Сила Архимеда</div>
+                    </div>
+                </a>
+                <a href="mechanics/arhimed_new.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">🚢</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Сила Архимеда 2 (Плавание тел)</div>
+                    </div>
+                </a>
+                <a href="mechanics/rabota_moschnost.html" class="sim-link">
+                    <div class="sim-card theme-mechanics">
+                        <div class="card-top"><div class="card-icon">⚡</div><div class="card-tag">7 класс</div></div>
+                        <div class="card-title">Работа и мощность</div>
+                    </div>
+                </a>
+                <a href="mechanics/moment_kpd.html" class="sim-link">
+                    <div class="sim-card theme-mechanics" style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border-color: #10b981;">
+                        <div class="card-top">
+                            <div class="card-icon" style="background: #10b981; color: white;">🏋️‍♂️</div>
+                            <div class="card-tag" style="background: #10b981; color: white;">7-8 класс</div>
+                        </div>
+                        <div class="card-title" style="color: #065f46; font-weight: 700;">Рычаг, блок, КПД (Простые механизмы)</div>
+                    </div>
+                </a>
             </div>
             <!-- ПАНЕЛЬ: МОЛЕКУЛЯРНАЯ ФИЗИКА -->
             <div class="section-pane" id="pane-molecular">
-                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">☁</div><div class="card-tag">8 класс</div></div><div class="card-title">Влажность воздуха</div></div>
-                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">🎈</div><div class="card-tag">7 класс</div></div><div class="card-title">Закон Паскаля</div></div>
-                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">🌊</div><div class="card-tag">7 класс</div></div><div class="card-title">Гидростатическое давление</div></div>
-                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">🧪</div><div class="card-tag">7 класс</div></div><div class="card-title">Сообщающиеся сосуды</div></div>
-                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">⚙</div><div class="card-tag">7 класс</div></div><div class="card-title">Гидравлический пресс</div></div>
+                <a href="molecular/vlazhnost.html" class="sim-link">
+                    <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">☁</div><div class="card-tag">8 класс</div></div><div class="card-title">Влажность воздуха</div></div>
+                </a>
+                <a href="molecular/zakonpaskal.html" class="sim-link">
+                    <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">🎈</div><div class="card-tag">7 класс</div></div><div class="card-title">Закон Паскаля</div></div>
+                </a>
+                <a href="molecular/gidrostatdavlenie.html" class="sim-link">
+                    <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">🌊</div><div class="card-tag">7 класс</div></div><div class="card-title">Гидростатическое давление</div></div>
+                </a>
+                <a href="molecular/soobsch_sosudy.html" class="sim-link">
+                    <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">🧪</div><div class="card-tag">7 класс</div></div><div class="card-title">Сообщающиеся сосуды</div></div>
+                </a>
+                <a href="molecular/gidrav_press.html" class="sim-link">
+                    <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">⚙</div><div class="card-tag">7 класс</div></div><div class="card-title">Гидравлический пресс</div></div>
+                </a>
             </div>
 
             <!-- ПАНЕЛЬ: ЭЛЕКТРОДИНАМИКА -->
             <div class="section-pane" id="pane-electro">
-                <div class="sim-card theme-electro"><div class="card-top"><div class="card-icon">🧲</div><div class="card-tag">8 класс</div></div><div class="card-title">Электромагнитная индукция</div></div>
-                <div class="sim-card theme-electro"><div class="card-top"><div class="card-icon">🔋</div><div class="card-tag">8 класс</div></div><div class="card-title">Закон Ома для участка цепи</div></div>
-                <div class="sim-card theme-electro"><div class="card-top"><div class="card-icon">📻</div><div class="card-tag">8 класс</div></div><div class="card-title">Резонанс в цепи RLC</div></div>
+                <a href="electrodynamics/em_ind.html" class="sim-link">
+                    <div class="sim-card theme-electro"><div class="card-top"><div class="card-icon">🧲</div><div class="card-tag">8 класс</div></div><div class="card-title">Эм. индукция</div></div>
+                </a>
+                <a href="electrodynamics/zakonOma.html" class="sim-link">
+                    <div class="sim-card theme-electro"><div class="card-top"><div class="card-icon">🔋</div><div class="card-tag">8 класс</div></div><div class="card-title">Закон Ома</div></div>
+                </a>
+                <a href="electrodynamics/rezonans_lc.html" class="sim-link">
+                    <div class="sim-card theme-electro"><div class="card-top"><div class="card-icon">📻</div><div class="card-tag">8 класс</div></div><div class="card-title">Резонанс в цепи RLC</div></div>
+                </a>
             </div>
 
             <!-- ПАНЕЛЬ: КОЛЕБАНИЯ И ВОЛНЫ -->
             <div class="section-pane" id="pane-waves">
-                <div class="sim-card theme-waves"><div class="card-top"><div class="card-icon">🔊</div><div class="card-tag">9 класс</div></div><div class="card-title">Резонанс звуковых волн</div></div>
-                <div class="sim-card theme-waves"><div class="card-top"><div class="card-icon">〰</div><div class="card-tag">9 conductivity</div></div><div class="card-title">Сложение колебаний</div></div>
+                <div class="sim-card theme-waves"><div class="card-top"><div class="card-icon">🔊</div><div class="card-tag">9 класс</div></div><div class="card-title">Резонанс</div></div>
+                <div class="sim-card theme-waves"><div class="card-top"><div class="card-icon">〰</div><div class="card-tag">9 класс</div></div><div class="card-title">Сложение колебаний</div></div>
             </div>
 
             <!-- ПАНЕЛЬ: ОПТИКА -->
             <div class="section-pane" id="pane-optics">
-                <div class="sim-card theme-optics"><div class="card-top"><div class="card-icon">👓</div><div class="card-tag">8 класс</div></div><div class="card-title">Опыт Юнга (Интерференция)</div></div>
-                <div class="sim-card theme-optics"><div class="card-top"><div class="card-icon">🔍</div><div class="card-tag">8 класс</div></div><div class="card-title">Ход лучей в линзе</div></div>
+                <div class="sim-card theme-optics"><div class="card-top"><div class="card-icon">👓</div><div class="card-tag">8 класс</div></div><div class="card-title">Опыт Юнга</div></div>
+                <div class="sim-card theme-optics"><div class="card-top"><div class="card-icon">🔍</div><div class="card-tag">8 класс</div></div><div class="card-title">Линза</div></div>
             </div>
 
             <!-- ПАНЕЛЬ: КВАНТОВАЯ ФИЗИКА -->
             <div class="section-pane" id="pane-quantum">
-                <div class="sim-card theme-quantum"><div class="card-top"><div class="card-icon">⚛</div><div class="card-tag">9 класс</div></div><div class="card-title">Квантовые явления и фотоэффект</div></div>
+                <div class="sim-card theme-quantum"><div class="card-top"><div class="card-icon">⚛</div><div class="card-tag">9 класс</div></div><div class="card-title">Квантовая физика</div></div>
             </div>
 
         </div>
