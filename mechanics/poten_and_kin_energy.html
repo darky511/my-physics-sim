@@ -169,7 +169,7 @@
             if (!isPlaying) { animId = null; return; }
             
             // Замедление ещё в 2 раза (суммарный шаг 0.000045, идеальный тягучий академический ход)
-            accelX = -0.000045 * curX; 
+            accelX = -0.000015 * curX; 
             
             speedX += accelX;
             curX += speedX;
