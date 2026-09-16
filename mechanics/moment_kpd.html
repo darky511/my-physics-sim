@@ -12,42 +12,47 @@
         .tab-btn { padding: 16px 24px; color: #94a3b8; background: none; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
         .tab-btn:hover { color: #f8fafc; background: rgba(255,255,255,0.05); }
         .tab-btn.active { color: #38bdf8; background: rgba(56, 189, 248, 0.1); box-shadow: inset 0 -3px 0 #38bdf8; }
-        .tab-content { display: none; padding: 24px; height: 540px; position: relative; background: #ffffff; overflow: hidden; }
+        .tab-content { display: none; padding: 24px; height: 550px; position: relative; background: #ffffff; overflow: hidden; }
         .tab-content.active { display: block; }
         .control-panel { position: absolute; top: 24px; left: 24px; background: rgba(248, 250, 252, 0.95); border: 1px solid #e2e8f0; padding: 16px; border-radius: 12px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.03); width: 290px; }
         .control-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 12px; }
-        .control-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 8px; }
-        .arrow-btn { width: 32px; height: 26px; border-radius: 4px; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-        .arrow-btn:hover { background: #e2e8f0; }
-        .vector-s { background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; position: absolute; }
-        .force-arrow { position: absolute; width: 4px; background: #ef4444; min-height: 20px; transition: height 0.2s ease; }
-        .force-arrow::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #ef4444; }
-        .force-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: #ef4444; white-space: nowrap; }
+        .formula-board { background: #0f172a; color: #38bdf8; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; margin-bottom: 12px; border-left: 3px solid #38bdf8; }
+        .btn { background: #3b82f6; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; }
+        .btn:hover { background: #2563eb; }
+        .btn-secondary { background: #e2e8f0; color: #475569; }
+        .btn-secondary:hover { background: #cbd5e1; }
     </style>
 </head>
 <body>
 <div class="container">
     <nav class="tabs-nav">
-        <button class="tab-btn active" onclick="switchTab(event, 'tab-lever')">⚖ 1. Рычаг моментов</button>
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-lever')">⚖ 1. Дискретный Рычаг</button>
         <button class="tab-btn" onclick="switchTab(event, 'tab-blocks')">🎡 2. Синхронные Блоки</button>
         <button class="tab-btn" onclick="switchTab(event, 'tab-kpd')">📐 3. Пошаговый КПД</button>
     </nav>
     <style>
         .lever-stage { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 60px; position: relative; }
-        .lever-system { width: 720px; height: 160px; position: relative; display: flex; justify-content: center; align-items: flex-end; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); transform-origin: center bottom; }
+        .lever-system { width: 640px; height: 160px; position: relative; display: flex; justify-content: center; align-items: flex-end; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); transform-origin: 320px 160px; }
         .board { width: 100%; height: 12px; background: linear-gradient(90deg, #64748b 0%, #475569 50%, #64748b 100%); border-radius: 6px; position: absolute; bottom: 0; left: 0; }
-        .ticks-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; justify-content: space-between; padding: 0 10px; }
-        .tick-mark { width: 2px; height: 8px; background: #94a3b8; position: relative; margin-top: 12px; }
-        .tick-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: #94a3b8; }
+        .ticks-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; justify-content: space-between; padding: 0; }
+        .tick-mark { width: 2px; height: 8px; background: #94a3b8; position: absolute; top: 12px; }
+        .tick-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #64748b; }
         .fulcrum { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 36px solid #0f172a; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 2; }
         .human { position: absolute; bottom: 12px; display: flex; flex-direction: column; align-items: center; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); }
-        .human-sprite { font-size: 40px; line-height: 1; }
+        .human-sprite { font-size: 44px; line-height: 1; position: relative; }
         .human-label { background: rgba(15, 23, 42, 0.85); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+        .gravity-arrow { position: absolute; width: 4px; background: #ef4444; left: calc(50% - 2px); top: 25px; transform-origin: top center; }
+        .gravity-arrow::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid #ef4444; }
+        .gravity-text { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: #ef4444; white-space: nowrap; }
+        .control-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 6px; }
     </style>
 
     <div id="tab-lever" class="tab-content active">
         <div class="control-panel">
-            <div class="control-title">⚖ Баланс моментов (М = F · l)</div>
+            <div class="control-title">⚖ Правило моментов</div>
+            <div class="formula-board" id="lever-formula">
+                M1 = F1 · l1 | M2 = F2 · l2<br>Условие: M1 = M2<br>Расчет: 0 == 0
+            </div>
             <div class="control-row">
                 <span>Мужчина (80 кг)</span>
                 <div style="display: flex; gap: 4px;">
@@ -63,105 +68,111 @@
                 </div>
             </div>
         </div>
+
         <div class="lever-stage">
             <div class="fulcrum"></div>
             <div class="lever-system" id="lever-board">
                 <div class="board">
                     <div class="ticks-container">
-                        <div class="tick-mark"><span class="tick-label">5</span></div>
-                        <div class="tick-mark"><span class="tick-label">4</span></div>
-                        <div class="tick-mark"><span class="tick-label">3</span></div>
-                        <div class="tick-mark"><span class="tick-label">2</span></div>
-                        <div class="tick-mark"><span class="tick-label">1</span></div>
-                        <div class="tick-mark" style="opacity:0;"><span class="tick-label">0</span></div>
-                        <div class="tick-mark"><span class="tick-label">1</span></div>
-                        <div class="tick-mark"><span class="tick-label">2</span></div>
-                        <div class="tick-mark"><span class="tick-label">3</span></div>
-                        <div class="tick-mark"><span class="tick-label">4</span></div>
-                        <div class="tick-mark"><span class="tick-label">5</span></div>
+                        <!-- Сетка делений: шаг ровно 56px от центра (320px) -->
+                        <div class="tick-mark" style="left: 40px;"><span class="tick-label">5</span></div>
+                        <div class="tick-mark" style="left: 96px;"><span class="tick-label">4</span></div>
+                        <div class="tick-mark" style="left: 152px;"><span class="tick-label">3</span></div>
+                        <div class="tick-mark" style="left: 208px;"><span class="tick-label">2</span></div>
+                        <div class="tick-mark" style="left: 264px;"><span class="tick-label">1</span></div>
+                        <div class="tick-mark" style="left: 320px; opacity: 0;"><span class="tick-label">0</span></div>
+                        <div class="tick-mark" style="left: 376px;"><span class="tick-label">1</span></div>
+                        <div class="tick-mark" style="left: 432px;"><span class="tick-label">2</span></div>
+                        <div class="tick-mark" style="left: 488px;"><span class="tick-label">3</span></div>
+                        <div class="tick-mark" style="left: 544px;"><span class="tick-label">4</span></div>
+                        <div class="tick-mark" style="left: 600px;"><span class="tick-label">5</span></div>
                     </div>
                 </div>
                 <div class="human" id="human-left">
-                    <div class="force-arrow" id="arrow-l" style="top: -45px; height: 40px; transform: scaleY(-1); transform-origin: top;">
-                        <span class="force-label" style="transform: translateX(-50%) scaleY(-1);">P1 = 800Н</span>
+                    <div class="human-sprite">
+                        👨
+                        <div class="gravity-arrow" style="height: 50px;"><span class="gravity-text">F1 = 800Н</span></div>
                     </div>
-                    <div class="human-sprite">👨</div>
-                    <div class="human-label">80 кг</div>
+                    <div class="human-label">Плечо: <span id="l1-val">3</span></div>
                 </div>
                 <div class="human" id="human-right">
-                    <div class="force-arrow" id="arrow-r" style="top: -45px; height: 20px; transform: scaleY(-1); transform-origin: top;">
-                        <span class="force-label" style="transform: translateX(-50%) scaleY(-1);">P2 = 200Н</span>
+                    <div class="human-sprite">
+                        👦
+                        <div class="gravity-arrow" style="height: 25px;"><span class="gravity-text">F2 = 200Н</span></div>
                     </div>
-                    <div class="human-sprite">👦</div>
-                    <div class="human-label">20 кг</div>
+                    <div class="human-label">Плечо: <span id="l2-val">3</span></div>
                 </div>
             </div>
         </div>
     </div>
     <style>
-        .blocks-stage { width: 100%; height: 100%; display: flex; justify-content: space-around; align-items: flex-end; padding-bottom: 40px; }
-        .block-column { width: 45%; height: 80%; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; position: relative; display: flex; justify-content: center; }
+        .blocks-stage { width: 100%; height: 100%; display: flex; justify-content: space-around; align-items: flex-end; padding-bottom: 30px; }
+        .block-column { width: 46%; height: 85%; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; position: relative; display: flex; justify-content: center; }
         .column-title { position: absolute; top: -30px; width: 100%; text-align: center; font-size: 13px; font-weight: 700; color: #475569; text-transform: uppercase; }
-        .beam { width: 120px; height: 8px; background: #475569; position: absolute; top: 40px; border-radius: 4px; }
-        .pulley-wheel { width: 40px; height: 40px; border: 2px solid #475569; border-radius: 50%; position: absolute; background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .beam { width: 160px; height: 8px; background: #475569; position: absolute; top: 30px; border-radius: 4px; }
+        .pulley-wheel { width: 40px; height: 40px; border: 2px solid #475569; border-radius: 50%; position: absolute; background: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 3; }
         .pulley-wheel::after { content: ''; position: absolute; width: 6px; height: 6px; background: #475569; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .block-load { width: 44px; height: 44px; background: linear-gradient(135deg, #64748b 0%, #334155 100%); border-radius: 6px; position: absolute; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: bottom 0.1s linear; }
-        .dynamometer { width: 16px; height: 50px; background: #e2e8f0; border: 1.5px solid #64748b; border-radius: 3px; position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4px; }
-        .dynamo-scale { width: 100%; font-size: 8px; text-align: center; font-weight: 700; color: #ef4444; margin-bottom: 2px; }
-        .rope { position: absolute; border-left: 2px solid #b45309; width: 0; transition: height 0.1s linear, bottom 0.1s linear; }
-        .slider-box { width: 100%; margin-top: 10px; font-size: 11px; font-weight: 600; }
-        .slider-input { width: 100%; margin-top: 4px; cursor: pointer; }
+        .block-load { width: 50px; height: 44px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 6px; position: absolute; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.15); z-index: 4; }
+        .dynamometer { width: 18px; height: 55px; background: #e2e8f0; border: 1.5px solid #64748b; border-radius: 3px; position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4px; z-index: 4; }
+        .dynamo-scale { width: 100%; font-size: 8px; text-align: center; font-weight: 700; color: #ef4444; }
+        .rope { position: absolute; border-left: 2px solid #b45309; width: 0; }
+        .drag-ring { width: 16px; height: 16px; border: 3px solid #3b82f6; background: #ffffff; border-radius: 50%; position: absolute; cursor: ns-resize; z-index: 5; box-shadow: 0 0 6px rgba(59,130,246,0.5); }
+        .drag-ring:hover { background: #3b82f6; }
     </style>
 
     <div id="tab-blocks" class="tab-content">
         <div class="control-panel">
-            <div class="control-title">🎡 Демонстрация сил и расстояний</div>
-            <div class="slider-box">
-                <label>1. Вес груза (P): <span id="weight-val">40</span> кг</label>
-                <input type="range" class="slider-input" id="weight-slider" min="10" max="60" value="40" oninput="updateBlocksPhysics()">
-            </div>
-            <div class="slider-box" style="margin-top: 12px;">
-                <label>2. Ход верёвки (S руки): <span id="rope-val">0.0</span> м</label>
-                <input type="range" class="slider-input" id="rope-slider" min="0" max="40" value="0" step="1" oninput="updateBlocksPhysics()">
+            <div class="control-title">🎡 Тяни мышкой за синее кольцо</div>
+            <div class="formula-board" id="blocks-info" style="margin-bottom:0;">
+                Неподвижный:<br>S руки = 0.0 м | h груза = 0.0 м<br><br>Подвижный:<br>S руки = 0.0 м | h груза = 0.0 м
             </div>
         </div>
+
         <div class="blocks-stage">
+            <!-- НЕПОДВИЖНЫЙ БЛОК -->
             <div class="block-column">
-                <div class="column-title">Неподвижный блок (F = P)</div>
+                <div class="column-title">Неподвижный блок</div>
                 <div class="beam"></div>
-                <div class="pulley-wheel" style="top: 44px; left: calc(50% - 20px);"></div>
-                <div class="rope" id="rope-fix-left" style="top: 64px; left: calc(50% - 20px); height: 260px;"></div>
-                <div class="rope" id="rope-fix-right" style="top: 64px; left: calc(50% + 20px); height: 160px;"></div>
-                <div class="block-load" id="load-fix" style="bottom: 100px; left: calc(50% - 42px);">40 кг</div>
-                <div class="dynamometer" id="dyn-fix" style="top: 224px; left: calc(50% + 11px);">
-                    <div class="dynamo-scale" id="scale-fix">400Н</div>
+                <div class="pulley-wheel" style="top: 34px; left: calc(50% - 20px);"></div>
+                <div class="rope" id="rope-fix-l" style="top: 54px; left: calc(50% - 20px); height: 240px;"></div>
+                <div class="rope" id="rope-fix-r" style="top: 54px; left: calc(50% + 20px); height: 140px;"></div>
+                <div class="block-load" id="load-fix" style="bottom: 120px; left: calc(50% - 45px);">40 кг</div>
+                <div class="dynamometer" id="dyn-fix" style="top: 194px; left: calc(50% + 11px);">
+                    <div class="dynamo-scale">400Н</div>
                 </div>
-                <div class="vector-s" id="vector-fix-h" style="left: calc(50% - 90px); bottom: 100px;">h груза</div>
-                <div class="vector-s" id="vector-fix-s" style="left: calc(50% + 40px); bottom: 140px; background: #e0f2fe; border-color: #38bdf8;">S руки</div>
+                <div class="drag-ring" id="ring-fix" style="top: 249px; left: calc(50% + 12px);"></div>
+                <div class="vector-s" id="v-fix-h" style="left: 20px; bottom: 120px;">h = 0.0м</div>
+                <div class="vector-s" id="v-fix-s" style="right: 20px; bottom: 170px; border-color:#38bdf8;">S = 0.0м</div>
             </div>
+
+            <!-- ПОДВИЖНЫЙ БЛОК -->
             <div class="block-column">
-                <div class="column-title">Подвижный блок (F = P / 2)</div>
+                <div class="column-title">Подвижный блок</div>
                 <div class="beam"></div>
-                <div class="pulley-wheel" style="top: 44px; left: calc(50% + 10px);"></div>
-                <div class="pulley-wheel" id="wheel-movable" style="bottom: 100px; left: calc(50% - 30px);"></div>
-                <div class="rope" id="rope-mov-left" style="top: 48px; left: calc(50% - 30px); height: 272px;"></div>
-                <div class="rope" id="rope-mov-mid" style="top: 48px; left: calc(50% - 2px); height: 272px;"></div>
-                <div class="rope" id="rope-mov-right" style="top: 64px; left: calc(50% + 50px); height: 160px;"></div>
-                <div class="block-load" id="load-mov" style="bottom: 50px; left: calc(50% - 32px);">40 кг</div>
-                <div class="dynamometer" id="dyn-mov" style="top: 224px; left: calc(50% + 41px);">
-                    <div class="dynamo-scale" id="scale-mov">200Н</div>
+                <div class="pulley-wheel" style="top: 34px; left: calc(50% + 10px);"></div>
+                <div class="pulley-wheel" id="wheel-mov" style="bottom: 120px; left: calc(50% - 30px);"></div>
+                <div class="rope" id="rope-mov-l" style="top: 38px; left: calc(50% - 30px); height: 256px;"></div>
+                <div class="rope" id="rope-mov-m" style="top: 38px; left: calc(50% - 2px); height: 256px;"></div>
+                <div class="rope" id="rope-mov-r" style="top: 54px; left: calc(50% + 50px); height: 140px;"></div>
+                <!-- Груз подвешен строго к центру подвижного блока -->
+                <div class="block-load" id="load-mov" style="bottom: 76px; left: calc(50% - 35px);">40 кг</div>
+                <div class="dynamometer" id="dyn-mov" style="top: 194px; left: calc(50% + 41px);">
+                    <div class="dynamo-scale">200Н</div>
                 </div>
-                <div class="vector-s" id="vector-mov-h" style="left: calc(50% - 80px); bottom: 50px;">h груза</div>
-                <div class="vector-s" id="vector-mov-s" style="left: calc(50% + 70px); bottom: 140px; background: #e0f2fe; border-color: #38bdf8;">S руки</div>
+                <div class="drag-ring" id="ring-mov" style="top: 249px; left: calc(50% + 42px);"></div>
+                <div class="vector-s" id="v-mov-h" style="left: 20px; bottom: 76px;">h = 0.0м</div>
+                <div class="vector-s" id="v-mov-s" style="right: 15px; bottom: 170px; border-color:#38bdf8;">S = 0.0м</div>
             </div>
         </div>
     </div>
     <style>
-        .kpd-stage { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 20px; padding-left: 320px; }
-        .wedge-container { width: 500px; height: 280px; position: relative; }
-        .wedge-geometry { width: 100%; height: 100%; position: absolute; bottom: 0; left: 0; border-left: 2px solid #334155; border-bottom: 2px solid #334155; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(56, 189, 248, 0.02) 100%); clip-path: polygon(0% 100%, 100% 100%, 100% 0%); }
-        .wedge-hypotenuse { position: absolute; width: 574px; height: 3px; background: #1e293b; top: 0; left: 0; transform: rotate(29.25deg); transform-origin: top left; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .kpd-box { width: 50px; height: 34px; background: #f59e0b; border: 1.5px solid #b45309; border-radius: 4px; position: absolute; left: 0; top: -34px; transform-origin: bottom left; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+        .kpd-stage { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 40px; padding-left: 330px; }
+        .wedge-container { width: 500px; height: 250px; position: relative; background: transparent; }
+        /* Математически точный клин: гипотенуза идет от (0,250) до (500,0) */
+        .wedge-geometry { width: 100%; height: 100%; position: absolute; bottom: 0; left: 0; border-left: 2px solid #1e293b; border-bottom: 2px solid #1e293b; background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(56, 189, 248, 0.02) 100%); clip-path: polygon(0% 100%, 100% 100%, 100% 0%); }
+        .wedge-hypotenuse { position: absolute; width: 559px; height: 2px; background: #1e293b; top: 0; left: 0; transform: rotate(26.565deg); transform-origin: top left; }
+        /* Брусок выровнен по касательной линии склона клина */
+        .kpd-box { width: 54px; height: 36px; background: #f59e0b; border: 1.5px solid #b45309; border-radius: 4px; position: absolute; left: 0; top: 0; transform-origin: bottom left; transform: rotate(26.565deg); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 5; }
         .kpd-dashboard { position: absolute; top: 160px; left: 24px; width: 290px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 12px; max-height: 350px; overflow-y: auto; }
         .step-log { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed #cbd5e1; line-height: 1.4; color: #475569; }
         .step-log span { color: #0f172a; font-weight: 700; }
@@ -169,32 +180,35 @@
 
     <div id="tab-kpd" class="tab-content">
         <div class="control-panel">
-            <div class="control-title">📐 Параметры плоскости</div>
-            <div style="font-size: 12px; font-weight: 600; color: #475569; line-height: 1.5; margin-bottom: 10px;">
+            <div class="control-title">📐 Наклонная плоскость</div>
+            <div style="font-size: 12px; font-weight: 600; color: #475569; line-height: 1.5; margin-bottom: 12px;">
                 Длина плоскости (L) = <span>5.0 м</span><br>
                 Высота подъёма (h) = <span>2.5 м</span><br>
+                Вес бруска (P) = <span>150 Н</span><br>
                 Сила трения (Fтр) = <span>30 Н</span>
             </div>
             <div style="display: flex; gap: 8px;">
-                <button class="btn" id="kpd-start-btn" onclick="startKpdSimulation()">Запустить подъем 🚀</button>
+                <button class="btn" id="kpd-start-btn" onclick="startKpdSimulation()">Старт 🚀</button>
                 <button class="btn btn-secondary" onclick="resetKpdSimulation()">Сброс 🔄</button>
             </div>
         </div>
+
         <div class="kpd-dashboard" id="kpd-log">
             <div class="control-title" style="margin-bottom: 8px; color: #059669;">📋 Пошаговый отчет КПД</div>
-            <div style="color: #64748b; font-style: italic;">Нажмите «Запустить подъем», чтобы произвести замеры работы...</div>
+            <div style="color: #64748b; font-style: italic;">Запустите подъём бруска для автоматического расчёта...</div>
         </div>
+
         <div class="kpd-stage">
             <div class="wedge-container">
                 <div class="wedge-geometry"></div>
                 <div class="wedge-hypotenuse"></div>
-                <div class="kpd-box" id="sliding-block" style="left: 0; top: 280px; transform: rotate(29.25deg);">
+                <div class="kpd-box" id="sliding-block" style="left: 0; top: 250px;">
                     150Н
-                    <div class="force-arrow" style="width: 30px; height: 4px; background: #059669; top: 15px; left: 50px; transform: rotate(0deg); min-height: 0;">
+                    <div class="force-arrow" style="width: 32px; height: 4px; background: #059669; top: 16px; left: 54px; transform: rotate(0deg); min-height: 0;">
                         <div style="position: absolute; right: -4px; top: -4px; border-left: 6px solid #059669; border-top: 4px solid transparent; border-bottom: 4px solid transparent;"></div>
                         <span style="position: absolute; top: -14px; left: 0; color: #059669; font-size: 9px; font-weight:700;">Fтяги</span>
                     </div>
-                    <div class="force-arrow" style="width: 20px; height: 3px; background: #ef4444; bottom: -3px; left: -22px; min-height: 0;">
+                    <div class="force-arrow" style="width: 22px; height: 3px; background: #ef4444; bottom: -3px; left: -24px; min-height: 0;">
                         <div style="position: absolute; left: -4px; top: -3px; border-right: 6px solid #ef4444; border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent;"></div>
                         <span style="position: absolute; top: 4px; left: 0; color: #ef4444; font-size: 9px; font-weight:700;">Fтр</span>
                     </div>
@@ -205,185 +219,182 @@
 </div>
     <script>
         function switchTab(evt, tabId) {
-            var tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(function(content) { content.classList.remove('active'); });
-            var tabBtns = document.querySelectorAll('.tab-btn');
-            tabBtns.forEach(function(btn) { btn.classList.remove('active'); });
+            var contents = document.querySelectorAll('.tab-content');
+            contents.forEach(function(c) { c.classList.remove('active'); });
+            var btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(function(b) { b.classList.remove('active'); });
             document.getElementById(tabId).classList.add('active');
             evt.currentTarget.classList.add('active');
-            if (tabId === 'tab-blocks') updateBlocksPhysics();
-            if (tabId === 'tab-lever') updateLeverBalance();
+            if (tabId === 'tab-blocks') resetBlocksDrag();
         }
 
-        var posLeft = 3;  
-        var posRight = 3; 
-        var F1 = 800; 
-        var F2 = 200; 
+        /* --- JS РЫЧАГА --- */
+        var posL = 2; var posR = 4;
+        var F_man = 800; var F_boy = 200;
 
-        function moveHuman(side, direction) {
+        function moveHuman(side, dir) {
             if (side === 'left') {
-                posLeft -= direction; 
-                if (posLeft < 1) posLeft = 1;
-                if (posLeft > 5) posLeft = 5;
-            } else if (side === 'right') {
-                posRight += direction;
-                if (posRight < 1) posRight = 1;
-                if (posRight > 5) posRight = 5;
+                posL += dir; // Коректное смещение по осям влево/вправо
+                if (posL < 1) posL = 1; if (posL > 5) posL = 5;
+            } else {
+                posR += dir;
+                if (posR < 1) posR = 1; if (posR > 5) posR = 5;
             }
             updateLeverBalance();
         }
 
         function updateLeverBalance() {
-            var hl = document.getElementById('human-left');
-            var hr = document.getElementById('human-right');
-            var board = document.getElementById('lever-board');
-            var stepPx = 64;
-            var centerPx = 360;
-            
-            hl.style.left = (centerPx - (posLeft * stepPx)) + 'px';
-            hr.style.left = (centerPx + (posRight * stepPx)) + 'px';
-            
-            var M1 = F1 * posLeft;
-            var M2 = F2 * posRight;
+            var step = 56; var center = 320;
+            document.getElementById('human-left').style.left = (center - (posL * step)) + 'px';
+            document.getElementById('human-right').style.left = (center + (posR * step)) + 'px';
+            document.getElementById('l1-val').textContent = posL;
+            document.getElementById('l2-val').textContent = posR;
+
+            var M1 = F_man * posL; var M2 = F_boy * posR;
             var angle = 0;
+            if (M1 > M2) angle = -10; else if (M1 < M2) angle = 10;
+
+            document.getElementById('lever-board').style.transform = 'rotate(' + angle + 'deg)';
             
-            if (M1 > M2) {
-                angle = -12;
-            } else if (M1 < M2) {
-                angle = 12;
-            } else {
-                angle = 0; // Точный баланс 800*1 == 200*4
-            }
-            board.style.transform = 'rotate(' + angle + 'deg)';
+            var txt = 'M1 = F1 · l1 | M2 = F2 · l2<br>Условие баланса: M1 = M2<br>Текущие моменты: ' + M1 + ' Н·м == ' + M2 + ' Н·м';
+            document.getElementById('lever-formula').innerHTML = txt;
         }
 
-        function updateBlocksPhysics() {
-            var P_kg = parseFloat(document.getElementById('weight-slider').value);
-            var S_rope = parseFloat(document.getElementById('rope-slider').value);
-            
-            document.getElementById('weight-val').textContent = P_kg;
-            document.getElementById('rope-val').textContent = (S_rope / 10).toFixed(1);
-            
-            var P_N = P_kg * 10;
-            var F_fix = P_N;
-            var h_fix = S_rope; 
-            
-            document.getElementById('scale-fix').textContent = F_fix + 'Н';
-            
-            var loadFix = document.getElementById('load-fix');
-            var dynFix = document.getElementById('dyn-fix');
-            var rFixLeft = document.getElementById('rope-fix-left');
-            var rFixRight = document.getElementById('rope-fix-right');
-            
-            loadFix.style.bottom = (60 + h_fix) + 'px';
-            dynFix.style.top = (200 + S_rope) + 'px';
-            rFixLeft.style.height = (250 - h_fix) + 'px';
-            rFixRight.style.height = (150 + S_rope) + 'px';
-            
-            var vFixH = document.getElementById('vector-fix-h');
-            var vFixS = document.getElementById('vector-fix-s');
-            vFixH.style.bottom = (60 + h_fix + 50) + 'px';
-            vFixH.textContent = 'h = ' + (h_fix/10).toFixed(1) + ' м';
-            vFixS.style.bottom = (280 - S_rope) + 'px';
-            vFixS.textContent = 'S = ' + (S_rope/10).toFixed(1) + ' м';
+        /* --- JS БЛОКОВ (DRAG INTERACTION) --- */
+        var activeRing = null; var startY = 0; var startTop = 0;
+        var maxDrag = 120; // Максимальный ход руки каната в px
 
-            var F_mov = P_N / 2;
-            var h_mov = S_rope / 2;
-            
-            document.getElementById('scale-mov').textContent = F_mov + 'Н';
-            
-            var wheelMov = document.getElementById('wheel-movable');
-            var loadMov = document.getElementById('load-mov');
-            var dynMov = document.getElementById('dyn-mov');
-            var rMovLeft = document.getElementById('rope-mov-left');
-            var rMovMid = document.getElementById('rope-mov-mid');
-            var rMovRight = document.getElementById('rope-mov-right');
-            
-            wheelMov.style.bottom = (60 + h_mov) + 'px';
-            loadMov.style.bottom = (20 + h_mov) + 'px';
-            dynMov.style.top = (200 + S_rope) + 'px';
-            
-            rMovLeft.style.height = (250 - h_mov) + 'px';
-            rMovMid.style.height = (250 - h_mov) + 'px';
-            rMovRight.style.height = (150 + S_rope) + 'px';
-            
-            var vMovH = document.getElementById('vector-mov-h');
-            var vMovS = document.getElementById('vector-mov-s');
-            vMovH.style.bottom = (20 + h_mov + 50) + 'px';
-            vMovH.textContent = 'h = ' + (h_mov/10).toFixed(1) + ' м';
-            vMovS.style.bottom = (280 - S_rope) + 'px';
-            vMovS.textContent = 'S = ' + (S_rope/10).toFixed(1) + ' м';
+        function initBlocksDrag() {
+            var rings = ['ring-fix', 'ring-mov'];
+            rings.forEach(function(id) {
+                var el = document.getElementById(id);
+                el.addEventListener('mousedown', function(e) {
+                    activeRing = id; startY = e.clientY;
+                    startTop = parseInt(el.style.top) || 249;
+                    document.body.style.cursor = 'ns-resize';
+                });
+            });
+
+            window.addEventListener('mousemove', function(e) {
+                if (!activeRing) return;
+                var deltaY = e.clientY - startY;
+                var newTop = startTop + deltaY;
+                // Ограничиваем ход руки (249px стартовая точка + maxDrag)
+                if (newTop < 249) newTop = 249;
+                if (newTop > 249 + maxDrag) newTop = 249 + maxDrag;
+                
+                var currentS_px = newTop - 249;
+                var S_m = currentS_px / 40; // Перевод пикселей в виртуальные метры
+
+                document.getElementById(activeRing).style.top = newTop + 'px';
+                
+                if (activeRing === 'ring-fix') {
+                    // Неподвижный блок: h = S
+                    var h_m = S_m;
+                    document.getElementById('dyn-fix').style.top = (194 + currentS_px) + 'px';
+                    document.getElementById('load-fix').style.bottom = (120 + currentS_px) + 'px';
+                    document.getElementById('rope-fix-l').style.height = (240 - currentS_px) + 'px';
+                    document.getElementById('rope-fix-r').style.height = (140 + currentS_px) + 'px';
+                    document.getElementById('v-fix-h').style.bottom = (120 + currentS_px) + 'px';
+                    document.getElementById('v-fix-h').textContent = 'h = ' + h_m.toFixed(1) + 'м';
+                    document.getElementById('v-fix-s').textContent = 'S = ' + S_m.toFixed(1) + 'м';
+                } else {
+                    // Подвижный блок: h = S / 2
+                    var h_m = S_m / 2;
+                    var currentH_px = currentS_px / 2;
+                    document.getElementById('dyn-mov').style.top = (194 + currentS_px) + 'px';
+                    document.getElementById('wheel-mov').style.bottom = (120 + currentH_px) + 'px';
+                    document.getElementById('load-mov').style.bottom = (76 + currentH_px) + 'px';
+                    document.getElementById('rope-mov-l').style.height = (256 - currentH_px) + 'px';
+                    document.getElementById('rope-mov-m').style.height = (256 - currentH_px) + 'px';
+                    document.getElementById('rope-mov-r').style.height = (140 + currentS_px) + 'px';
+                    document.getElementById('v-mov-h').style.bottom = (76 + currentH_px) + 'px';
+                    document.getElementById('v-mov-h').textContent = 'h = ' + h_m.toFixed(1) + 'м';
+                    document.getElementById('v-mov-s').textContent = 'S = ' + S_m.toFixed(1) + 'м';
+                }
+                updateBlocksText();
+            });
+
+            window.addEventListener('mouseup', function() {
+                activeRing = null; document.body.style.cursor = 'default';
+            });
         }
 
-        var kpdAnimationId = null;
-        var kpdProgress = 0;
+        function updateBlocksText() {
+            var S_fix = ((parseInt(document.getElementById('ring-fix').style.top) || 249) - 249) / 40;
+            var S_mov = ((parseInt(document.getElementById('ring-mov').style.top) || 249) - 249) / 40;
+            var txt = 'Неподвижный:<br>S руки = ' + S_fix.toFixed(1) + ' м | h груза = ' + S_fix.toFixed(1) + ' м<br><br>' +
+                      'Подвижный:<br>S руки = ' + S_mov.toFixed(1) + ' м | h груза = ' + (S_mov/2).toFixed(1) + ' м';
+            document.getElementById('blocks-info').innerHTML = txt;
+        }
 
+        function resetBlocksDrag() {
+            document.getElementById('ring-fix').style.top = '249px';
+            document.getElementById('ring-mov').style.top = '249px';
+            document.getElementById('dyn-fix').style.top = '194px';
+            document.getElementById('dyn-mov').style.top = '194px';
+            document.getElementById('load-fix').style.bottom = '120px';
+            document.getElementById('load-mov').style.bottom = '76px';
+            document.getElementById('wheel-mov').style.bottom = '120px';
+            document.getElementById('rope-fix-l').style.height = '240px';
+            document.getElementById('rope-fix-r').style.height = '140px';
+            document.getElementById('rope-mov-l').style.height = '256px';
+            document.getElementById('rope-mov-m').style.height = '256px';
+            document.getElementById('rope-mov-r').style.height = '140px';
+            document.getElementById('v-fix-h').textContent = 'h = 0.0м'; document.getElementById('v-fix-s').textContent = 'S = 0.0м';
+            document.getElementById('v-mov-h').textContent = 'h = 0.0м'; document.getElementById('v-mov-s').textContent = 'S = 0.0м';
+            updateBlocksText();
+        }
+
+        /* --- JS РАСЧЕТА КПД --- */
+        var kpdId = null; var kpdProg = 0;
         function startKpdSimulation() {
-            if (kpdAnimationId) return;
+            if (kpdId) return;
             document.getElementById('kpd-start-btn').disabled = true;
             var block = document.getElementById('sliding-block');
-            var logContainer = document.getElementById('kpd-log');
-            logContainer.innerHTML = '<div class="control-title" style="margin-bottom: 8px; color: #059669;">📋 Пошаговый отчет КПД</div>';
             
-            function animate() {
-                kpdProgress += 1.5;
-                if (kpdProgress > 100) kpdProgress = 100;
+            function frame() {
+                kpdProg += 1.2;
+                if (kpdProg > 100) kpdProg = 100;
                 
-                var currentLeft = (436 * kpdProgress) / 100;
-                var currentTop = 280 - ((240 * kpdProgress) / 100);
+                // Математически строгое движение по наклонному профилю: L=500px, H=250px
+                var curL = (500 * kpdProg) / 100;
+                var curT = 250 - ((250 * kpdProg) / 100);
                 
-                block.style.left = currentLeft + 'px';
-                block.style.top = currentTop + 'px';
+                block.style.left = curL + 'px';
+                block.style.top = curT + 'px';
                 
-                if (kpdProgress < 100) {
-                    kpdAnimationId = requestAnimationFrame(animate);
+                if (kpdProg < 100) {
+                    kpdId = requestAnimationFrame(frame);
                 } else {
-                    cancelAnimationFrame(kpdAnimationId);
-                    kpdAnimationId = null;
-                    calculateAndPrintKpdReport();
+                    cancelAnimationFrame(kpdId); kpdId = null;
+                    printKpdReport();
                 }
             }
-            animate();
+            frame();
         }
 
-        function calculateAndPrintKpdReport() {
-            var logContainer = document.getElementById('kpd-log');
-            var P = 150;   
-            var h = 2.5;   
-            var L = 5.0;   
-            var F_tr = 30; 
-            
-            var F_polez = P * (h / L); 
-            var F_polnaya = F_polez + F_tr; 
-            var A_pol = P * h;          
-            var A_zatr = F_polnaya * L; 
-            var eta = (A_pol / A_zatr) * 100; 
-            
-            // Абсолютно безопасный вывод без бэктиков и шаблонов ${}
+        function printKpdReport() {
+            var log = document.getElementById('kpd-log');
+            var P = 150; var h = 2.5; var L = 5.0; var F_tr = 30;
+            var A_pol = P * h;
+            var F_total = (P * (h / L)) + F_tr;
+            var A_zatr = F_total * L;
+            var eta = (A_pol / A_zatr) * 100;
+
             var h1 = '<div class="step-log">Шаг 1. Находим полезную работу подъёма:<br><b>Aпол = P · h</b><br>Aпол = 150Н · 2.5м = <span>' + A_pol.toFixed(1) + ' Дж</span></div>';
-            var h2 = '<div class="step-log">Шаг 2. Рассчитываем необходимую силу тяги:<br><b>Fтяги = Fпроекция + Fтр</b><br>Fтяги = 75Н + 30Н = <span>' + F_polnaya.toFixed(1) + ' Н</span></div>';
-            var h3 = '<div class="step-log">Шаг 3. Находим полную затраченную работу:<br><b>Aзатр = Fтяги · L</b><br>Aзатр = 105Н · 5м = <span>' + A_zatr.toFixed(1) + ' Дж</span></div>';
+            var h2 = '<div class="step-log">Шаг 2. Рассчитываем необходимую силу тяги:<br><b>Fтяги = Fпроекция + Fтр</b><br>Fтяги = 75Н + 30Н = <span>' + F_total.toFixed(1) + ' Н</span></div>';
+            var h3 = '<div class="step-log">Шаг 3. Находим полную затраченную работу:<br><b>Aзатр = Fтяги · L</b><br>Aзатр = ' + F_total.toFixed(1) + 'Н · 5м = <span>' + A_zatr.toFixed(1) + ' Дж</span></div>';
             var h4 = '<div class="step-log" style="border:none; margin-bottom:0;">Шаг 4. Вычисляем итоговый КПД механизма:<br><b>η = (Aпол / Aзатр) · 100%</b><br>η = (' + A_pol.toFixed(1) + ' / ' + A_zatr.toFixed(1) + ') · 100% = <span style="color:#059669; font-size:14px;">' + eta.toFixed(1) + '%</span></div>';
-            
-            logContainer.innerHTML += h1 + h2 + h3 + h4;
+            log.innerHTML += h1 + h2 + h3 + h4;
         }
 
         function resetKpdSimulation() {
-            if (kpdAnimationId) {
-                cancelAnimationFrame(kpdAnimationId);
-                kpdAnimationId = null;
-            }
-            kpdProgress = 0;
+            if (kpdId) { cancelAnimationFrame(kpdId); kpdId = null; }
+            kpdProg = 0;
             var block = document.getElementById('sliding-block');
-            block.style.left = '0px';
-            block.style.top = '280px';
+            block.style.left = '0px'; block.style.top = '250px';
             document.getElementById('kpd-start-btn').disabled = false;
-            document.getElementById('kpd-log').innerHTML = '<div class="control-title" style="margin-bottom: 8px; color: #059669;">📋 Пошаговый отчет КПД</div><div style="color: #64748b; font-style: italic;">Нажмите «Запустить подъем», чтобы произвести замеры работы...</div>';
-        }
-
-        window.onload = function() {
-            updateLeverBalance();
-        };
-    </script>
+document.getElementById('kpd-log').innerHTML = '📋 Пошаговый отчет КПДЗапустите подъём бруска для автоматического расчёта...';}window.onload = function() {updateLeverBalance();initBlocksDrag();};</script>
 </body>
 </html>
