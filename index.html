@@ -3,188 +3,327 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Физическая лаборатория</title>
+    <title>LAB_PHYSICS // Цифровая Лаборатория</title>
     <style>
-        :root {
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-secondary: #64748b;
-            --accent-blue: #3b82f6;
-            --accent-purple: #8b5cf6;
-            --accent-orange: #f59e0b;
-            --accent-green: #10b981; 
-            --accent-cyan: #06b6d4;
-            --accent-rose: #f43f5e;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            line-height: 1.5;
+            background-color: #f8fafc;
+            color: #1e293b;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
         }
-
-        h1 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            color: #0f172a;
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #334155;
+            flex-shrink: 0;
         }
-
-        .subtitle {
-            text-align: center;
-            color: var(--text-secondary);
-            margin-bottom: 3rem;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-        }
-
-        section {
-            background: var(--card-bg);
+        .sidebar-header {
             padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease;
+            border-bottom: 1px solid #334155;
         }
-
-        section:hover {
-            transform: translateY(-4px);
+        .sidebar-logo {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #38bdf8;
+            text-transform: uppercase;
         }
-
-        h3 {
-            margin-top: 0;
-            font-size: 1.25rem;
+        .sidebar-subtitle {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .menu-list {
+            list-style: none;
+            padding: 16px 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .menu-item {
+            padding: 14px 24px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #cbd5e1;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 10px;
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 12px;
-            margin-bottom: 16px;
-        }
-
-        /* Цветовые акценты для разделов */
-        .mechanics h3 { color: var(--accent-blue); }
-        .molecule h3 { color: var(--accent-green); }
-        .electro h3 { color: var(--accent-orange); }
-        .waves h3 { color: var(--accent-cyan); }
-        .optics h3 { color: var(--accent-purple); }
-        .quantum h3 { color: var(--accent-rose); }
-
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        li {
-            margin-bottom: 12px;
-        }
-
-        a {
-            text-decoration: none;
-            color: var(--text-main);
-            font-weight: 500;
-            display: block;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: #f1f5f9;
+            justify-content: space-between;
             transition: all 0.2s ease;
+            position: relative;
         }
-
-        a:hover {
-            background: var(--accent-blue);
-            color: white;
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: #fff;
         }
-
-        .molecule a:hover { background: var(--accent-green); }
-        .optics a:hover { background: var(--accent-purple); }
-        .electro a:hover { background: var(--accent-orange); }
-        .waves a:hover { background: var(--accent-cyan); }
-        .quantum a:hover { background: var(--accent-rose); }
-
+        .menu-item.active {
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0) 100%);
+            color: #38bdf8;
+            font-weight: 600;
+        }
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #38bdf8;
+            box-shadow: 0 0 10px #38bdf8;
+        }
+        .badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 20px;
+            background: #334155;
+            color: #94a3b8;
+        }
+        .menu-item.active .badge {
+            background: #38bdf8;
+            color: #0f172a;
+        }
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .main-header {
+            background: #ffffff;
+            padding: 20px 32px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .breadcrumbs {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .breadcrumbs span {
+            color: #0f172a;
+            font-weight: 600;
+        }
+        .grid-container {
+            padding: 32px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .section-pane {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+        .section-pane.active {
+            display: grid;
+        }
+        .sim-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 150px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .sim-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+        }
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .card-icon {
+            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+        .card-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.4;
+            margin-top: 12px;
+        }
+        .theme-mechanics .card-icon { background: rgba(16, 185, 129, 0.1); }
+        .theme-mechanics .card-tag { background: rgba(16, 185, 129, 0.1); color: #059669; }
+        .theme-mechanics.sim-card:hover { border-color: #10b981; }
+        .theme-molecular .card-icon { background: rgba(6, 182, 212, 0.1); }
+        .theme-molecular .card-tag { background: rgba(6, 182, 212, 0.1); color: #0891b2; }
+        .theme-molecular.sim-card:hover { border-color: #06b6d4; }
+        .theme-electro .card-icon { background: rgba(245, 158, 11, 0.1); }
+        .theme-electro .card-tag { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        .theme-electro.sim-card:hover { border-color: #f59e0b; }
+        .theme-waves .card-icon { background: rgba(99, 102, 241, 0.1); }
+        .theme-waves .card-tag { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
+        .theme-waves.sim-card:hover { border-color: #6366f1; }
+        .theme-optics .card-icon { background: rgba(236, 72, 153, 0.1); }
+        .theme-optics .card-tag { background: rgba(236, 72, 153, 0.1); color: #db2777; }
+        .theme-optics.sim-card:hover { border-color: #ec4899; }
+        .theme-quantum .card-icon { background: rgba(139, 92, 246, 0.1); }
+        .theme-quantum .card-tag { background: rgba(139, 92, 246, 0.1); color: #7c3aed; }
+        .theme-quantum.sim-card:hover { border-color: #8b5cf6; }
     </style>
 </head>
 <body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">LAB_PHYSICS //</div>
+            <div class="sidebar-subtitle">Цифровой практикум</div>
+        </div>
+        <ul class="menu-list">
+            <li class="menu-item active" data-target="mechanics"><span>⚙ Механика</span><span class="badge">12</span></li>
+            <li class="menu-item" data-target="molecular"><span>⚗ Молекулярная физика</span><span class="badge">5</span></li>
+            <li class="menu-item" data-target="electro"><span>⚡ Электродинамика</span><span class="badge">3</span></li>
+            <li class="menu-item" data-target="waves"><span>🌊 Колебания и волны</span><span class="badge">2</span></li>
+            <li class="menu-item" data-target="optics"><span>👁 Оптика</span><span class="badge">2</span></li>
+            <li class="menu-item" data-target="quantum"><span>🌌 Квантовая физика</span><span class="badge">1</span></li>
+        </ul>
+    </nav>
+    <main class="main-content">
+        <header class="main-header">
+            <div class="breadcrumbs">Лаборатория / <span id="current-category-title">Механика</span></div>
+        </header>
+        <div class="grid-container">
+            <!-- ПАНЕЛЬ: МЕХАНИКА -->
+            <div class="section-pane active" id="pane-mechanics">
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">🪂</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Свободное падение</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">⏳</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Маятник</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">⚖</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Мера инертности (масса)</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">🧱</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Плотность материалов</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">🍏</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Сила тяжести и вес</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">🪓</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Сила упругости</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">🚙</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Сила трения</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">💨</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Давление твердых тел</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">💧</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Сила Архимеда</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">🚢</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Сила Архимеда 2 (Плавание тел)</div>
+                </div>
+                <div class="sim-card theme-mechanics">
+                    <div class="card-top"><div class="card-icon">⚡</div><div class="card-tag">7 класс</div></div>
+                    <div class="card-title">Работа и мощность</div>
+                </div>
+                <div class="sim-card theme-mechanics" style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border-color: #10b981;">
+                    <div class="card-top">
+                        <div class="card-icon" style="background: #10b981; color: white;">🏋️‍♂️</div>
+                        <div class="card-tag" style="background: #10b981; color: white;">7-8 класс</div>
+                    </div>
+                    <div class="card-title" style="color: #065f46; font-weight: 700;">Рычаг, блок, КПД (Простые механизмы)</div>
+                </div>
+            </div>
+            <!-- ПАНЕЛЬ: МОЛЕКУЛЯРНАЯ ФИЗИКА -->
+            <div class="section-pane" id="pane-molecular">
+                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">☁</div><div class="card-tag">8 класс</div></div><div class="card-title">Влажность воздуха</div></div>
+                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">🎈</div><div class="card-tag">7 класс</div></div><div class="card-title">Закон Паскаля</div></div>
+                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">🌊</div><div class="card-tag">7 класс</div></div><div class="card-title">Гидростатическое давление</div></div>
+                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">🧪</div><div class="card-tag">7 класс</div></div><div class="card-title">Сообщающиеся сосуды</div></div>
+                <div class="sim-card theme-molecular"><div class="card-top"><div class="card-icon">⚙</div><div class="card-tag">7 класс</div></div><div class="card-title">Гидравлический пресс</div></div>
+            </div>
 
-    <h1>Лаборатория симуляций</h1>
-    <p class="subtitle">Интерактивные модели физических процессов</p>
+            <!-- ПАНЕЛЬ: ЭЛЕКТРОДИНАМИКА -->
+            <div class="section-pane" id="pane-electro">
+                <div class="sim-card theme-electro"><div class="card-top"><div class="card-icon">🧲</div><div class="card-tag">8 класс</div></div><div class="card-title">Электромагнитная индукция</div></div>
+                <div class="sim-card theme-electro"><div class="card-top"><div class="card-icon">🔋</div><div class="card-tag">8 класс</div></div><div class="card-title">Закон Ома для участка цепи</div></div>
+                <div class="sim-card theme-electro"><div class="card-top"><div class="card-icon">📻</div><div class="card-tag">8 класс</div></div><div class="card-title">Резонанс в цепи RLC</div></div>
+            </div>
 
-    <div class="grid">
-        <!-- Механика -->
-        <section class="mechanics">
-            <h3>⚙️ Механика</h3>
-            <ul>
-                <li><a href="mechanics/ball.html">Свободное падение</a></li>
-                <li><a href="mechanics/math_pendulum.html">Маятник</a></li>
-                <li><a href="mechanics/inertia.html">Мера инертности (масса)</a></li>
-                <li><a href="mechanics/plotnost.html">Плотность</a></li>
-                <li><a href="mechanics/gravity.html">Сила тяжести и вес</a></li>
-                <li><a href="mechanics/guk.html">Сила упругости</a></li>
-                <li><a href="mechanics/trenie.html">Сила трения</a></li>
-                <li><a href="mechanics/davlenie.html">Давление</a></li>
-                <li><a href="mechanics/arhimed.html">Сила Архимеда</a></li>
-                <li><a href="mechanics/arhimed_new.html">Сила Архимеда 2</a></li>
-                <li><a href="mechanics/rabota_moschnost.html">Работа и мощность</a></li>
-                <li><a href="mechanics/moment_kpd.html">Рычаг, блок, КПД</a></li>
-            </ul>
-        </section>
+            <!-- ПАНЕЛЬ: КОЛЕБАНИЯ И ВОЛНЫ -->
+            <div class="section-pane" id="pane-waves">
+                <div class="sim-card theme-waves"><div class="card-top"><div class="card-icon">🔊</div><div class="card-tag">9 класс</div></div><div class="card-title">Резонанс звуковых волн</div></div>
+                <div class="sim-card theme-waves"><div class="card-top"><div class="card-icon">〰</div><div class="card-tag">9 conductivity</div></div><div class="card-title">Сложение колебаний</div></div>
+            </div>
 
-        <!-- Молекулярная физика -->
-        <section class="molecule">
-            <h3>⚗️ Молекулярная физика</h3>
-            <ul>
-                <li><a href="molecular/vlazhnost.html">Влажность воздуха</a></li>
-                <li><a href="molecular/zakonpaskal.html">Закон Паскаля</a></li>
-                <li><a href="molecular/gidrostatdavlenie.html">Гидростатическое давление</a></li>
-                <li><a href="molecular/soobsch_sosudy.html">Сообщающиеся сосуды</a></li>
-                <li><a href="molecular/gidravl_press.html">Гидравлический пресс</a></li>
-            </ul>
-        </section>
-        
-        <!-- Электродинамика -->
-        <section class="electro">
-            <h3>⚡ Электродинамика</h3>
-            <ul>
-                <li><a href="electrodynamics/em_ind.html">Эм. индукция</a></li>
-                <li><a href="electrodynamics/zakonOma.html">Закон Ома</a></li>
-                <li><a href="electrodynamics/rezonans_lc.html">Резонанс в цепи RLC</a></li>
-            </ul>
-        </section>
+            <!-- ПАНЕЛЬ: ОПТИКА -->
+            <div class="section-pane" id="pane-optics">
+                <div class="sim-card theme-optics"><div class="card-top"><div class="card-icon">👓</div><div class="card-tag">8 класс</div></div><div class="card-title">Опыт Юнга (Интерференция)</div></div>
+                <div class="sim-card theme-optics"><div class="card-top"><div class="card-icon">🔍</div><div class="card-tag">8 класс</div></div><div class="card-title">Ход лучей в линзе</div></div>
+            </div>
 
-        <!-- Колебания и волны -->
-        <section class="waves">
-            <h3>🌊 Колебания и волны</h3>
-            <ul>
-                <li><a href="waves/rezonans.html">Резонанс</a></li>
-                <li><a href="waves/garmonich_koleb.html">Сложение колебаний</a></li>
-            </ul>
-        </section>
-        
-        <!-- Оптика -->
-        <section class="optics">
-            <h3>👁️ Оптика</h3>
-            <ul>
-                <li><a href="optika/Jung_exp.html">Опыт Юнга</a></li>
-                <li><a href="optika/conv_lens.html">Линза</a></li>
-            </ul>
-        </section>
+            <!-- ПАНЕЛЬ: КВАНТОВАЯ ФИЗИКА -->
+            <div class="section-pane" id="pane-quantum">
+                <div class="sim-card theme-quantum"><div class="card-top"><div class="card-icon">⚛</div><div class="card-tag">9 класс</div></div><div class="card-title">Квантовые явления и фотоэффект</div></div>
+            </div>
 
-        <!-- Квантовая физика -->
-        <section class="quantum">
-            <h3>🌌 Квантовая физика</h3>
-            <!-- <ul> -->
-                <!-- <li><a href="electrodynamics/em_ind.html">Эм. индукция</a></li> -->
-            <!-- </ul> -->
-        </section>
-    </div>
+        </div>
+    </main>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuItems = document.querySelectorAll('.menu-list .menu-item');
+            const sections = document.querySelectorAll('.grid-container .section-pane');
+            const titleField = document.getElementById('current-category-title');
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    menuItems.forEach(m => m.classList.remove('active'));
+                    sections.forEach(s => s.classList.remove('active'));
+                    
+                    item.classList.add('active');
+                    
+                    const targetId = item.getAttribute('data-target');
+                    const targetPane = document.getElementById('pane-' + targetId);
+                    if (targetPane) {
+                        targetPane.classList.add('active');
+                    }
+
+                    const cleanTitle = item.querySelector('span:first-child').textContent.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF]/g, '').trim();
+                    titleField.textContent = cleanTitle;
+                });
+            });
+        });
+    </script>
 </body>
 </html>
