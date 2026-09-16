@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экспериментальное определение КПД</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; user-select: none; }
+        body { background-color: #f8fafc; color: #1e293b; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 900px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; padding: 24px; }
+        
+        /* Верхний Sci-Fi инфо-щит */
+        .info-header { background: #0f172a; color: #38bdf8; padding: 14px 20px; border-radius: 12px; font-size: 13px; line-height: 1.5; border-left: 4px solid #38bdf8; margin-bottom: 20px; }
+        .info-header b { color: #ffffff; }
+
+        .workbench { width: 100%; height: 420px; display: flex; gap: 20px; position: relative; }
+        .left-controls { width: 280px; display: flex; flex-direction: column; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 12px; }
+        .right-stage { flex-grow: 1; background: #f1f5f9; border: 1px dashed #cbd5e1; border-radius: 12px; position: relative; overflow: hidden; display: flex; justify-content: space-around; align-items: center; padding: 20px; }
+        
+        .control-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 4px; }
+        .slider-box { display: flex; flex-direction: column; background: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .slider-box label { font-size: 12px; font-weight: 600; color: #475569; }
+        .slider-box input { width: 100%; margin-top: 6px; cursor: pointer; }
+        
+        .btn { background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; text-align: center; width: 100%; }
+        .btn:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="info-header">
+        <b>Лабораторный практикум: Коэффициент полезного действия (η)</b><br>
+        Главное правило механики: КПД реальных механизмов всегда меньше 100%, так как часть затраченной работы неизбежно расходуется на преодоление трения и превращается в тепловой нагрев деталей.
+    </div>
+    <div class="workbench">
+        <!-- ЛЕВАЯ ПАНЕЛЬ С КАНАЛАМИ ЭНЕРГИИ -->
+        <style>
+            .energy-meters { display: flex; justify-content: space-between; gap: 10px; margin-top: auto; }
+            .barrel { flex: 1; height: 130px; background: #e2e8f0; border: 2px solid #cbd5e1; border-radius: 6px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 6px; }
+            .barrel-fill { width: 100%; height: 0%; position: absolute; bottom: 0; left: 0; transition: height 0.1s linear; }
+            .barrel-title { font-size: 10px; font-weight: 700; color: #1e293b; z-index: 2; text-shadow: 0 1px 2px rgba(255,255,255,0.8); text-align: center; line-height: 1.2; }
+            .barrel-val { font-size: 11px; font-weight: 800; color: #0f172a; z-index: 2; margin-top: 2px; }
+        </style>
+        
+        <div class="left-controls">
+            <div class="slider-box">
+                <label>Вес кирпичей (P): <span id="p-text">200</span> Н</label>
+                <input type="range" id="p-slider" min="100" max="300" value="200" step="50" oninput="resetKpdExp()">
+            </div>
+            <div class="slider-box">
+                <label>Сила трения в оси (Fтр): <span id="f-text">30</span> Н</label>
+                <input type="range" id="f-slider" min="0" max="60" value="30" step="10" oninput="resetKpdExp()">
+            </div>
+            <button class="btn" id="start-btn" onclick="runKpdExperiment()">Запустить подъём 🚀</button>
+            <button class="btn" style="background:#cbd5e1; color:#475569;" onclick="resetKpdExp()">Сброс 🔄</button>
+            
+            <div class="control-title" style="margin-top: 8px;">Баланс распределения энергии:</div>
+            <div class="energy-meters">
+                <!-- Бочка полезной работы -->
+                <div class="barrel" style="border-color: #a7f3d0;">
+                    <div class="barrel-fill" id="fill-pol" style="background: linear-gradient(0deg, #10b981 0%, #34d399 100%);"></div>
+                    <div class="barrel-title">Полезная работа<br><b>Aп = P · h</b></div>
+                    <div class="barrel-val" id="val-pol">0.0 Дж</div>
+                </div>
+                <!-- Бочка тепловых потерь -->
+                <div class="barrel" style="border-color: #fed7aa;">
+                    <div class="barrel-fill" id="fill-loss" style="background: linear-gradient(0deg, #f97316 0%, #fb923c 100%);"></div>
+                    <div class="barrel-title">Потери на трение<br><b>Aтр = Fтр · S</b></div>
+                    <div class="barrel-val" id="val-loss">0.0 Дж</div>
+                </div>
+            </div>
+        </div>
+        <!-- ПРАВАЯ РАБОЧАЯ СЦЕНА С ТЕРМОМЕТРОМ -->
+        <style>
+            .mechanism-zone { width: 50%; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 20px; }
+            .dashboard-zone { width: 46%; height: 100%; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+            
+            .ceiling { width: 140px; height: 6px; background: #475569; border-radius: 3px; }
+            /* Центральный ворот, меняющий цвет от нагрева при трении */
+            .winch-drum { width: 50px; height: 50px; border: 3px solid #334155; border-radius: 50%; position: absolute; top: 60px; background: #cbd5e1; z-index: 3; transition: background-color 0.2s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .winch-drum::after { content: ''; position: absolute; width: 8px; height: 8px; background: #334155; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+            
+            .kpd-rope { position: absolute; border-left: 2px dashed #b45309; width: 0; z-index: 2; }
+            .brick-load { width: 44px; height: 36px; background: #b91c1c; border: 2px solid #7f1d1d; border-radius: 4px; position: absolute; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            
+            .hand-dyn { width: 18px; height: 50px; background: #e2e8f0; border: 1.5px solid #64748b; border-radius: 3px; position: absolute; display: flex; align-items: center; justify-content: center; z-index: 4; }
+            .hand-dyn-scale { font-size: 8px; font-weight: 800; color: #ef4444; text-align: center; }
+            
+            /* Живой Sci-Fi термометр на корпусе механизма */
+            .thermometer-container { position: absolute; top: 50px; left: calc(50% + 40px); width: 12px; height: 70px; background: #e2e8f0; border: 1.5px solid #64748b; border-radius: 6px; padding: 1px; display: flex; flex-direction: column; justify-content: flex-end; }
+            .thermo-bar { width: 100%; height: 20%; background: #ef4444; border-radius: 4px; transition: height 0.2s ease; }
+            .thermo-text { position: absolute; top: -14px; left: -10px; font-size: 9px; font-weight: 700; color: #ef4444; white-space: nowrap; }
+            
+            .live-tag { position: absolute; font-size: 11px; font-weight: 700; color: #0369a1; background: #e0f2fe; border: 1px solid #7dd3fc; padding: 2px 6px; border-radius: 4px; }
+            .calc-step { font-size: 12px; line-height: 1.4; color: #475569; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px; }
+            .calc-step span { color: #0f172a; font-weight: 700; }
+        </style>
+
+        <div class="right-stage">
+            <div class="mechanism-zone">
+                <div class="ceiling"></div>
+                <div class="winch-drum" id="drum"></div>
+                
+                <!-- Встроенный термометр потерь -->
+                <div class="thermometer-container">
+                    <span class="thermo-text">T = <span id="t-val">20</span>°C</span>
+                    <div class="thermo-bar" id="t-bar"></div>
+                </div>
+                
+                <!-- Левый канат к грузу кирпичей -->
+                <div class="kpd-rope" id="rope-l" style="top: 85px; left: calc(50% - 25px); height: 240px; border-left-style: solid;"></div>
+                <!-- Правый тяговый канат в руке -->
+                <div class="kpd-rope" id="rope-r" style="top: 85px; left: calc(50% + 25px); height: 120px; border-left-style: solid;"></div>
+                
+                <div class="brick-load" id="brick" style="top: 325px; left: calc(50% - 47px);">200 Н</div>
+                
+                <div class="hand-dyn" id="dyn" style="top: 205px; left: calc(50% + 16px);">
+                    <div class="hand-dyn-scale" id="dyn-label">230Н</div>
+                </div>
+                
+                <!-- Индикаторы векторов S и h -->
+                <div class="live-tag" id="tag-h" style="left: 10px; top: 330px;">h = 0.0 м</div>
+                <div class="live-tag" id="tag-s" style="right: 10px; top: 210px; background:#f0fdf4; border-color:#86efac; color:#166534;">S = 0.0 м</div>
+            </div>
+            <!-- ЦИФРОВОЙ ОТЧЁТ И ВЫЧИСЛЕНИЯ ПО ФОРМУЛАМ -->
+            <div class="dashboard-zone">
+                <div class="control-title" style="color: #0284c7; font-size:13px; border-bottom:2px solid #0284c7; padding-bottom:4px;">📊 Математический расчёт</div>
+                <div class="calc-step">1. Полезная сила (Вес груза):<br><b>Fпол = P</b> = <span id="step-p">200 Н</span></div>
+                <div class="calc-step">2. Полная затраченная сила тяги:<br><b>Fтяги = Fпол + Fтр</b> = <span id="step-f">230 Н</span></div>
+                <div class="calc-step">3. Расчёт полезной работы:<br><b>Aп = P · h</b> = <span id="step-ap">0.0 Дж</span></div>
+                <div class="calc-step">4. Расчёт затраченной работы:<br><b>Aз = Fтяги · S</b> = <span id="step-az">0.0 Дж</span></div>
+                <div class="calc-step" style="border:none; margin-bottom:0;">
+                    5. Коэффициент полезного действия:<br><b>η = (Aп / Aз) · 100%</b><br>
+                    η = <span id="step-eta" style="font-size:15px; color:#10b981;">100.0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <script>
+        var animId = null;
+        var progress = 0; // Ход процесса от 0 до 100%
+
+        function resetKpdExp() {
+            if (animId) { cancelAnimationFrame(animId); animId = null; }
+            progress = 0;
+            document.getElementById('start-btn').disabled = false;
+            
+            var P = parseFloat(document.getElementById('p-slider').value);
+            var F_tr = parseFloat(document.getElementById('f-slider').value);
+            
+            document.getElementById('p-text').textContent = P;
+            document.getElementById('f-text').textContent = F_tr;
+            
+            // Сброс позиций элементов
+            document.getElementById('brick').style.top = '325px';
+            document.getElementById('dyn').style.top = '205px';
+            document.getElementById('rope-l').style.height = '240px';
+            document.getElementById('rope-r').style.height = '120px';
+            
+            document.getElementById('brick').textContent = P + ' Н';
+            document.getElementById('dyn-label').textContent = (P + F_tr) + 'Н';
+            
+            // Сброс дашборда и бочек
+            document.getElementById('fill-pol').style.height = '0%';
+            document.getElementById('fill-loss').style.height = '0%';
+            document.getElementById('val-pol').textContent = '0.0 Дж';
+            document.getElementById('val-loss').textContent = '0.0 Дж';
+            
+            document.getElementById('tag-h').style.top = '330px';
+            document.getElementById('tag-h').textContent = 'h = 0.0 м';
+            document.getElementById('tag-s').style.top = '210px';
+            document.getElementById('tag-s').textContent = 'S = 0.0 м';
+            
+            document.getElementById('drum').style.backgroundColor = '#cbd5e1';
+            document.getElementById('t-bar').style.height = '20%';
+            document.getElementById('t-val').textContent = '20';
+            
+            document.getElementById('step-p').textContent = P + ' Н';
+            document.getElementById('step-f').textContent = (P + F_tr) + ' Н';
+            document.getElementById('step-ap').textContent = '0.0 Дж';
+            document.getElementById('step-az').textContent = '0.0 Дж';
+            document.getElementById('step-eta').textContent = '100.0%';
+            document.getElementById('step-eta').style.color = '#10b981';
+        }
+
+        function runKpdExperiment() {
+            if (animId) return;
+            document.getElementById('start-btn').disabled = true;
+            
+            var P = parseFloat(document.getElementById('p-slider').value);
+            var F_tr = parseFloat(document.getElementById('f-slider').value);
+            var F_total = P + F_tr;
+            
+            var maxS_m = 3.0; // Максимальное расстояние протяга нити в метрах
+            
+            function updateFrame() {
+                progress += 1.0; // Скорость анимации подъёма
+                if (progress > 100) progress = 100;
+                
+                var currentS_m = (maxS_m * progress) / 100;
+                var currentH_m = currentS_m; // На вороте (неподвижном блоке) h равно S
+                
+                var pixS = currentS_m * 40;
+                
+                var Y_brick = 325 - pixS;
+                var Y_dyn = 205 + pixS;
+                
+                document.getElementById('brick').style.top = Y_brick + 'px';
+                document.getElementById('dyn').style.top = Y_dyn + 'px';
+                document.getElementById('rope-l').style.height = (240 - pixS) + 'px';
+                document.getElementById('rope-r').style.height = (120 + pixS) + 'px';
+                
+                var tH = document.getElementById('tag-h');
+                tH.style.top = (Y_brick + 5) + 'px';
+                tH.textContent = 'h = ' + currentH_m.toFixed(1) + ' м';
+                
+                var tS = document.getElementById('tag-s');
+                tS.style.top = (Y_dyn + 5) + 'px';
+                tS.textContent = 'S = ' + currentS_m.toFixed(1) + ' м';
+                
+                // Расчёт джоулей по формулам
+                var A_pol = P * currentH_m;
+                var A_loss = F_tr * currentS_m;
+                var A_zatr = F_total * currentS_m;
+                
+                var eta = 100;
+                if (A_zatr > 0) {
+                    eta = (A_pol / A_zatr) * 100;
+                }
+                
+                // Отрисовка наполнения Sci-Fi бочек энергий
+                var maxEnergyScale = 900; // Для нормализации процентов высоты бочек
+                document.getElementById('fill-pol').style.height = Math.min(100, (A_pol / maxEnergyScale) * 100) + '%';
+                document.getElementById('fill-loss').style.height = Math.min(100, (A_loss / maxEnergyScale) * 100) + '%';
+                
+                document.getElementById('val-pol').textContent = A_pol.toFixed(1) + ' Дж';
+                document.getElementById('val-loss').textContent = A_loss.toFixed(1) + ' Дж';
+                
+                // Эффект нагрева ворота из-за трения (чем выше трение, тем сильнее краснеет ворот)
+                if (F_tr > 0) {
+                    var heatFactor = (progress / 100) * (F_tr / 60);
+                    var red = Math.floor(203 + (52 * heatFactor));
+                    var green = Math.floor(213 - (150 * heatFactor));
+                    var blue = Math.floor(225 - (180 * heatFactor));
+                    document.getElementById('drum').style.backgroundColor = 'rgb(' + red + ',' + green + ',' + blue + ')';
+                    
+                    var currentTemp = 20 + Math.floor(60 * heatFactor);
+                    document.getElementById('t-val').textContent = currentTemp;
+                    document.getElementById('t-bar').style.height = (20 + Math.floor(60 * heatFactor)) + '%';
+                }
+                
+                // Вывод в математический дашборд
+                document.getElementById('step-ap').textContent = A_pol.toFixed(1) + ' Дж';
+                document.getElementById('step-az').textContent = A_zatr.toFixed(1) + ' Дж';
+                
+                var eLabel = document.getElementById('step-eta');
+                eLabel.textContent = eta.toFixed(1) + '%';
+                eLabel.style.color = eta < 80 ? '#ef4444' : '#10b981';
+                
+                if (progress < 100) {
+                    animId = requestAnimationFrame(updateFrame);
+                } else {
+                    cancelAnimationFrame(animId); animId = null;
+                }
+            }
+            updateFrame();
+        }
+
+        window.onload = function() {
+            resetKpdExp();
+        };
+    </script>
+</body>
+</html>
