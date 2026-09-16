@@ -82,10 +82,10 @@
         </div>
         <!-- ПРАВАЯ ЗОНА С МОНОЛИТНЫМ ПАРАБОЛИЧЕСКИМ ТРЕКОМ -->
         <style>
-            /* Монолитный параболический трек, отрисованный через SVG для идеальной гладкости */
             .ramp-svg-container { width: 500px; height: 300px; position: relative; background: transparent; }
             .height-line { position: absolute; left: calc(50% - 1px); top: 50px; width: 2px; height: 200px; border-left: 2px dashed #94a3b8; z-index: 1; }
             .height-tag { position: absolute; left: calc(50% + 8px); font-size: 11px; font-weight: 700; color: #64748b; background: rgba(241,245,249,0.9); padding: 1px 4px; border-radius: 4px; }
+            .vector-s { background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; position: absolute; white-space: nowrap; }
             
             /* Скейтборд с динамическими векторами над ним */
             .skater { width: 34px; height: 34px; position: absolute; z-index: 5; font-size: 32px; line-height: 1; text-align: center; margin-left: -17px; margin-top: -34px; transition: transform 0.03s linear; }
@@ -95,7 +95,7 @@
 
         <div class="right-stage">
             <div class="ramp-svg-container">
-                <!-- Отрисовка параболы: вершина на x=250, y=250. Края уходят вверх к y=50 -->
+                <!-- Отрисовка параболической чаши: от (50,50) вниз к (250,250) и вверх к (450,50) -->
                 <svg width="500" height="300" style="position:absolute; top:0; left:0; z-index:2;">
                     <path d="M 50 50 Q 250 250 450 50" fill="none" stroke="#334155" stroke-width="6" stroke-linecap="round"/>
                 </svg>
@@ -122,7 +122,7 @@
         var g = 10;
         var maxH = 5.0; 
         
-        // Положение кодируется горизонтальной координатой x от -200 до +200 относительно центра параболы
+        // Положение на параболе: x от -200 до +200 относительно центра чаши
         var curX = -200; 
         var speedX = 0.0; 
         var accelX = 0.0;
@@ -144,7 +144,7 @@
             isPlaying = true;
             document.getElementById('play-btn').textContent = 'Пауза ⏸';
             
-            curX = -200; // Возврат на левый край
+            curX = -200; // Левый край чаши
             speedX = 0.0;
             
             updateEnergyCalculations(curX);
@@ -155,9 +155,8 @@
         function animateFrame() {
             if (!isPlaying) { animId = null; return; }
             
-            // Физика движения по параболе y = k * x^2
-            // Скатывающая сила зависит от крутизны склона (производной параболы).
-            // Коэффициент уменьшен до 0.00018, чтобы замедлить скорость перекатов ровно в 3 раза
+            // Физика скатывания в параболическую чашу. 
+            // Сила направлена к центру (знак минус). Скорость перекатов снижена ровно в 3 раза за счет шага 0.00018
             accelX = -0.00018 * curX; 
             
             speedX += accelX;
@@ -172,44 +171,44 @@
         function drawSkaterOnParabola(x) {
             var skater = document.getElementById('skater-node');
             
-            // Масштабирование виртуального смещения x во внутренние пиксели SVG (центр на 250px)
+            // Координата X: центр экрана на 250px
             var screenX = 250 + x;
             
-            // Математически точная парабола y = 50 + (x^2 / 200)
-            // При x = -200 или +200, y = 50 + 200 = 250px. Скейтер никогда не сорвётся!
-            var screenY = 50 + (x * x / 200);
+            // ИСПРАВЛЕННАЯ ГЕОМЕТРИЯ ЧАШИ (y растет вниз):
+            // В центре x=0, y=250px (самая нижняя точка). На краях x=±200, y = 250 - 200 = 50px (вершина чаши)
+            var screenY = 250 - (x * x / 200);
             
             skater.style.left = screenX + 'px';
             skater.style.top = screenY + 'px';
             
-            // Динамический наклон скейта по касательной к параболе (производная y' = x / 100)
-            var tangentAngleRad = Math.atan(x / 100);
+            // Касательный наклон скейта к вогнутой поверхности (производная y' = -x / 100)
+            var tangentAngleRad = Math.atan(-x / 100);
             var tangentAngleDeg = tangentAngleRad * (180 / Math.PI);
             skater.style.transform = 'translate(-50%, -100%) rotate(' + tangentAngleDeg + 'deg)';
         }
 
         function updateEnergyCalculations(x) {
-            // Текущая относительная высота: на краях h=5м, в центре h=0м
-            // Пересчитываем строго по формуле профиля
+            // Относительная высота h от дна чаши: в центре x=0 -> h=0м. На краях x=±200 -> h=5м
             var h = maxH * (x * x / 40000); 
             if (h > maxH) h = maxH; if (h < 0) h = 0;
             
-            var E_pot = mass * g * (maxH - h); // Потенциальная энергия высоты
+            // Пересчёт энергии по канонам физики 7 класса
+            var E_pot = mass * g * h;          // Потенциальная энергия высоты
             var E_total = mass * g * maxH;     // Полная механическая энергия системы
             var E_kin = E_total - E_pot;       // Кинетическая энергия движения
             if (E_kin < 0) E_kin = 0;
 
-            // Сдвиг стрелки h
+            // Движение стрелки высоты h
             var hTag = document.getElementById('h-tag');
-            hTag.style.top = (50 + (h * 40)) + 'px'; // 40px на 1 метр высоты
-            hTag.textContent = 'h = ' + (maxH - h).toFixed(1) + ' м';
+            hTag.style.top = (250 - (h * 40)) + 'px'; // 40px на 1 метр высоты
+            hTag.textContent = 'h = ' + h.toFixed(1) + ' м';
 
             var maxScale = 4000;
             var pctEp = (E_pot / maxScale) * 100;
             var pctEk = (E_kin / maxScale) * 100;
             var pctEt = (E_total / maxScale) * 100;
 
-            // Обновление гистограмм на левой панели
+            // Вывод данных на левые графики
             document.getElementById('fill-ep').style.width = pctEp + '%';
             document.getElementById('fill-ek').style.width = pctEk + '%';
             document.getElementById('fill-etotal').style.width = pctEt + '%';
@@ -218,7 +217,7 @@
             document.getElementById('num-ek').textContent = E_kin.toFixed(0) + ' Дж';
             document.getElementById('num-etotal').textContent = E_total.toFixed(0) + ' Дж';
             
-            // Наполнение микро-векторов прямо над головой скейтера
+            // Вывод данных на микро-векторы над скейтом
             document.getElementById('mbar-ep').style.height = (E_pot / E_total * 100) + '%';
             document.getElementById('mbar-ek').style.height = (E_kin / E_total * 100) + '%';
             
