@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Интерактивная физика: Битва за колпак</title>
+    <title>Интерактивная физика: Движение цилиндра</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -61,15 +61,13 @@
 </head>
 <body>
 
-    <h1>🎮 Лабораторный квест: Давление в сосуде</h1>
+    <h1>🎮 Физический эксперимент: Жесткий цилиндр на поршне</h1>
     
     <div class="container">
-        <!-- Визуализация -->
         <div class="canvas-container">
             <canvas id="physicsCanvas" width="360" height="450"></canvas>
         </div>
         
-        <!-- Пульт управления -->
         <div class="controls">
             <h3>Управление насосом:</h3>
             <button class="btn-pump-in" id="pumpInBtn">💨 Накачать воздух в сосуд</button>
@@ -78,8 +76,8 @@
             
             <h3>Датчики показателей:</h3>
             <div class="stat-box">Давление в сосуде: <span id="pVesselText" class="stat-value">100</span> кПа</div>
-            <div class="stat-box">Давление под колпаком: <span id="pInText" class="stat-value">110</span> кПа</div>
-            <div class="stat-box">Положение колпака: <span id="posText" class="stat-value">Стабильно</span></div>
+            <div class="stat-box">Давление под колпаком: <span id="pInText" class="stat-value">100</span> кПа</div>
+            <div class="stat-box">Положение цилиндра: <span id="posText" class="stat-value">Стабильно</span></div>
         </div>
     </div>
     <script>
@@ -87,23 +85,27 @@
         const ctx = canvas.getContext('2d');
 
         // Физические параметры
-        let pVessel = 100; // Начальное давление в сосуде (кПа)
-        let cylinderY = 220; // Начальная высота колпака (координата Y верхней стенки)
-        let targetY = 220;   // Куда колпак стремится по законам физики
-        const pistonY = 280; // Неподвижный поршень (координата верхушки поршня)
-        const mass = 15;     // Вес колпака в условных единицах давления
+        let pVessel = 100;    // Давление во внешнем сосуде (кПа)
+        let cylinderY = 200;  // Координата Y крышки цилиндра
+        let targetY = 200;    // Целевое положение крышки
+        
+        const pistonY = 270;  // Неподвижный поршень (не двигается!)
+        const mass = 15;      // Влияние веса цилиндра (сдвигает баланс сил)
 
-        // Константы размеров
+        // Геометрия элементов (теперь у цилиндра жесткая фиксированная высота!)
         const vesselX = 60, vesselY = 40, vesselW = 240, vesselH = 360;
         const pistonX = 140, pistonW = 80, pistonH = 12;
-        const rodX = 176, rodW = 8, rodH = 120;
-        const cylW = 96, cylH = 110, cylX = 132;
+        const rodX = 176, rodW = 8, rodH = 130;
+        
+        const cylX = 136;
+        const cylW = 88;
+        const cylH = 120; // Жесткая высота цилиндра — она НЕ меняется!
 
         function drawSystem() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Внешний большой сосуд (фон давления)
-            let vesselAlpha = Math.min(0.8, pVessel / 300);
+            // 1. Внешний сосуд и его атмосфера
+            let vesselAlpha = Math.min(0.7, pVessel / 300);
             ctx.fillStyle = `rgba(77, 171, 247, ${vesselAlpha})`;
             ctx.fillRect(vesselX, vesselY, vesselW, vesselH);
             
@@ -111,82 +113,84 @@
             ctx.lineWidth = 4;
             ctx.strokeRect(vesselX, vesselY, vesselW, vesselH);
 
-            // Входная труба насоса
+            // Трубка насоса
             ctx.beginPath();
-            ctx.moveTo(vesselX, vesselY + 40);
-            ctx.lineTo(vesselX - 25, vesselY + 40);
-            ctx.lineTo(vesselX - 25, vesselY + 70);
+            ctx.moveTo(vesselX, vesselY + 50);
+            ctx.lineTo(vesselX - 20, vesselY + 50);
             ctx.stroke();
 
-            // 2. Неподвижный поршень на ножке
+            // 2. Неподвижный поршень со шрафом ко дну
             ctx.fillStyle = '#868e96';
-            ctx.fillRect(rodX, pistonY + pistonH, rodW, rodH); // Ножка поршня ко дну
-            ctx.fillStyle = '#adb5bd';
-            ctx.fillRect(pistonX, pistonY, pistonW, pistonH); // Сам поршень
+            ctx.fillRect(rodX, pistonY + pistonH, rodW, rodH);
+            ctx.fillStyle = '#666';
+            ctx.fillRect(pistonX, pistonY, pistonW, pistonH);
 
-            // 3. Запертый воздух внутри подвижного цилиндра (колпака)
-            // Считаем внутреннее давление по закону Бойля-Мариотта (приблизительно для визуала)
-            let volume = Math.max(10, pistonY - cylinderY);
-            let pInternal = Math.round((110 * 60) / volume);
+            // 3. Газ, запертый внутри (между неподвижным поршнем и подвижной крышкой)
+            let gasHeight = pistonY - cylinderY; 
+            let pInternal = Math.round((115 * 70) / Math.max(10, gasHeight));
 
-            let innerAlpha = Math.min(0.9, pInternal / 300);
-            ctx.fillStyle = `rgba(255, 107, 107, ${innerAlpha})`;
-            ctx.fillRect(cylX + 4, cylinderY + 4, cylW - 8, pistonY - cylinderY);
+            if (gasHeight > 0) {
+                let innerAlpha = Math.min(0.9, pInternal / 300);
+                ctx.fillStyle = `rgba(255, 107, 107, ${innerAlpha})`;
+                ctx.fillRect(cylX + 4, cylinderY + 4, cylW - 8, gasHeight);
+            }
 
-            // 4. Подвижный цилиндр (колпак), надетый сверху
+            // 4. ПОДВИЖНЫЙ ТВЕРДЫЙ ЦИЛИНДР (рисуется как единый передвигающийся каркас)
             ctx.strokeStyle = '#ffd43b';
             ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.moveTo(cylX, pistonY + 30); // Левая стенка чуть ниже поршня
-            ctx.lineTo(cylX, cylinderY);    // Вверх до крышки
-            ctx.lineTo(cylX + cylW, cylinderY); // Крышка колпака
-            ctx.lineTo(cylX + cylW, pistonY + 30); // Правая стенка вниз
+            // Левая стенка жесткой длины cylH
+            ctx.moveTo(cylX, cylinderY + cylH); 
+            ctx.lineTo(cylX, cylinderY);
+            // Верхняя крышка, на которую давит внешнее давление
+            ctx.lineTo(cylX + cylW, cylinderY);
+            // Правая стенка жесткой длины cylH
+            ctx.lineTo(cylX + cylW, cylinderY + cylH);
             ctx.stroke();
 
-            // Обновляем текст на датчиках
+            // Информационная панель
             document.getElementById('pVesselText').innerText = Math.round(pVessel);
             document.getElementById('pInText').innerText = pInternal;
             
-            // Логика статуса положения
-            let statusText = "Стабилен";
-            if (pInternal > pVessel + mass + 2) statusText = "🚀 Взлетает вверх!";
-            if (pInternal < pVessel + mass - 2) statusText = "📉 Опускается вниз!";
-            if (cylinderY <= vesselY + 5) statusText = "💥 Упёрся в потолок!";
-            if (cylinderY >= pistonY - 15) statusText = "⚠️ Сел на поршень!";
+            let statusText = "В равновесии";
+            if (cylinderY < targetY - 1) statusText = "📉 Опускается на поршень";
+            if (cylinderY > targetY + 1) statusText = "🚀 Скользит вверх по поршню";
+            if (cylinderY <= vesselY + 6) statusText = "💥 Упёрся в верхнюю стенку!";
+            if (cylinderY >= pistonY - 15) statusText = "⚠️ Сел крышкой на поршень!";
             document.getElementById('posText').innerText = statusText;
         }
         function updatePhysics() {
-            // Рассчитываем идеальную высоту колпака из уравнения баланса сил:
-            // P_внутри * S = P_сосуда * S + mg  =>  P_внутри = P_сосуда + const_массы
-            // Отсюда через объём находим целевой Y
-            let targetVolume = (110 * 60) / (pVessel + mass);
-            targetY = pistonY - targetVolume;
+            // Закон Бойля-Мариотта для запертого газа: P_внеш + вес = P_внутр
+            // Изменение внешнего давления заставляет цилиндр смещаться, меняя объем газа
+            let targetGasHeight = (115 * 70) / (pVessel + mass);
+            targetY = pistonY - targetGasHeight;
 
-            // Ограничения движения (чтобы не улетел сквозь стены и не пробил поршень)
-            if (targetY < vesselY + 10) targetY = vesselY + 10;
-            if (targetY > pistonY - 10) targetY = pistonY - 10;
+            // Ограничения физического тела внутри камеры
+            if (targetY < vesselY + 5) targetY = vesselY + 5; // Потолок сосуда
+            if (targetY > pistonY - 10) targetY = pistonY - 10; // Крышка легла на поршень
 
-            // Плавная анимация движения к целевой точке (эффект инерции)
-            cylinderY += (targetY - cylinderY) * 0.1;
+            // Реалистичное плавное скольжение стакана по поршню
+            cylinderY += (targetY - cylinderY) * 0.08;
 
             drawSystem();
             requestAnimationFrame(updatePhysics);
         }
 
-        // Обработчики кнопок управления
+        // Кнопки управления давлением во внешней камере
         document.getElementById('pumpInBtn').addEventListener('click', () => {
-            if (pVessel < 280) pVessel += 25; // Накачиваем
+            if (pVessel < 260) pVessel += 30;
         });
 
         document.getElementById('pumpOutBtn').addEventListener('click', () => {
-            if (pVessel > 20) pVessel -= 25; // Откачиваем
+            if (pVessel > 30) pVessel -= 30;
         });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
-            pVessel = 100; // Сброс к норме
+            pVessel = 100;
         });
 
-        // Запуск симуляции
+        // Старт физического движка
         updatePhysics();
     </script>
 </body>
