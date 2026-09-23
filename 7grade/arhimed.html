@@ -251,10 +251,19 @@
                     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 3;
                     ctx.beginPath(); ctx.moveTo(dynX, 0); ctx.lineTo(dynX, currentBY); ctx.stroke();
                 } else if (currentTask.level === 4) {
-                    ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
-                    drawSpring(glassX + 60, glassY + glassH - 4, currentBY + bodyH);
-                    drawSpring(glassX + glassW - 60, glassY + glassH - 4, currentBY + bodyH);
-                    ctx.fillStyle = '#cbd5e1'; ctx.fillRect(currentBX - 10, currentBY + bodyH, bodyW + 20, 6);
+                    // Подводные весы на дне стакана
+                    let platformY = currentBY + bodyH; // Верхняя грань платформы весов
+                    
+                    // Рисуем красивые, чётко видимые пружины от дна стакана (330) вверх до платформы
+                    drawSpring(glassX + 50, glassY + glassH - 4, platformY + 6);
+                    drawSpring(glassX + glassW - 50, glassY + glassH - 4, platformY + 6);
+                    
+                    // Рисуем саму платформу напольных весов, на которой стоит валун
+                    ctx.fillStyle = '#94a3b8'; 
+                    ctx.fillRect(currentBX - 15, platformY, bodyW + 30, 6);
+                    ctx.strokeStyle = '#475569';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(currentBX - 15, platformY, bodyW + 30, 6);
                 } else if (currentTask.level === 5 && gameState !== "fail_anim") {
                     ctx.fillStyle = '#64748b'; ctx.fillRect(dynX - 6, 0, 12, currentBY);
                     ctx.fillStyle = '#475569'; ctx.fillRect(currentBX - 5, currentBY - 6, bodyW + 10, 6);
