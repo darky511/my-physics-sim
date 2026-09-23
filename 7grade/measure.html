@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Игровой СИ-Конструктор</title>
+    <title>Игровой СИ-Конструктор со Шпаргалкой</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -17,27 +17,60 @@
         }
         h1 { color: #38bdf8; font-size: 24px; margin-bottom: 5px; text-align: center; }
         .subtitle { color: #64748b; font-size: 14px; margin-bottom: 25px; text-align: center; }
-        .container {
+        
+        /* Двухколоночный макет */
+        .main-layout {
+            display: flex;
+            gap: 25px;
+            max-width: 1050px;
+            width: 100%;
+            align-items: flex-start;
+        }
+        
+        /* Левая колонка: Игровая зона */
+        .game-zone {
+            flex: 1.3;
             background: #1e293b;
             border-radius: 16px;
             padding: 25px;
-            max-width: 650px;
-            width: 100%;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
         }
-        /* Главное табло задачи */
+        
+        /* Правая колонка: Умная шпаргалка */
+        .cheat-sheet {
+            flex: 0.9;
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+        }
+        
+        .cheat-title { font-size: 16px; font-weight: bold; color: #38bdf8; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+        .cheat-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .cheat-table th { text-align: left; color: #94a3b8; padding: 6px; font-size: 12px; }
+        .cheat-table td { padding: 8px 6px; border-bottom: 1px solid #334155; }
+        .cheat-row { transition: all 0.3s; }
+        /* Подсветка активной строки */
+        .cheat-row.highlighted {
+            background: rgba(56, 189, 248, 0.15);
+            color: #ffd43b;
+            font-weight: bold;
+            border-left: 3px solid #38bdf8;
+        }
+
         .quest-board {
             background: #0f172a;
             padding: 20px;
             border-radius: 12px;
             text-align: center;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
             color: #ffd43b;
             margin-bottom: 25px;
             border: 2px solid #334155;
         }
-        /* Визуальный конвейер трансформации числа */
         .conveyor {
             display: flex;
             align-items: center;
@@ -50,65 +83,59 @@
         }
         .node {
             background: #1e293b;
-            padding: 12px 20px;
+            padding: 12px 15px;
             border-radius: 8px;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             font-family: monospace;
             border: 2px solid #475569;
-            min-width: 80px;
+            min-width: 70px;
             text-align: center;
         }
         .arrow { font-size: 24px; color: #94a3b8; }
-        /* Пустой слот для кубика */
         .slot {
             background: #0f172a;
             border: 2px dashed #38bdf8;
             color: #38bdf8;
             min-width: 110px;
-            min-height: 50px;
+            min-height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 8px;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: bold;
         }
-        .slot.filled {
-            background: #0284c7;
-            color: white;
-            border-style: solid;
-        }
-        /* Сетка доступных кубиков-действий */
+        .slot.filled { background: #0284c7; color: white; border-style: solid; }
+        
         .blocks-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
             margin-top: 15px;
         }
         .cube-btn {
             background: #475569;
             color: white;
             border: none;
-            padding: 15px 10px;
-            font-size: 18px;
+            padding: 14px 8px;
+            font-size: 16px;
             font-weight: bold;
             font-family: monospace;
             border-radius: 8px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             transition: all 0.15s;
-            text-align: center;
         }
         .cube-btn:hover { background: #64748b; transform: translateY(-2px); }
         .cube-btn:active { transform: translateY(0); }
         
         .feedback {
             text-align: center;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             margin-top: 25px;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             display: none;
         }
@@ -118,56 +145,100 @@
 </head>
 <body>
 
-    <h1>⚡ СИ-Конструктор: Энергетический Мост</h1>
-    <div class="subtitle">Подбери правильный кубик-модификатор, чтобы перевести параметры в систему СИ!</div>
+    <h1>⚡ СИ-Конструктор: Энергетический Мост v2.0</h1>
+    <div class="subtitle">Используй интерактивную шпаргалку справа, чтобы безошибочно подбирать кубики перевода!</div>
 
-    <div class="container">
-        <!-- Табло текущего квеста -->
-        <div class="quest-board" id="questText">Загрузка космической системы...</div>
+    <div class="main-layout">
+        <!-- ЛЕВАЯ ЧАСТЬ: ИГРА -->
+        <div class="game-zone">
+            <div class="quest-board" id="questText">Загрузка систем...</div>
 
-        <!-- Схема физического конвейера -->
-        <div class="conveyor">
-            <div class="node" id="startNode">0</div>
-            <div class="arrow">➔</div>
-            <div class="slot" id="operatorSlot">[ Выбери кубик ]</div>
-            <div class="arrow">➔</div>
-            <div class="node" id="resultNode">?</div>
+            <div class="conveyor">
+                <div class="node" id="startNode">0</div>
+                <div class="arrow">➔</div>
+                <div class="slot" id="operatorSlot">[ Твой кубик ]</div>
+                <div class="arrow">➔</div>
+                <div class="node" id="resultNode">?</div>
+            </div>
+
+            <label style="font-weight: bold; color: #94a3b8; display: block; margin-bottom: 10px;">Доступные кубики-действия:</label>
+            <div class="blocks-grid" id="gridContainer"></div>
+
+            <div class="feedback" id="feedbackMessage"></div>
         </div>
 
-        <!-- Панель выбора интерактивных кубиков -->
-        <label style="font-weight: bold; color: #94a3b8; display: block; margin-bottom: 10px;">Доступные кубики-модификаторы:</label>
-        <div class="blocks-grid" id="gridContainer"></div>
-
-        <!-- Уведомления об успехе/ошибке -->
-        <div class="feedback" id="feedbackMessage"></div>
+        <!-- ПРАВАЯ ЧАСТЬ: УМНАЯ ШПАРГАЛКА -->
+        <div class="cheat-sheet">
+            <div class="cheat-title">🗺️ Лабораторный справочник физика (СИ)</div>
+            <table class="cheat-table">
+                <thead>
+                    <tr>
+                        <th>Величина</th>
+                        <th>Из чего переводим</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="cheat-row" id="row-length-km"><td>Длина (м)</td><td>километры (км)</td><td>Умножить на 1000 (· 1000)</td></tr>
+                    <tr class="cheat-row" id="row-length-cm"><td>Длина (м)</td><td>сантиметры (см)</td><td>Поделить на 100 (: 100)</td></tr>
+                    <tr class="cheat-row" id="row-length-mm"><td>Длина (м)</td><td>миллиметры (мм)</td><td>Поделить на 1000 (: 1000)</td></tr>
+                    <tr class="cheat-row" id="row-mass-t"><td>Масса (кг)</td><td>тонны (т)</td><td>Умножить на 1000 (· 1000)</td></tr>
+                    <tr class="cheat-row" id="row-mass-g"><td>Масса (кг)</td><td>граммы (г)</td><td>Поделить на 1000 (: 1000)</td></tr>
+                    <tr class="cheat-row" id="row-mass-mg"><td>Масса (кг)</td><td>миллиграммы (мг)</td><td>Поделить на 1 000 000</td></tr>
+                    <tr class="cheat-row" id="row-time-min"><td>Время (с)</td><td>минуты (мин)</td><td>Умножить на 60 (· 60)</td></tr>
+                    <tr class="cheat-row" id="row-time-h"><td>Время (с)</td><td>часы (ч)</td><td>Умножить на 3600 (· 3600)</td></tr>
+                    <tr class="cheat-row" id="row-speed"><td>Скорость (м/с)</td><td>км/ч</td><td>Поделить на 3.6 (: 3.6)</td></tr>
+                    <tr class="cheat-row" id="row-area-cm2"><td>Площадь (м²)</td><td>кв. сантиметры (см²)</td><td>Поделить на 10 000</td></tr>
+                    <tr class="cheat-row" id="row-area-mm2"><td>Площадь (м²)</td><td>кв. миллиметры (mm²)</td><td>Поделить на 1 000 000</td></tr>
+                    <tr class="cheat-row" id="row-vol-l"><td>Объём (м³)</td><td>литры / дм³ (л)</td><td>Поделить на 1000 (: 1000)</td></tr>
+                    <tr class="cheat-row" id="row-vol-cm3"><td>Объём (м³)</td><td>куб. сантиметры (см³)</td><td>Поделить на 1 000 000</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
     <script>
-        // Полностью автономная и проверенная база задач без внешних зависимостей
+        // Расширенная база данных: 16 уникальных примеров из Пёрышкина
         const missions = [
-            { text: "Переведи путь: 5 км ➔ ? метров (СИ)", start: 5, blockLabel: "· 1000", resultStr: "5000 м", isCorrect: (label) => label === "· 1000" },
-            { text: "Переведи массу: 450 г ➔ ? килограмм (СИ)", start: 450, blockLabel: ": 1000", resultStr: "0.45 кг", isCorrect: (label) => label === ": 1000" },
-            { text: "Переведи размер: 20 см ➔ ? метров (СИ)", start: 20, blockLabel: ": 100", resultStr: "0.2 м", isCorrect: (label) => label === ": 100" },
-            { text: "Переведи время: 3 минуты ➔ ? секунд (СИ)", start: 3, blockLabel: "· 60", resultStr: "180 с", isCorrect: (label) => label === "· 60" },
-            { text: "Переведи скорость: 72 км/ч ➔ ? м/с (СИ)", start: 72, blockLabel: ": 3.6", resultStr: "20 м/с", isCorrect: (label) => label === ": 3.6" },
-            { text: "Переведи площадь: 5 см² ➔ ? м² (СИ)", start: 5, blockLabel: ": 10000", resultStr: "0.0005 м²", isCorrect: (label) => label === ": 10000" },
-            { text: "Переведи объём: 8 литров ➔ ? м³ (СИ)", start: 8, blockLabel: ": 1000", resultStr: "0.008 м³", isCorrect: (label) => label === ": 1000" }
+            // --- ДЛИНА ---
+            { text: "Переведи путь: 8 км ➔ ? метров", start: 8, blockLabel: "· 1000", resultStr: "8000 м", type: "row-length-km", isCorrect: (l) => l === "· 1000" },
+            { text: "Переведи длину: 45 см ➔ ? метров", start: 45, blockLabel: ": 100", resultStr: "0.45 м", type: "row-length-cm", isCorrect: (l) => l === ": 100" },
+            { text: "Переведи толщину: 300 мм ➔ ? метров", start: 300, blockLabel: ": 1000", resultStr: "0.3 м", type: "row-length-mm", isCorrect: (l) => l === ": 1000" },
+            // --- МАССА ---
+            { text: "Переведи массу груза: 2.5 т ➔ ? килограмм", start: 2.5, blockLabel: "· 1000", resultStr: "2500 кг", type: "row-mass-t", isCorrect: (l) => l === "· 1000" },
+            { text: "Переведи массу камня: 600 г ➔ ? килограмм", start: 600, blockLabel: ": 1000", resultStr: "0.6 кг", type: "row-mass-g", isCorrect: (l) => l === ": 1000" },
+            { text: "Переведи массу капли: 750 мг ➔ ? килограмм", start: 750, blockLabel: ": 1000000", resultStr: "0.00075 кг", type: "row-mass-mg", isCorrect: (l) => l === ": 1000000" },
+            // --- ВРЕМЯ ---
+            { text: "Переведи время: 5 минут ➔ ? секунд", start: 5, blockLabel: "· 60", resultStr: "300 с", type: "row-time-min", isCorrect: (l) => l === "· 60" },
+            { text: "Переведи длительность урока: 2 часа ➔ ? секунд", start: 2, blockLabel: "· 3600", resultStr: "7200 с", type: "row-time-h", isCorrect: (l) => l === "· 3600" },
+            // --- СКОРОСТЬ ---
+            { text: "Переведи скорость автомобиля: 90 км/ч ➔ ? м/с", start: 90, blockLabel: ": 3.6", resultStr: "25 м/с", type: "row-speed", isCorrect: (l) => l === ": 3.6" },
+            { text: "Переведи скорость гепарда: 108 км/ч ➔ ? м/с", start: 108, blockLabel: ": 3.6", resultStr: "30 м/с", type: "row-speed", isCorrect: (l) => l === ": 3.6" },
+            // --- ПЛОЩАДЬ ---
+            { text: "Переведи площадь поршня: 40 см² ➔ ? м²", start: 40, blockLabel: ": 10000", resultStr: "0.004 м²", type: "row-area-cm2", isCorrect: (l) => l === ": 10000" },
+            { text: "Переведи площадь сечения провода: 15 мм² ➔ ? м²", start: 15, blockLabel: ": 1000000", resultStr: "0.000015 м²", type: "row-area-mm2", isCorrect: (l) => l === ": 1000000" },
+            // --- ОБЪЁМ ---
+            { text: "Переведи объём колбы: 3 литра ➔ ? м³", start: 3, blockLabel: ": 1000", resultStr: "0.003 м³", type: "row-vol-l", isCorrect: (l) => l === ": 1000" },
+            { text: "Переведи объём бака: 250 л ➔ ? м³", start: 250, blockLabel: ": 1000", resultStr: "0.25 м³", type: "row-vol-l", isCorrect: (l) => l === ": 1000" },
+            { text: "Переведи объём бруска: 500 см³ ➔ ? м³", start: 500, blockLabel: ": 1000000", resultStr: "0.0005 м³", type: "row-vol-cm3", isCorrect: (l) => l === ": 1000000" },
+            { text: "Переведи объём детали: 8000 см³ ➔ ? м³", start: 8000, blockLabel: ": 1000000", resultStr: "0.008 м³", type: "row-vol-cm3", isCorrect: (l) => l === ": 1000000" }
         ];
 
-        // Все доступные варианты кубиков, которые мы разложим перед учеником на столе
-        const availablePool = ["· 1000", ": 1000", ": 100", "· 60", ": 3.6", ": 10000", "· 100", ": 60"];
+        // Набор кубиков, которые мы даем ученику для выбора (9 штук для идеальной сетки 3х3)
+        const availablePool = [
+            "· 1000", ": 100", ": 1000",
+            "· 60", "· 3600", ": 3.6",
+            ": 10000", ": 1000000", "· 100"
+        ];
 
         let currentMissionIdx = 0;
 
-        // Генерация кнопок-кубиков на панели
         function renderCubeButtons() {
             const grid = document.getElementById('gridContainer');
-            grid.innerHTML = ""; // очистка
-
+            grid.innerHTML = "";
             availablePool.forEach(label => {
                 const btn = document.createElement('button');
                 btn.className = 'cube-btn';
                 btn.innerText = label;
-                // Привязываем событие клика по кубику
                 btn.onclick = () => handleCubeClick(label);
                 grid.appendChild(btn);
             });
@@ -175,11 +246,19 @@
         function loadMission(idx) {
             const mission = missions[idx];
             
-            // Обновляем текстовые элементы на табло
-            document.getElementById('questText').innerText = mission.text;
+            // 1. Сбрасываем старую подсветку в шпаргалке
+            document.querySelectorAll('.cheat-row').forEach(row => {
+                row.classList.remove('highlighted');
+            });
+            
+            // 2. Включаем неоновую подсветку для нужной строки справочника
+            const activeRow = document.getElementById(mission.type);
+            if (activeRow) activeRow.classList.add('highlighted');
+
+            // 3. Обновляем текстовые дисплеи
+            document.getElementById('questText').innerText = `🎯 Задача ${idx + 1}/16: ${mission.text}`;
             document.getElementById('startNode').innerText = mission.start;
             
-            // Сбрасываем центральный слот в пустое состояние
             const slot = document.getElementById('operatorSlot');
             slot.innerText = "[ Выбери кубик ]";
             slot.className = "slot";
@@ -193,32 +272,28 @@
             const slot = document.getElementById('operatorSlot');
             const feed = document.getElementById('feedbackMessage');
 
-            // Анимируем вставку кубика в слот конвейера
             slot.innerText = chosenLabel;
             slot.className = "slot filled";
             feed.style.display = "block";
 
-            // Проверяем, правильный ли кубик выбрал ученик
             if (mission.isCorrect(chosenLabel)) {
-                // Если выбор верен
                 document.getElementById('resultNode').innerText = mission.resultStr;
                 feed.className = "feedback success";
-                feed.innerHTML = `🎉 Великолепно! Энергетический мост стабилен. <br> Выбран правильный масштаб приставки: <b>${mission.start} ${chosenLabel.replace('·', '×').replace(':', '÷')} = ${mission.resultStr}</b>`;
+                feed.innerHTML = `🎉 Потрясающе! Коэффициент СИ выбран безупречно. <br> Справочник подтверждает: <b>${mission.start} ${chosenLabel.replace('·', '×').replace(':', '÷')} = ${mission.resultStr}</b>`;
 
-                // Автопереход к следующей загадке через 3 секунды
+                // Переключаем на следующую задачу через 3 секунды
                 setTimeout(() => {
                     currentMissionIdx = (currentMissionIdx + 1) % missions.length;
                     loadMission(currentMissionIdx);
                 }, 3000);
             } else {
-                // Если кубик не подошел
                 document.getElementById('resultNode').innerText = "Ошибка";
                 feed.className = "feedback error";
-                feed.innerText = `❌ Цепь разорвана! Модификатор "${chosenLabel}" не подходит для этой величины. Подумай, во сколько раз отличаются исходная единица и системная (СИ), и уменьшиться должно число или увеличиться?`;
+                feed.innerText = `❌ Упс, не тот кубик! Обрати внимание на подсвеченную жёлтым строку в справочнике справа. Она подскажет правильный математический узел!`;
             }
         }
 
-        // Самый первый запуск игры при открытии файла в браузере
+        // Стартовая сборка лабораторного стенда
         renderCubeButtons();
         loadMission(currentMissionIdx);
     </script>
