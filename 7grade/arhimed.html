@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Физический квест: Сила Архимеда</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            user-select: none;
+        }
+        h1 { color: #0284c7; font-size: 24px; margin-bottom: 5px; text-align: center; }
+        
+        /* Шкала опыта */
+        .progress-bar-container {
+            width: 100%;
+            max-width: 900px;
+            background: #e2e8f0;
+            height: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 20%;
+            background: #06b6d4;
+            transition: width 0.5s ease;
+        }
+
+        /* Интерактивная карточка с главной формулой */
+        .formula-card {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            max-width: 900px;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .formula-visual {
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Cambria', serif;
+            background: #f1f5f9;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            color: #0891b2;
+        }
+        .formula-desc { font-size: 13px; color: #475569; max-width: 500px; line-height: 1.4; }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 930px;
+            width: 100%;
+            justify-content: center;
+        }
+        .canvas-container { 
+            background: #ffffff; 
+            border-radius: 16px; 
+            padding: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 2px solid #e2e8f0;
+        }
+        
+        /* Правая панель с условиями задач */
+        .task-panel {
+            flex: 1;
+            min-width: 340px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 2px solid #e2e8f0;
+        }
+        .task-title { font-size: 16px; font-weight: bold; color: #0891b2; }
+        .task-text {
+            background: #ecfeff;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            border-left: 4px solid #06b6d4;
+            font-weight: 500;
+            min-height: 100px;
+        }
+        
+        .input-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-box label { font-size: 14px; font-weight: bold; color: #334155; }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        input {
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            color: #0f172a;
+            font-size: 20px;
+            padding: 8px;
+            border-radius: 6px;
+            width: 140px;
+            text-align: center;
+            font-family: monospace;
+        }
+        input:focus { border-color: #06b6d4; outline: none; }
+        .unit { font-size: 18px; font-weight: bold; color: #475569; }
+
+        .btn-action {
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+            background: #0891b2;
+            color: white;
+            box-shadow: 0 4px 10px rgba(8,145,178,0.2);
+        }
+        .btn-action:hover { background: #0e7490; }
+        
+        .feedback {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            line-height: 1.4;
+        }
+        .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    </style>
+</head>
+<body>
+
+    <h1>⚓ Научный квест: Тайны закона Архимеда</h1>
+    
+    <div class="progress-bar-container">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    
+    <div class="formula-card">
+        <div class="formula-visual">F_A = ρ_жид · g · V_погр</div>
+        <div class="formula-desc">
+            <b>Закон Архимеда:</b> На тело, погружённое в жидкость или газ, действует выталкивающая сила, равная весу вытесненной им жидкости. <br>
+            Внимательно следите за тем, какая часть объёма тела находится под водой!
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Стенд гидростатики -->
+        <div class="canvas-container">
+            <canvas id="archimedesCanvas" width="440" height="380"></canvas>
+        </div>
+        <!-- Блок задач -->
+        <div class="task-panel">
+            <div class="task-title" id="levelTitle">Уровень 1 из 5</div>
+            <div class="task-text" id="taskLabel">Загрузка космических архивов...</div>
+            
+            <div class="input-box">
+                <label id="inputLabel">Твой ответ:</label>
+                <div class="input-row">
+                    <input type="number" id="userAnswer" placeholder="Значение" step="any">
+                    <span class="unit" id="unitLabel">Н</span>
+                </div>
+            </div>
+
+            <button class="btn-action" id="checkBtn">⚡ Опустить образец в жидкость</button>
+            <div class="feedback" id="feedbackBlock"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('archimedesCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Физическое положение груза на экране
+        let bodyY = 120; // стартовое положение (подвешен над водой)
+        let targetBodyY = 120;
+        let isAnimating = false;
+        let animationType = "none"; // "success", "fail"
+
+        let currentTask = null;
+
+        function drawSystem() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Координаты стакана с жидкостью
+            const glassX = 120, glassY = 160, glassW = 200, glassH = 200;
+            const waterLevelY = glassY + 60; // уровень воды
+
+            // 1. Отрисовка окружения (космический фон для 3 уровня)
+            if (currentTask && currentTask.level === 3) {
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Нарисуем пару звёзд для атмосферы иной планеты
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(40, 40, 2, 2); ctx.fillRect(380, 80, 3, 3); ctx.fillRect(90, 300, 2, 2);
+            }
+
+            // 2. Жидкость в стакане
+            ctx.fillStyle = (currentTask && currentTask.level === 3) ? '#22c55e' : '#7dd3fc'; // На чужой планете жидкость зелёная!
+            ctx.globalAlpha = 0.6;
+            ctx.fillRect(glassX + 4, waterLevelY, glassW - 8, glassH - 64);
+            ctx.globalAlpha = 1.0;
+
+            // 3. Стенки стеклянного стакана/лабораторного резервуара
+            ctx.strokeStyle = (currentTask && currentTask.level === 3) ? '#94a3b8' : '#475569';
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(glassX, glassY); ctx.lineTo(glassX, glassY + glassH);
+            ctx.lineTo(glassX + glassW, glassY + glassH); ctx.lineTo(glassX + glassW, glassY);
+            ctx.stroke();
+
+            // 4. Отрисовка динамометра (шкалы) сверху
+            const dynX = glassX + glassW / 2;
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(dynX, 20); ctx.lineTo(dynX, 60); ctx.stroke(); // подвес
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(dynX - 15, 30, 30, 40); // корпус
+            ctx.strokeRect(dynX - 15, 30, 30, 40);
+
+            // Пружина, идущая к телу
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(dynX, 70);
+            let springTurns = 6;
+            let springStep = (bodyY - 70) / springTurns;
+            for (let i = 0; i < springTurns; i++) {
+                let sy = 70 + i * springStep;
+                ctx.lineTo(dynX + (i % 2 === 0 ? 8 : -8), sy + springStep / 2);
+            }
+            ctx.lineTo(dynX, bodyY);
+            ctx.stroke();
+
+            // 5. Отрисовка погружаемого тела (бруска)
+            const bodyW = 70, bodyH = 70;
+            const bx = dynX - bodyW / 2;
+            ctx.fillStyle = '#b45309'; // деревянный или металлический брусок
+            ctx.fillRect(bx, bodyY, bodyW, bodyH);
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bx, bodyY, bodyW, bodyH);
+
+            // --- ДИНАМИЧЕСКИЕ СТРЕЛКИ СИЛ С МУЛЬТИ-СКРЫТИЕМ (Без спойлеров!) ---
+            let hideSystem = currentTask && currentTask.hide ? currentTask.hide : "";
+
+            // Сила тяжести (всегда вниз)
+            ctx.fillStyle = '#dc2626';
+            if (bodyY > 150) {
+                drawArrow(dynX, bodyY + bodyH / 2, dynX, bodyY + bodyH + 30, '#dc2626', "F_тяж");
+            }
+
+            // Сила Архимеда (вверх, только если коснулись или погрузились в воду)
+            if (bodyY + bodyH > waterLevelY) {
+                let faLabel = hideSystem.includes("fa") ? "F_A = ?" : `F_A = ${currentTask ? currentTask.fa : 0} Н`;
+                drawArrow(dynX - 20, bodyY + bodyH / 2, dynX - 20, bodyY - 20, '#0284c7', faLabel);
+            }
+
+            // Информационные лейблы на экране параметров резервуара
+            ctx.fillStyle = (currentTask && currentTask.level === 3) ? '#f8fafc' : '#0f172a';
+            ctx.font = 'bold 11px sans-serif';
+            
+            let rhoLabel = hideSystem.includes("rho") ? "ρ_жид = ?" : `ρ_жид = ${currentTask ? currentTask.rho : 0} кг/м³`;
+            let vLabel = hideSystem.includes("v") ? "V_тела = ?" : `V_тела = ${currentTask ? currentTask.v : 0} м³`;
+            let gLabel = hideSystem.includes("g") ? "g = ?" : `g = ${currentTask ? currentTask.g : 10} Н/кг`;
+
+            ctx.fillText(rhoLabel, glassX + 15, glassY + glassH + 20);
+            ctx.fillText(vLabel, glassX + 15, glassY + glassH + 35);
+            ctx.fillText(gLabel, glassX + 15, glassY + glassH + 50);
+        }
+
+        function drawArrow(x1, y1, x2, y2, color, label) {
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            let angle = Math.atan2(y2 - y1, x2 - x1);
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - 6 * Math.cos(angle - Math.PI / 6), y2 - 6 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(x2 - 6 * Math.cos(angle + Math.PI / 6), y2 - 6 * Math.sin(angle + Math.PI / 6));
+            ctx.fill();
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText(label, x2 + 8, y2 + (y2 < y1 ? 12 : -5));
+        }
+        // Разнородная база данных 5 задач (Разные сюжеты и типы расчётов)
+        const questDatabase = [
+            {
+                level: 1,
+                hide: "fa", // Скрываем саму силу Архимеда
+                text: "<b>Уровень 1 (Эксперимент в пресной воде):</b> Металлический брусок объёмом V = 0.002 м³ полностью погрузили в бак с чистой водой (ρ = 1000 кг/м³). Какая выталкивающая сила Архимеда действует на этот брусок? (Примите g = 10 Н/кг).",
+                inputLabel: "Вычисли силу Архимеда F_A:",
+                unit: "Н",
+                rho: 1000, v: 0.002, g: 10, fa: 20,
+                expected: 20,
+                finalY: 190 // глубокое погружение
+            },
+            {
+                level: 2,
+                hide: "fa", // Скрываем силу Архимеда, проверяем понимание слова "наполовину"
+                text: "<b>Уровень 2 (Внимание, полупогружение!):</b> Деревянный куб объёмом V = 0.006 м³ плавает на поверхности керосина (ρ = 800 signatures кг/м³), погрузившись в него строго <b>наполовину (1/2 своего объёма)</b>. Чему равна действующая на него сила Архимеда? (g = 10 Н/кг).",
+                inputLabel: "Вычисли силу Архимеда с учётом полупогружения:",
+                unit: "Н",
+                rho: 800, v: 0.006, g: 10, fa: 24, // F_A = 800 * 10 * 0.003 = 24 Н
+                expected: 24,
+                finalY: 155 // плавает наполовину
+            },
+            {
+                level: 3,
+                hide: "g fa", // Скрываем ускорение тяжести планет и саму силу
+                text: "<b>Уровень 3 (Экспедиция на Kepler-452):</b> Космонавты опустили исследовательский зонд объёмом V = 0.05 м³ в резервуар с жидким метаном (ρ = 400 кг/м³). Бортовой компьютер зафиксировал силу Архимеда, равную F_A = 120 Н. Чему равно <b>ускорение свободного падения g</b> на этой далёкой планете?",
+                inputLabel: "Вычисли планетарное g:",
+                unit: "Н/кг",
+                rho: 400, v: 0.05, g: 6, fa: 120, // 120 = 400 * g * 0.05 => 120 = 20 * g => g = 6
+                expected: 6,
+                finalY: 190
+            },
+            {
+                level: 4,
+                hide: "fa", // Скрываем силу Архимеда, так как в поле ввода мы ищем показания ДИНАМОМЕТРА (вес в воде)
+                text: "<b>Уровень 4 (Показания приборов):</b> Тяжёлый гранитный валун массой m = 50 кг и объёмом V = 0.015 м³ опустили под воду (ρ = 1000 кг/м³). Что покажет шкала динамометра (каков будет <b>вес этого валуна в воде</b>)? (Примите g = 10 Н/кг).",
+                inputLabel: "Рассчитай вес тела внутри жидкости:",
+                unit: "Н",
+                rho: 1000, v: 0.015, g: 10, fa: 150, // F_тяж = 500 Н, F_A = 1000*10*0.015 = 150 Н. Вес = 500 - 150 = 350 Н
+                expected: 350,
+                finalY: 190
+            },
+            {
+                level: 5,
+                hide: "fa rho v", // Полный хардкор: скрываем параметры, оставляя только текст задачи
+                text: "<b>Уровень 5 (Супер-инженер):</b> Полая стальная деталь имеет общую массу m = 14 кг и полный внешний объём V = 0.02 м³. Какую <b>минимальную дополнительную силу</b> нужно приложить к детали, чтобы полностью удерживать её под водой (ρ = 1000 кг/м³)? (g = 10 Н/кг).",
+                inputLabel: "Вычисли удерживающую внешнюю силу:",
+                unit: "Н",
+                rho: 1000, v: 0.02, g: 10, fa: 200, // F_A = 1000*10*0.02 = 200 Н. F_тяж = 14 * 10 = 140 Н. Сила удержания = 200 - 140 = 60 Н
+                expected: 60,
+                finalY: 190
+            }
+        ];
+
+        let currentLevelIdx = 0;
+
+        function loadQuest(idx) {
+            currentTask = questDatabase[idx];
+            
+            // Настройка индикаторов интерфейса
+            document.getElementById('progressFill').style.width = ((idx + 1) * 20) + "%";
+            document.getElementById('levelTitle').innerText = `Уровень ${currentTask.level} из 5`;
+            document.getElementById('taskLabel').innerHTML = currentTask.text;
+            document.getElementById('inputLabel').innerText = currentTask.inputLabel;
+            document.getElementById('unitLabel').innerText = currentTask.unit;
+            
+            // Сброс анимации (брусок висит сверху)
+            bodyY = 110;
+            isAnimating = false;
+            animationType = "none";
+            
+            document.getElementById('userAnswer').value = "";
+            document.getElementById('feedbackBlock').style.display = "none";
+            document.getElementById('checkBtn').style.display = "block";
+            document.getElementById('checkBtn').innerText = "⚡ Опустить образец в жидкость";
+            
+            drawSystem();
+        }
+
+        function animateProcess() {
+            if (!isAnimating) return;
+
+            if (animationType === "success") {
+                // Если ответ верный — тело плавно опускается до нужной точки в воде
+                if (bodyY < currentTask.finalY) {
+                    bodyY += 1.2;
+                } else {
+                    isAnimating = false;
+                    // Автопереход на следующий уровень через 2 секунды
+                    setTimeout(() => {
+                        currentLevelIdx++;
+                        if (currentLevelIdx < questDatabase.length) {
+                            loadQuest(currentLevelIdx);
+                        } else {
+                            // Финал квеста
+                            document.getElementById('taskLabel').innerHTML = "🏆 <b>ТРИУМФ НАУКИ!</b> Ты успешно разгадал все 5 законов гидростатики Архимеда, справился с гравитацией чужих планет и полыми деталями. Ты настоящий эксперт физики!";
+                            document.getElementById('checkBtn').style.display = "none";
+                            document.getElementById('feedbackBlock').style.display = "none";
+                            document.getElementById('progressFill').style.background = "#06b6d4";
+                        }
+                    }, 2000);
+                }
+            } else if (animationType === "fail") {
+                // Если ошибка — тело дёргается у кромки воды, но трос блокируется
+                bodyY += 4;
+                setTimeout(() => { bodyY = 110; drawSystem(); }, 150);
+                isAnimating = false;
+            }
+
+            drawSystem();
+            if (isAnimating) requestAnimationFrame(animateProcess);
+        }
+
+        // Логика кнопки проверки
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            if (isAnimating) return;
+            
+            const userAns = parseFloat(document.getElementById('userAnswer').value);
+            const feed = document.getElementById('feedbackBlock');
+            feed.style.display = "block";
+
+            if (isNaN(userAns)) {
+                feed.className = "feedback error";
+                feed.innerText = "⚠️ Пожалуйста, введи числовой ответ перед проведением опыта!";
+                return;
+            }
+
+            // Верификация ответа
+            if (Math.abs(userAns - currentTask.expected) < 0.1) {
+                feed.className = "feedback success";
+                feed.innerHTML = `🎉 Верно! Расчёт безупречен. Датчики зафиксировали идеальное гидростатическое равновесие!`;
+                
+                document.getElementById('checkBtn').innerText = "🛰️ Анализ данных и переход...";
+                isAnimating = true;
+                animationType = "success";
+                animateProcess();
+            } else {
+                feed.className = "feedback error";
+                feed.innerHTML = `❌ Давление не сбалансировано, трос заблокирован! Жидкость выталкивает образец с другой силой. Перечитай условие и проверь формулу еще раз в тетради.`;
+                
+                isAnimating = true;
+                animationType = "fail";
+                animateProcess();
+            }
+        });
+
+        // Первичный старт квеста
+        loadQuest(currentLevelIdx);
+    </script>
+</body>
+</html>
