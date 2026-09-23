@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Живая физика: Правило моментов рычага</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            user-select: none;
+        }
+        h1 { color: #0284c7; font-size: 24px; margin-bottom: 5px; text-align: center; }
+        
+        .progress-bar-container {
+            width: 100%;
+            max-width: 920px;
+            background: #e2e8f0;
+            height: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 20%;
+            background: #0284c7;
+            transition: width 0.5s ease;
+        }
+
+        .formula-card {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            max-width: 920px;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .formula-visual {
+            font-size: 22px;
+            font-weight: bold;
+            font-family: 'Cambria', serif;
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            color: #0369a1;
+        }
+        .formula-desc { font-size: 13px; color: #475569; max-width: 500px; line-height: 1.4; }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 950px;
+            width: 100%;
+            justify-content: center;
+        }
+        .canvas-container { 
+            background: #ffffff; 
+            border-radius: 16px; 
+            padding: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 2px solid #e2e8f0;
+        }
+        
+        .task-panel {
+            flex: 1;
+            min-width: 350px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 2px solid #e2e8f0;
+        }
+        .task-title { font-size: 16px; font-weight: bold; color: #0284c7; }
+        .task-text {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            border-left: 4px solid #0284c7;
+            font-weight: 500;
+            min-height: 110px;
+        }
+        
+        .input-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-box label { font-size: 14px; font-weight: bold; color: #334155; }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        input {
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            color: #0f172a;
+            font-size: 20px;
+            padding: 8px;
+            border-radius: 6px;
+            width: 140px;
+            text-align: center;
+            font-family: monospace;
+        }
+        input:focus { border-color: #0284c7; outline: none; }
+        .unit { font-size: 18px; font-weight: bold; color: #475569; }
+
+        .btn-action {
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+            background: #0284c7;
+            color: white;
+            box-shadow: 0 4px 10px rgba(2,132,199,0.2);
+        }
+        .btn-action:hover { background: #0369a1; }
+        
+        .feedback {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            line-height: 1.4;
+        }
+        .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    </style>
+</head>
+<body>
+
+    <h1>🧱 Лабораторный квест: Архимедово правило рычага</h1>
+    
+    <div class="progress-bar-container">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    
+    <div class="formula-card">
+        <div class="formula-visual">F₁ / F₂ = l₂ / l₁</div>
+        <div class="formula-visual">M = F · l</div>
+        <div class="formula-desc">
+            <b>Условие равновесия рычага:</b> Сумма моментов сил, вращающих его по часовой стрелке, должна быть строго равна сумме моментов сил, вращающих его против часовой стрелки.
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="leverCanvas" width="460" height="380"></canvas>
+        </div>
+        <div class="task-panel">
+            <div class="task-title" id="levelTitle">Уровень 1 из 5</div>
+            <div class="task-text" id="taskLabel">Синхронизация физических стендов...</div>
+            
+            <div class="input-box">
+                <label id="inputLabel">Твой ответ:</label>
+                <div class="input-row">
+                    <input type="number" id="userAnswer" placeholder="Значение" step="any">
+                    <span class="unit" id="unitLabel">м</span>
+                </div>
+            </div>
+
+            <button class="btn-action" id="checkBtn">⚡ Сбалансировать систему</button>
+            <div class="feedback" id="feedbackBlock"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('leverCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let animationTime = 0;
+        let leverAngle = 0;       // Угол наклона рычага
+        let targetAngle = 0;      
+        
+        let gameState = "observing"; 
+        let currentTask = null;
+
+        function drawSystem() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = 220;
+            const groundY = 320;
+            const pxPerMeter = 30; // Масштаб: 30 пикселей = 1 метр плеча
+
+            animationTime += 0.04;
+            if (gameState === "observing") {
+                leverAngle = Math.sin(animationTime) * 0.02; // лёгкое покачивание на ветру
+            } else if (gameState === "success_anim") {
+                leverAngle += (0 - leverAngle) * 0.1; // Идеальный ноль — горизонталь
+            } else if (gameState === "fail_anim") {
+                leverAngle += (targetAngle - leverAngle) * 0.1; // Откидывание в сторону перевеса
+            }
+
+            // 1. Окружение (Лужайка площадки/Дверной проём)
+            ctx.fillStyle = '#f0fdfa'; ctx.fillRect(0, 0, canvas.width, groundY);
+            ctx.fillStyle = '#e2e8f0'; ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+            ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(canvas.width, groundY); ctx.stroke();
+
+            if (currentTask && currentTask.level === 3) {
+                // Специфический бэкграунд ДВЕРИ для 3-го уровня
+                ctx.fillStyle = '#fef08a'; // деревянная дверь
+                ctx.fillRect(centerX - 120, centerY - 120, 240, 220);
+                ctx.strokeStyle = '#78350f'; ctx.lineWidth = 6;
+                ctx.strokeRect(centerX - 120, centerY - 120, 240, 220);
+                
+                // Петли двери (Точка опоры)
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(centerX - 124, centerY - 90, 8, 20);
+                ctx.fillRect(centerX - 124, centerY + 40, 8, 20);
+            } else {
+                // Стандартный опорный треугольник качелей для остальных уровней
+                ctx.fillStyle = '#64748b';
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX - 20, groundY);
+                ctx.lineTo(centerX + 20, groundY);
+                ctx.fill();
+            }
+
+            // Трансформация контекста для вращения рычага качелей
+            ctx.save();
+            if (currentTask && currentTask.level === 3) {
+                // Для двери ось вращения (петли) находится слева
+                ctx.translate(centerX - 120, centerY);
+            } else {
+                // Для качелей ось вращения строго по центру
+                ctx.translate(centerX, centerY);
+            }
+            ctx.rotate(leverAngle);
+
+            // 2. Отрисовка самой твёрдой палочки (Рычага)
+            if (currentTask && currentTask.level === 3) {
+                // Дверная ручка-рычаг
+                ctx.strokeStyle = '#475569'; ctx.lineWidth = 8;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(currentTask.l1 * pxPerMeter * 2, 0); ctx.stroke();
+                ctx.fillStyle = '#ffd43b'; ctx.beginPath(); ctx.arc(currentTask.l1 * pxPerMeter * 2, 0, 8, 0, Math.PI*2); ctx.fill();
+            } else {
+                // Доска качелей
+                ctx.strokeStyle = '#b45309'; ctx.lineWidth = 8;
+                ctx.beginPath(); ctx.moveTo(-200, 0); ctx.lineTo(200, 0); ctx.stroke();
+                // Разметка делений (метры)
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 2;
+                for(let m = -180; m <= 180; m += pxPerMeter) {
+                    if (m === 0) continue;
+                    ctx.beginPath(); ctx.moveTo(m, -4); ctx.lineTo(m, 4); ctx.stroke();
+                }
+            }
+
+            // 3. ОТРИСОВКА ГРУЗОВ И ВЕКТОРОВ СИЛ (СТРОГО БЕЗ СПОЙЛЕРОВ)
+            let hideSystem = currentTask && currentTask.hide ? currentTask.hide : "";
+
+            if (currentTask) {
+                if (currentTask.level === 3) {
+                    // Уровень 3: Младенец жмёт на ручку двери вертикально вниз
+                    let fLabel = hideSystem.includes("f") ? "F = ?" : `F = ${currentTask.f1} Н`;
+                    drawArrow(currentTask.l1 * pxPerMeter * 2, 0, currentTask.l1 * pxPerMeter * 2, 50, '#dc2626', fLabel);
+                    
+                    // Показ плеча линии l
+                    ctx.fillStyle = '#0284c7'; ctx.font = '11px monospace';
+                    let lLabel = hideSystem.includes("l") ? "l = ?" : `l = ${currentTask.l1} м`;
+                    ctx.fillText(lLabel, (currentTask.l1 * pxPerMeter), -10);
+                } else if (currentTask.level === 5) {
+                    // Уровень 5: Две силы справа, одна слева
+                    // Сила 1 (Слева)
+                    drawBoxAndForce(-currentTask.l1 * pxPerMeter, 20, '#ef4444', `F₁=${currentTask.f1}Н`, `l₁=${currentTask.l1}м`);
+                    // Сила 2 (Справа ближняя)
+                    drawBoxAndForce(currentTask.l2 * pxPerMeter, 15, '#3b82f6', `F₂=${currentTask.f2}Н`, `l₂=${currentTask.l2}м`);
+                    // Сила 3 (Справа дальняя, искомая)
+                    let f3Label = hideSystem.includes("f") ? "F₃ = ?" : `F₃ = ${currentTask.f3} Н`;
+                    drawBoxAndForce(currentTask.l3 * pxPerMeter, 12, '#10b981', f3Label, `l₃=${currentTask.l3}м`);
+                } else {
+                    // Стандартные уровни 1, 2, 4 (Одна сила слева, одна справа)
+                    // Сила 1 (Слева)
+                    let l1Label = hideSystem.includes("l1") ? "l₁ = ?" : `l₁ = ${currentTask.l1} м`;
+                    drawBoxAndForce(-currentTask.l1 * pxPerMeter, 22, '#ef4444', `F₁=${currentTask.f1}Н`, l1Label);
+
+                    // Сила 2 (Справа)
+                    let f2Label = hideSystem.includes("f2") ? "F₂ = ?" : `F₂ = ${currentTask.f2} Н`;
+                    let l2Label = hideSystem.includes("l2") ? "l₂ = ?" : `l₂ = ${currentTask.l2} м`;
+                    drawBoxAndForce(currentTask.l2 * pxPerMeter, currentTask.level === 1 ? 30 : 18, '#16a34a', f2Label, l2Label);
+                }
+            }
+
+            ctx.restore(); // Возвращаем контекст из трансформаций
+        }
+
+        function drawBoxAndForce(x, boxSize, color, fText, lText) {
+            // Рисуем кубик груза, лежащий на доске рычага
+            ctx.fillStyle = color;
+            ctx.fillRect(x - boxSize/2, -boxSize - 4, boxSize, boxSize);
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1;
+            ctx.strokeRect(x - boxSize/2, -boxSize - 4, boxSize, boxSize);
+
+            // Вектор силы тяжести груза (вниз)
+            drawArrow(x, -boxSize/2, x, 45, color, fText);
+
+            // Метка плеча длины l над доской
+            ctx.fillStyle = '#475569'; ctx.font = 'bold 10px sans-serif';
+            ctx.fillText(lText, x - 15, -boxSize - 10);
+        }
+
+        function drawArrow(x1, y1, x2, y2, color, label) {
+            ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            let angle = Math.atan2(y2 - y1, x2 - x1);
+            ctx.beginPath(); ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - 6 * Math.cos(angle - Math.PI / 6), y2 - 6 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(x2 - 6 * Math.cos(angle + Math.PI / 6), y2 - 6 * Math.sin(angle + Math.PI / 6));
+            ctx.fill();
+            ctx.font = 'bold 11px sans-serif'; ctx.fillText(label, x2 + 6, y2 + (y2 < y1 ? 12 : -4));
+        }
+        // Абсолютно разнородные 5 задач по Пёрышкину с выверенной тригонометрией
+        const questDatabase = [
+            {
+                level: 1,
+                hide: "l2", // скрываем правое плечо l2 мужчине
+                text: "<b>Уровень 1 (Качели-балансир):</b> На левом краю детских качелей на расстоянии l₁ = 4 м сидит худенький мальчик весом F₁ = 200 Н. Справа садится тяжёлый мужчина весом F₂ = 800 Н. На каком расстоянии l₂ от центра опоры должен сесть мужчина, чтобы качели пришли в идеальный баланс?",
+                inputLabel: "Вычисли плечо силы l₂:",
+                unit: "м",
+                f1: 200, l1: 4, f2: 800, l2: 1, // Ожидаемый ответ: 200 * 4 = 800 * l2 => l2 = 1 м
+                expected: 1, failAngle: -0.2 // Перевешивает левая сторона мальчика
+            },
+            {
+                level: 2,
+                hide: "f2", // скрываем правую силу F2
+                text: "<b>Уровень 2 (Поиск неизвестной силы):</b> К левому концу лёгкого рычага на расстоянии l₁ = 3 м от опоры подвешен тяжелый металлический груз силой веса F₁ = 100 Н. Какую силу F₂ необходимо приложить к правому концу рычага на плече l₂ = 1.5 м, чтобы удержать рычаг в равновесии?",
+                inputLabel: "Вычисли удерживающую силу F₂:",
+                unit: "Н",
+                f1: 100, l1: 3, f2: 200, l2: 1.5, // 100 * 3 = F2 * 1.5 => F2 = 200 Н
+                expected: 200, failAngle: -0.2
+            },
+            {
+                level: 3,
+                hide: "work", // Ищем момент силы, скрываем общую подпись работы/момента
+                text: "<b>Уровень 3 (Правило моментов двери):</b> На ручку двери, расположенную на расстоянии l = 0.8 м от петель (оси вращения), младенец нажимает рукой перпендикулярно плоскости двери с крошечной силой F = 10 Н. Вычислите вращающий <b>момент силы М</b>, который создаёт ребёнок.",
+                inputLabel: "Вычисли момент силы M (Н·м):",
+                unit: "Н·м",
+                f1: 10, l1: 0.8, expected: 8, // M = F * l = 10 * 0.8 = 8 Н*м
+                failAngle: 0.02 // Дверь просто не откроется
+            },
+            {
+                level: 4,
+                hide: "l2", // скрываем правое плечо, даны массы
+                text: "<b>Уровень 4 (Переход от массы груза):</b> На левое плечо рычага длиной l₁ = 2 м положили бетонный блок массой m₁ = 6 кг. На каком расстоянии l₂ от центра опоры нужно подвесить второй груз массой m₂ = 2 кг, чтобы рычаг уравновесился? (Примите g = 10 Н/кг).",
+                inputLabel: "Вычисли плечо силы l₂:",
+                unit: "м",
+                f1: 60, l1: 2, f2: 20, l2: 6, // F1=60Н, F2=20Н. 60 * 2 = 20 * l2 => l2 = 6 м
+                expected: 6, failAngle: -0.2
+            },
+            {
+                level: 5,
+                hide: "f", // скрываем силу F3 на олимпиадном уровне
+                text: "<b>Уровень 5 (Супер-инженер: Баланс трёх сил):</b> Рычаг нагружен тремя силами. Слева висит груз F₁ = 300 Н на плече l₁ = 2 м. Справа на расстоянии l₂ = 1 м висит груз F₂ = 200 Н. Какой силы груз F₃ нужно подвесить на самый правый край рычага (l₃ = 4 м), чтобы восстановилось равновесие?",
+                inputLabel: "Вычисли компенсирующую силу F₃:",
+                unit: "Н",
+                f1: 300, l1: 2, f2: 200, l2: 1, f3: 100, l3: 4, // 300*2 = 200*1 + F3*4 => 600 = 200 + 4*F3 => F3 = 100 Н
+                expected: 100, failAngle: -0.2
+            }
+        ];
+
+        let currentLevelIdx = 0;
+
+        function loadQuest(idx) {
+            currentTask = questDatabase[idx];
+            gameState = "observing";
+            
+            document.getElementById('progressFill').style.width = ((idx + 1) * 20) + "%";
+            document.getElementById('levelTitle').innerText = `Уровень ${currentTask.level} из 5`;
+            document.getElementById('taskLabel').innerHTML = currentTask.text;
+            document.getElementById('inputLabel').innerText = currentTask.inputLabel;
+            document.getElementById('unitLabel').innerText = currentTask.unit;
+            
+            leverAngle = 0.05; // стартовый лёгкий перекос
+            
+            document.getElementById('userAnswer').value = "";
+            document.getElementById('feedbackBlock').style.display = "none";
+            document.getElementById('checkBtn').style.display = "block";
+            document.getElementById('checkBtn').innerText = "⚡ Сбалансировать систему";
+        }
+
+        function updateGameLoop() {
+            if (gameState === "success_anim") {
+                leverAngle += (0 - leverAngle) * 0.08; // Выравниваем строго в 0 (горизонт)
+                bodyOffset = 0;
+            } else if (gameState === "fail_anim") {
+                leverAngle += (currentTask.failAngle - leverAngle) * 0.08; // Откидываем в сторону падения
+                if (Math.abs(leverAngle - currentTask.failAngle) < 0.01) {
+                    setTimeout(resetAfterFail, 1500);
+                }
+            }
+
+            drawSystem();
+            requestAnimationFrame(updateGameLoop);
+        }
+
+        function resetAfterFail() {
+            gameState = "observing";
+            document.getElementById('checkBtn').style.display = "block";
+        }
+
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            if (gameState !== "observing") return;
+            
+            const userAns = parseFloat(document.getElementById('userAnswer').value);
+            const feed = document.getElementById('feedbackBlock');
+            feed.style.display = "block";
+
+            if (isNaN(userAns)) {
+                feed.className = "feedback error";
+                feed.innerText = "⚠️ Сначала введите числовой ответ в поле бланка!";
+                return;
+            }
+
+            if (Math.abs(userAns - currentTask.expected) < 0.1) {
+                // УСПЕХ
+                gameState = "success_anim";
+                feed.className = "feedback success";
+                feed.innerHTML = `🎉 Верно! Моменты сил идеально скомпенсированы. Система находится в равновесии!`;
+                document.getElementById('checkBtn').style.display = "none";
+                
+                setTimeout(() => {
+                    currentLevelIdx++;
+                    if (currentLevelIdx < questDatabase.length) {
+                        loadQuest(currentLevelIdx);
+                    } else {
+                        document.getElementById('taskLabel').innerHTML = "🏆 <b>ТРИУМФ МЕХАНИКИ!</b> Ты успешно прошёл все 5 уровней, разгадал секрет плеча силы и правила моментов! Архимед гордился бы тобой!";
+                    }
+                }, 3000);
+            } else {
+                // КАТАСТРОФА
+                gameState = "fail_anim";
+                targetAngle = currentTask.failAngle;
+                feed.className = "feedback error";
+                feed.innerHTML = `❌ Расчёт неверный! Рычаг опрокинулся. Сумма вращающих моментов не равна нулю. Перепроверь плечи сил на черновике!`;
+                document.getElementById('checkBtn').style.display = "none";
+            }
+        });
+
+        // Старт
+        loadQuest(currentLevelIdx);
+        updateGameLoop();
+    </script>
+</body>
+</html>
