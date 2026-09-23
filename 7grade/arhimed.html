@@ -286,11 +286,37 @@
             }
             drawArrow(dynX - 25, currentBY + bodyH / 2, dynX - 25, currentBY - 25, '#0284c7', faLabel);
 
-            // В. Вектор веса тела или силы упора
+            // В. Вектор веса тела или силы упора (СТРОГО СОГЛАСНО ФИЗИКЕ)
             if (currentTask.level === 4) {
+                // Вектор веса P давит НА ВЕСЫ, то есть направлен строго ВНИЗ из дна бруска!
                 let weightLabel = gameState === "success_anim" ? `P_в_воде = ${currentTask.expected} Н` : "P_в_воде = ?";
-                drawArrow(dynX + 25, currentBY + bodyH, dynX + 25, currentBY + bodyH + 35, '#16a34a', weightLabel);
+                
+                // Координаты стрелки: начинается на дне бруска (currentBY + bodyH) 
+                // и идёт ВНИЗ на 30 пикселей. Текст смещён вправо (+25), чтобы не налезать на параметры бака.
+                ctx.strokeStyle = '#16a34a';
+                ctx.fillStyle = '#16a34a';
+                ctx.lineWidth = 3;
+                
+                let startArrowY = currentBY + bodyH;
+                let endArrowY = startArrowY + 30;
+                
+                ctx.beginPath(); 
+                ctx.moveTo(dynX + 25, startArrowY); 
+                ctx.lineTo(dynX + 25, endArrowY); 
+                ctx.stroke();
+                
+                // Рисуем наконечник стрелки, смотрящий ВНИЗ
+                ctx.beginPath();
+                ctx.moveTo(dynX + 25, endArrowY);
+                ctx.lineTo(dynX + 20, endArrowY - 6);
+                ctx.lineTo(dynX + 30, endArrowY - 6);
+                ctx.fill();
+                
+                // Подпись вектора (Р_в_воде вместо несуществующей F_тяж_в_воде)
+                ctx.font = 'bold 11px sans-serif'; 
+                ctx.fillText(weightLabel, dynX + 38, endArrowY - 10);
             } else if (currentTask.level === 5 && gameState !== "fail_anim") {
+                // Сила прижимного упора давит на тело сверху вниз
                 let holdLabel = gameState === "success_anim" ? `F_упора = ${currentTask.expected} Н` : "F_упора = ?";
                 drawArrow(dynX, currentBY - 35, dynX, currentBY, '#16a34a', holdLabel);
             }
