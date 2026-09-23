@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Физический Конструктор: Вырази Букву</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            user-select: none;
+        }
+        h1 { color: #38bdf8; font-size: 24px; margin-bottom: 5px; }
+        .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 20px; text-align: center; }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        select {
+            background: #0f172a;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            font-size: 15px;
+            width: 100%;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        .formula-info {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #38bdf8;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .quest-box {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd43b;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        /* Зона конструктора формул */
+        .workspace {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            min-height: 120px;
+            background: #334155;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+        .fraction {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: 100px;
+        }
+        .fraction-line {
+            width: 100%;
+            height: 3px;
+            background: #f8fafc;
+            border-radius: 2px;
+        }
+        .row-zone {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            min-height: 45px;
+            min-width: 60px;
+            border: 1px dashed rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 2px;
+        }
+        /* Стили кубиков-букв */
+        .block {
+            background: #0284c7;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: grab;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: background 0.2s, transform 0.1s;
+            display: inline-block;
+        }
+        .block:active { cursor: grabbing; transform: scale(0.95); }
+        .block.target-letter { background: #e11d48; } /* Выделяем искомую букву */
+        .sign { font-size: 24px; font-weight: bold; color: #94a3b8; }
+        
+        .btn-check {
+            width: 100%;
+            padding: 14px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-check:hover { background: #059669; }
+        .feedback {
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 15px;
+            display: none;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+    </style>
+</head>
+<body>
+
+    <h1>🧱 Физический Конструктор Формул</h1>
+    <div class="subtitle">Перетаскивай кубики-буквы, чтобы выразить искомую величину!</div>
+
+    <div class="container">
+        <div class="card">
+            <label for="formulaSelect"><strong>Выбери тему и формулу из 7 класса:</strong></label>
+            <select id="formulaSelect"></select>
+
+            <div class="formula-info" id="formulaDesc"></div>
+            <div class="quest-box" id="questText"></div>
+
+            <!-- Интерактивная зона перемещения -->
+            <div class="workspace">
+                <!-- Левая часть уравнения -->
+                <div class="fraction">
+                    <div class="row-zone" id="leftTop" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+                    <div class="fraction-line" id="leftLine" style="display:none;"></div>
+                    <div class="row-zone" id="leftBottom" ondragover="allowDrop(event)" ondrop="drop(event)" style="display:none;"></div>
+                </div>
+
+                <div class="sign">=</div>
+
+                <!-- Правая часть уравнения -->
+                <div class="fraction">
+                    <div class="row-zone" id="rightTop" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+                    <div class="fraction-line" id="rightLine"></div>
+                    <div class="row-zone" id="rightBottom" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+                </div>
+            </div>
+
+            <button class="btn-check" id="checkBtn">🔍 Проверить формулу</button>
+            <div class="feedback" id="feedbackBox"></div>
+        </div>
+    </div>
+    <script>
+        // Абсолютно все базовые формулы 7 класса по Пёрышкину с расшифровкой
+        const formulasDatabase = [
+            {
+                id: "speed",
+                title: "1. Скорость движения: v = s / t",
+                desc: "Вычисляет быстроту перемещения тела. <br><b>v</b> — скорость (м/с), <b>s</b> — путь (м), <b>t</b> — время движения (с).",
+                target: "s",
+                quest: "Вырази ПУТЬ (s) из формулы скорости",
+                // Начальное состояние кубиков в зонах:
+                setup: { leftTop: ['v'], rightTop: ['s'], rightBottom: ['t'] },
+                // Как должно быть в итоге, чтобы ответ засчитался:
+                check: (zones) => zones.leftTop.includes('s') && zones.rightTop.includes('v') && zones.rightTop.includes('t') && zones.rightBottom.length === 0
+            },
+            {
+                id: "density",
+                title: "2. Плотность вещества: ρ = m / V",
+                desc: "Показывает массу вещества в единице объёма. <br><b>ρ (ро)</b> — плотность (кг/м³), <b>m</b> — масса тела (кг), <b>V</b> — объём (м³).",
+                target: "V",
+                quest: "Вырази ОБЪЁМ (V) из формулы плотности",
+                setup: { leftTop: ['ρ'], rightTop: ['m'], rightBottom: ['V'] },
+                check: (zones) => zones.leftTop.includes('V') && zones.rightTop.includes('m') && zones.rightBottom.includes('ρ')
+            },
+            {
+                id: "weight",
+                title: "3. Сила тяжести и Вес: F = m · g (P = m · g)",
+                desc: "Сила, с которой Земля притягивает тело, или сила давления на опору. <br><b>F (или P)</b> — сила/вес (Н), <b>m</b> — масса (кг), <b>g</b> — ускорение свободного падения (~10 Н/кг).",
+                target: "m",
+                quest: "Вырази МАССУ (m) из формулы силы тяжести",
+                setup: { leftTop: ['F'], rightTop: ['m', 'g'], rightBottom: [] },
+                check: (zones) => zones.leftTop.includes('m') && zones.rightTop.includes('F') && zones.rightBottom.includes('g')
+            },
+            {
+                id: "hooke",
+                title: "4. Закон Гука (Сила упругости): F = k · x",
+                desc: "Сила, возникающая при деформации пружины. <br><b>F</b> — сила упругости (Н), <b>k</b> — жёсткость пружины (Н/м), <b>x</b> — удлинение (м).",
+                target: "k",
+                quest: "Вырази ЖЁСТКОСТЬ (k) из Закона Гука",
+                setup: { leftTop: ['F'], rightTop: ['k', 'x'], rightBottom: [] },
+                check: (zones) => zones.leftTop.includes('k') && zones.rightTop.includes('F') && zones.rightBottom.includes('x')
+            },
+            {
+                id: "pressure",
+                title: "5. Давление твёрдых тел: p = F / S",
+                desc: "Результат распределения силы по площади поверхности. <br><b>p</b> — давление (Па), <b>F</b> — сила давления (Н), <b>S</b> — площадь опоры (м²).",
+                target: "S",
+                quest: "Вырази ПЛОЩАДЬ (S) из формулы давления",
+                setup: { leftTop: ['p'], rightTop: ['F'], rightBottom: ['S'] },
+                check: (zones) => zones.leftTop.includes('S') && zones.rightTop.includes('F') && zones.rightBottom.includes('p')
+            },
+            {
+                id: "hydro",
+                title: "6. Гидростатическое давление жидкости: p = ρ · g · h",
+                desc: "Давление, создаваемое столбом жидкости на глубине. <br><b>p</b> — давление (Па), <b>ρ</b> — плотность жидкости (кг/м³), <b>g</b> — константа 10 Н/кг, <b>h</b> — высота столба/глубина (м).",
+                target: "h",
+                quest: "Вырази ГЛУБИНУ (h) из формулы давления жидкости",
+                setup: { leftTop: ['p'], rightTop: ['ρ', 'g', 'h'], rightBottom: [] },
+                check: (zones) => zones.leftTop.includes('h') && zones.rightTop.includes('p') && zones.rightBottom.includes('ρ') && zones.rightBottom.includes('g')
+            },
+            {
+                id: "archimedes",
+                title: "7. Выталкивающая (Архимедова) сила: F = ρ · g · V",
+                desc: "Сила, действующая на тело, погружённое в жидкость или газ. <br><b>F</b> — сила Архимеда (Н), <b>ρ</b> — плотность жидкости (кг/м³), <b>V</b> — объём погружённой части тела (м³).",
+                target: "V",
+                quest: "Вырази ОБЪЁМ тела (V) из формулы Архимеда",
+                setup: { leftTop: ['F'], rightTop: ['ρ', 'g', 'V'], rightBottom: [] },
+                check: (zones) => zones.leftTop.includes('V') && zones.rightTop.includes('F') && zones.rightBottom.includes('ρ') && zones.rightBottom.includes('g')
+            },
+            {
+                id: "work",
+                title: "8. Механическая работа: A = F · s",
+                desc: "Совершается только при наличии силы и перемещения тела под её действием. <br><b>A</b> — работа (Дж), <b>F</b> — сила (Н), <b>s</b> — пройденный путь (м).",
+                target: "F",
+                quest: "Вырази СИЛУ (F) из формулы работы",
+                setup: { leftTop: ['A'], rightTop: ['F', 's'], rightBottom: [] },
+                check: (zones) => zones.leftTop.includes('F') && zones.rightTop.includes('A') && zones.rightBottom.includes('s')
+            },
+            {
+                id: "power",
+                title: "9. Мощность: N = A / t",
+                desc: "Показывает скорость совершения работы во времени. <br><b>N</b> — мощность (Вт), <b>A</b> — работа (Дж), <b>t</b> — время работы (с).",
+                target: "t",
+                quest: "Вырази ВРЕМЯ (t) из формулы мощности",
+                setup: { leftTop: ['N'], rightTop: ['A'], rightBottom: ['t'] },
+                check: (zones) => zones.leftTop.includes('t') && zones.rightTop.includes('A') && zones.rightBottom.includes('N')
+            },
+            {
+                id: "efficiency",
+                title: "10. КПД механизма: η = Aп / Aз",
+                desc: "Коэффициент полезного действия простых механизмов. <br><b>η (эта)</b> — КПД, <b>Aп</b> — полезная работа (Дж), <b>Aз</b> — затраченная полная работа (Дж).",
+                target: "Aз",
+                quest: "Вырази ЗАТРАЧЕННУЮ РАБОТУ (Aз) из формулы КПД",
+                setup: { leftTop: ['η'], rightTop: ['Aп'], rightBottom: ['Aз'] },
+                check: (zones) => zones.leftTop.includes('Aз') && zones.rightTop.includes('Aп') && zones.rightBottom.includes('η')
+            },
+            {
+                id: "pot_energy",
+                title: "11. Потенциальная энергия: E = m · g · h",
+                desc: "Энергия взаимодействия тела с Землёй благодаря высоте подъёма. <br><b>E</b> — энергия (Дж), <b>m</b> — масса (кг), <b>h</b> — высота (м).",
+                target: "m",
+                quest: "Вырази МАССУ (m) из энергии поднятого тела",
+                setup: { leftTop: ['E'], rightTop: ['m', 'g', 'h'], rightBottom: [] },
+                check: (zones) => zones.leftTop.includes('m') && zones.rightTop.includes('E') && zones.rightBottom.includes('g') && zones.rightBottom.includes('h')
+            }
+        ];
+
+        let currentFormula = formulasDatabase[0];
+        const select = document.getElementById('formulaSelect');
+        const fDesc = document.getElementById('formulaDesc');
+        const qText = document.getElementById('questText');
+        const feedback = document.getElementById('feedbackBox');
+
+        // Инициализация выпадающего списка формул
+        formulasDatabase.forEach((f, idx) => {
+            let opt = document.createElement('option');
+            opt.value = idx;
+            opt.innerText = f.title;
+            select.appendChild(opt);
+        });
+
+        function initWorkspace(formula) {
+            currentFormula = formula;
+            fDesc.innerHTML = formula.desc;
+            qText.innerText = formula.quest;
+            feedback.style.display = "none";
+
+            // Очищаем зоны
+            const zones = ['leftTop', 'leftBottom', 'rightTop', 'rightBottom'];
+            zones.forEach(z => document.getElementById(z).innerHTML = '');
+
+            // Проверяем, нужна ли вообще дробь (если в начальном состоянии или по логике знаменатели пусты, настраиваем интерфейс)
+            // Но для учебного универсализма делаем зоны активными всегда
+            document.getElementById('leftBottom').style.display = "flex";
+            document.getElementById('leftLine').style.display = "block";
+
+            // Создаем и расставляем кубики
+            Object.keys(formula.setup).forEach(zoneId => {
+                const zone = document.getElementById(zoneId);
+                formula.setup[zoneId].forEach(letter => {
+                    let block = document.createElement('div');
+                    block.className = 'block';
+                    if (letter === formula.target) block.className += ' target-letter';
+                    block.innerText = letter;
+                    block.id = 'block_' + letter;
+                    block.draggable = true;
+                    block.addEventListener('dragstart', drag);
+                    zone.appendChild(block);
+                });
+            });
+        }
+
+        // Логика Drag and Drop HTML5 API
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            let data = ev.dataTransfer.getData("text");
+            let draggedElement = document.getElementById(data);
+            
+            // Запрещаем бросать кубик на другой кубик, только в зону роу-зоны!
+            if (ev.target.classList.contains('row-zone')) {
+                ev.target.appendChild(draggedElement);
+            } else if (ev.target.parentElement.classList.contains('row-zone')) {
+                ev.target.parentElement.appendChild(draggedElement);
+            }
+        }
+
+        // Сбор текущего состояния распределения букв по зонам
+        function getCurrentState() {
+            const getLetters = (id) => Array.from(document.getElementById(id).children).map(c => c.innerText);
+            return {
+                leftTop: getLetters('leftTop'),
+                leftBottom: getLetters('leftBottom'),
+                rightTop: getLetters('rightTop'),
+                rightBottom: getLetters('rightBottom')
+            };
+        }
+
+        // Кнопка проверки
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            const state = getCurrentState();
+            feedback.style.display = "block";
+
+            if (currentFormula.check(state)) {
+                feedback.className = "feedback success";
+                feedback.innerText = "🎉 Абсолютно верно! Ты круто управляешь физическими законами!";
+            } else {
+                feedback.className = "feedback error";
+                feedback.innerText = "❌ Мимо. Помни правило весов: перенося букву на другую сторону от знака '=', меняй её этаж (из числителя в знаменатель и наоборот)!";
+            }
+        });
+
+        // Смена формулы в селекторе
+        select.addEventListener('change', (e) => {
+            initWorkspace(formulasDatabase[e.target.value]);
+        });
+
+        // Первая инициализация при загрузке
+        initWorkspace(formulasDatabase[0]);
+    </script>
+</body>
+</html>
