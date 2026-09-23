@@ -156,7 +156,7 @@
 </head>
 <body>
 
-    <h1>📐 Точный лабораторный стенд: Сила Архимеда</h1>
+    <h1>📐 Живая физика: Сила Архимеда</h1>
     
     <div class="progress-bar-container">
         <div class="progress-fill" id="progressFill"></div>
@@ -197,7 +197,7 @@
 
         let animationTime = 0; 
         let bodyOffset = 0;    
-        let bodyY = 205;       // Стартовая Y-координата тела
+        let bodyY = 205;       
         
         let gameState = "observing"; 
         let currentTask = null;
@@ -205,7 +205,6 @@
         function drawSystem() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // ИСПРАВЛЕНО: Сдвигаем стакан на 30 пикселей вверх (glassY было 160 стало 130)
             const glassX = 130, glassY = 130, glassW = 200, glassH = 200;
             const waterLevelY = glassY + 60; // Линия воды = 190 пикселей
             const dynX = glassX + glassW / 2;
@@ -252,7 +251,6 @@
                     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 3;
                     ctx.beginPath(); ctx.moveTo(dynX, 0); ctx.lineTo(dynX, currentBY); ctx.stroke();
                 } else if (currentTask.level === 4) {
-                    // Подводные весы на новом приподнятом дне стакана
                     ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
                     drawSpring(glassX + 60, glassY + glassH - 4, currentBY + bodyH);
                     drawSpring(glassX + glassW - 60, glassY + glassH - 4, currentBY + bodyH);
@@ -290,7 +288,6 @@
 
             // В. Вектор веса тела или силы упора
             if (currentTask.level === 4) {
-                // ИСПРАВЛЕНО: Вектор веса P теперь гарантированно помещается на экране!
                 let weightLabel = gameState === "success_anim" ? `P_в_воде = ${currentTask.expected} Н` : "P_в_воде = ?";
                 drawArrow(dynX + 25, currentBY + bodyH, dynX + 25, currentBY + bodyH + 35, '#16a34a', weightLabel);
             } else if (currentTask.level === 5 && gameState !== "fail_anim") {
@@ -298,7 +295,7 @@
                 drawArrow(dynX, currentBY - 35, dynX, currentBY, '#16a34a', holdLabel);
             }
 
-            // Параметры среды (ИСПРАВЛЕНО: теперь в просторном «подвале» под стаканом)
+            // Параметры среды под стаканом
             ctx.fillStyle = (currentTask && currentTask.level === 3) ? '#f8fafc' : '#0f172a';
             ctx.font = 'bold 11px sans-serif';
             let rhoLabel = hideSystem.includes("rho") ? "ρ_жид = ?" : `ρ_жид = ${currentTask ? currentTask.rho : 0} кг/м³`;
@@ -322,7 +319,7 @@
 
         function drawArrow(x1, y1, x2, y2, color, label) {
             ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); stroke();
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); // ИСПРАВЛЕНО: Теперь строго ctx.stroke()
             let angle = Math.atan2(y2 - y1, x2 - x1);
             ctx.beginPath(); ctx.moveTo(x2, y2);
             ctx.lineTo(x2 - 6 * Math.cos(angle - Math.PI / 6), y2 - 6 * Math.sin(angle - Math.PI / 6));
@@ -330,7 +327,6 @@
             ctx.fill();
             ctx.font = 'bold 11px sans-serif'; ctx.fillText(label, x2 + 8, y2 + (y2 < y1 ? 10 : -4));
         }
-        // ИСПРАВЛЕНО: Координаты observeY пересчитаны под новые приподнятые уровни
         const questDatabase = [
             {
                 level: 1,
@@ -340,7 +336,7 @@
                 unit: "Н",
                 rho: 1000, v: 0.003, g: 10, fa: 30,
                 expected: 30,
-                observeY: 205 // Полное погружение (ниже линии воды 190)
+                observeY: 205 
             },
             {
                 level: 2,
@@ -350,7 +346,7 @@
                 unit: "Н",
                 rho: 800, v: 0.008, g: 10, fa: 32,
                 expected: 32,
-                observeY: 155 // Ровно половина бруска погружена (190 - 35 = 155)
+                observeY: 155 
             },
             {
                 level: 3,
@@ -370,7 +366,7 @@
                 unit: "Н",
                 rho: 1000, v: 0.012, g: 10, fa: 120,
                 expected: 280,
-                observeY: 254 // ИСПРАВЛЕНО: Стоит на весах на новом дне стакана (330 - 70 - 6 = 254)
+                observeY: 254 
             },
             {
                 level: 5,
