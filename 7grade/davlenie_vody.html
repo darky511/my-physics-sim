@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Интерактивная физика: Задача №523</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #38bdf8; margin-bottom: 5px; text-align: center; font-size: 24px; }
+        .task-text {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 900px;
+            border-left: 4px solid #0284c7;
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+            max-width: 950px;
+            width: 100%;
+        }
+        .canvas-container { background: #1e293b; border-radius: 12px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .solver-panel {
+            flex: 1;
+            min-width: 320px;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+        .input-group label { font-size: 14px; color: #94a3b8; }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        input {
+            background: #1e293b;
+            border: 1px solid #475569;
+            color: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 16px;
+            width: 120px;
+            font-family: monospace;
+        }
+        input:focus { border-color: #38bdf8; outline: none; }
+        .unit { font-weight: bold; color: #cbd5e1; }
+        .feedback { font-size: 13px; font-weight: bold; margin-top: 3px; display: none; }
+        .correct { color: #4ade80; }
+        .wrong { color: #f87171; }
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #0284c7;
+            color: #fff;
+            transition: background 0.2s;
+        }
+        button:hover { background: #0369a1; }
+        .hint { font-size: 12px; color: #64748b; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <h1>🐠 Лабораторный тренажёр: Гидростатика аквариума</h1>
+    
+    <div class="task-text">
+        <strong>Задача 523:</strong> В аквариум высотой 32 см, длиной 50 см и шириной 20 см налита вода, уровень которой ниже края на 2 см. Рассчитайте самостоятельно и введите ответы ниже.<br>
+        <span class="hint">* Для расчётов примите ускорение свободного падения g = 10 Н/кг, плотность воды ρ = 1000 кг/м³.</span>
+    </div>
+    
+    <div class="container">
+        <!-- Левая часть: Визуальный аквариум -->
+        <div class="canvas-container">
+            <canvas id="aquariumCanvas" width="400" height="400"></canvas>
+        </div>
+        
+        <!-- Правая часть: Форма ввода решений -->
+        <div class="solver-panel">
+            <h3>📝 Твой бланк ответов:</h3>
+            
+            <!-- Вопрос А -->
+            <div class="input-group" id="groupA">
+                <label>а) Давление воды на дно аквариума:</label>
+                <div class="input-row">
+                    <input type="number" id="ansA" placeholder="Значение">
+                    <span class="unit">Па</span>
+                </div>
+                <div class="feedback" id="feedA"></div>
+            </div>
+
+            <!-- Вопрос Б -->
+            <div class="input-group" id="groupB">
+                <label>б) Полный вес налитой воды:</label>
+                <div class="input-row">
+                    <input type="number" id="ansB" placeholder="Значение">
+                    <span class="unit">Н</span>
+                </div>
+                <div class="feedback" id="feedB"></div>
+            </div>
+
+            <!-- Вопрос В -->
+            <div class="input-group" id="groupC">
+                <label>в) Сила давления на торцевую стенку (шириной 20 см):</label>
+                <div class="input-row">
+                    <input type="number" id="ansC" placeholder="Значение">
+                    <span class="unit">Н</span>
+                </div>
+                <div class="feedback" id="feedC"></div>
+            </div>
+
+            <button id="checkBtn">🚀 Проверить моё решение</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('aquariumCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Геометрия отрисовки аквариума (боковая проекция/3D-изометрия)
+        const aqX = 80, aqY = 60, aqW = 240, aqH = 260; 
+        const waterHeightPixels = aqH * (30 / 32); // Вода заполнена на 30 см из 32
+        const waterTopY = aqY + (aqH - waterHeightPixels);
+
+        function drawAquarium() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Сетка и разметка высоты (Линейка)
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 32; i += 4) {
+                let y = aqY + aqH - (i * (aqH / 32));
+                ctx.beginPath();
+                ctx.moveTo(aqX - 10, y);
+                ctx.lineTo(aqX, y);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#64748b';
+                ctx.font = '11px sans-serif';
+                ctx.fillText(i + ' см', aqX - 42, y + 4);
+            }
+
+            // 2. Задний план воды (толща воды)
+            ctx.fillStyle = 'rgba(14, 165, 233, 0.4)';
+            ctx.fillRect(aqX, waterTopY, aqW, waterHeightPixels);
+
+            // Поверхность воды (светлая линия)
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(aqX, waterTopY);
+            ctx.lineTo(aqX + aqW, waterTopY);
+            ctx.stroke();
+
+            // 3. Каркас стеклянного аквариума (Стенки)
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(aqX, aqY, aqW, aqH);
+
+            // Обозначение пустого места (2 см сверху)
+            ctx.fillStyle = '#ef4444';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('← пусто 2 см', aqX + aqW + 10, waterTopY - 5);
+
+            // 4. Виз-распределение давления на боковую стенку (Эпюра)
+            // Рисуем стрелки силы давления: на поверхности 0, ко дну растут линейно!
+            ctx.strokeStyle = '#f59e0b';
+            ctx.fillStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            
+            for (let y = waterTopY; y <= aqY + aqH; y += 25) {
+                let depthFraction = (y - waterTopY) / waterHeightPixels;
+                let arrowLength = depthFraction * 50; // Длина стрелки зависит от глубины
+                
+                if (arrowLength > 5) {
+                    let startX = aqX + aqW;
+                    let endX = aqX + aqW + arrowLength;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startX, y);
+                    ctx.lineTo(endX, y);
+                    ctx.stroke();
+                    
+                    // Наконечник стрелки
+                    ctx.beginPath();
+                    ctx.moveTo(endX, y);
+                    ctx.lineTo(endX - 5, y - 3);
+                    ctx.lineTo(endX - 5, y + 3);
+                    ctx.fill();
+                }
+            }
+            
+            // Подпись к эпюре сил
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('Рост давления P = ρgh', aqX + 70, aqY + aqH + 25);
+            ctx.fillText('на стенку', aqX + aqW + 10, aqY + aqH - 10);
+        }
+
+        drawAquarium();
+        // Правильные ответы, рассчитанные по формулам
+        const correctAnswers = {
+            a: 3000, // Па (давление на дно)
+            b: 300,  // Н (вес воды)
+            c: 90    // Н (сила давления на стенку)
+        };
+
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            // Считываем значения из инпутов
+            const valA = parseFloat(document.getElementById('ansA').value);
+            const valB = parseFloat(document.getElementById('ansB').value);
+            const valC = parseFloat(document.getElementById('ansC').value);
+
+            // Элементы обратной связи
+            const feedA = document.getElementById('feedA');
+            const feedB = document.getElementById('feedB');
+            const feedC = document.getElementById('feedC');
+
+            // Проверка пункта А
+            feedA.style.display = "block";
+            if (valA === correctAnswers.a) {
+                feedA.className = "feedback correct";
+                feedA.innerHTML = "🎉 Верно! P = 1000 кг/м³ × 10 Н/кг × 0.3 м = 3000 Па.";
+            } else {
+                feedA.className = "feedback wrong";
+                feedA.innerHTML = "❌ Неправильно. Подсказка: проверь высоту столба воды. Она равна 32 см - 2 см = 30 см (переведи в метры!).";
+            }
+
+            // Проверка пункта Б
+            feedB.style.display = "block";
+            if (valB === correctAnswers.b) {
+                feedB.className = "feedback correct";
+                feedB.innerHTML = "🎉 Отлично! Объем V = 0.03 м³, масса m = 30 кг, вес P = 300 Н.";
+            } else {
+                feedB.className = "feedback wrong";
+                feedB.innerHTML = "❌ Ошибка. Подсказка: найди сначала объём воды V = a × b × h, затем массу m = ρV, а потом вес P = mg.";
+            }
+
+            // Проверка пункта В
+            feedC.style.display = "block";
+            if (valC === correctAnswers.c) {
+                feedC.className = "feedback correct";
+                feedC.innerHTML = "🎉 Браво! Умница! Сила равна среднему давлению (на полглубины) умноженному на площадь стенки: F = Pср × S = 1500 Па × 0.06 м² = 90 Н.";
+            } else {
+                feedC.className = "feedback wrong";
+                feedC.innerHTML = "❌ Ошибка в пункте в). Помни, что давление распределено неравномерно! Нужно использовать СРЕДНЕЕ давление на стенку: Pср = (ρ × g × h) / 2.";
+            }
+        });
+    </script>
+</body>
+</html>
