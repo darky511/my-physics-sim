@@ -17,7 +17,7 @@
         }
         h1 { color: #0284c7; font-size: 24px; margin-bottom: 5px; text-align: center; }
         
-        /* Индикатор прогресса уровней */
+        /* Индикатор продвижения по уровням */
         .progress-bar-container {
             width: 100%;
             max-width: 900px;
@@ -35,6 +35,7 @@
             transition: width 0.5s ease;
         }
 
+        /* Интерактивная карточка с главной формулой */
         .formula-card {
             background: #ffffff;
             border: 2px solid #e2e8f0;
@@ -77,6 +78,7 @@
             border: 2px solid #e2e8f0;
         }
         
+        /* Правый блок условий задачи */
         .task-panel {
             flex: 1;
             min-width: 340px;
@@ -156,9 +158,9 @@
 </head>
 <body>
 
-    <h1>🏋️ Инженерный квест: 5 уровней гидравлики</h1>
+    <h1>📐 Лабораторный практикум: Гидравлический Пресс</h1>
     
-    <!-- Индикатор продвижения по квесту -->
+    <!-- Индикатор опыта -->
     <div class="progress-bar-container">
         <div class="progress-fill" id="progressFill"></div>
     </div>
@@ -166,17 +168,17 @@
     <div class="formula-card">
         <div class="formula-visual">F₂ / F₁ = S₂ / S₁</div>
         <div class="formula-desc">
-            <b>Закон Паскаля в действии:</b> Сила пресса прямо зависит от площадей его поршней. При расчётах помните, что ускорение свободного падения <b>g ≈ 10 Н/кг</b>.
+            <b>Закон гидравлической машины:</b> Силы, действующие на поршни, прямо пропорциональны площадям этих поршней. <br>
+            В расчётах помните, что ускорение свободного падения на Земле составляет <b>g ≈ 10 Н/кг</b>.
         </div>
     </div>
 
     <div class="container">
-        <!-- Чертеж гидравлической машины -->
+        <!-- Стенд симуляции -->
         <div class="canvas-container">
             <canvas id="pressCanvas" width="440" height="360"></canvas>
         </div>
-
-        <!-- Рабочая зона квеста -->
+        <!-- Панель управления -->
         <div class="task-panel">
             <div class="task-title" id="levelTitle">Уровень 1 из 5</div>
             <div class="task-text" id="taskLabel">Загрузка условий задачи...</div>
@@ -193,6 +195,7 @@
             <div class="feedback" id="feedbackBlock"></div>
         </div>
     </div>
+
     <script>
         const canvas = document.getElementById('pressCanvas');
         const ctx = canvas.getContext('2d');
@@ -204,7 +207,6 @@
         let isAnimating = false;
         let animationDirection = "none"; 
 
-        // Глобальный объект текущей задачи
         let currentTask = null;
 
         function drawSystem() {
@@ -215,13 +217,13 @@
             const x1 = 60;
             const x2 = 260;
 
-            // 1. Голубая жидкость (масло Паскаля)
+            // 1. Рабочая жидкость (масло)
             ctx.fillStyle = '#bae6fd'; 
             ctx.fillRect(x1, p1Y + 12, w1, tubeBottomY - p1Y - 12);
             ctx.fillRect(x1, tubeBottomY - 40, (x2 + w2) - x1, 40); 
             ctx.fillRect(x2, p2Y + 15, w2, tubeBottomY - p2Y - 15);
 
-            // 2. Стенки пресса
+            // 2. Стальные стенки пресса
             ctx.strokeStyle = '#64748b';
             ctx.lineWidth = 4;
             ctx.lineCap = 'round';
@@ -230,35 +232,37 @@
             ctx.moveTo(x1 + w1, 90); ctx.lineTo(x1 + w1, tubeBottomY - 40); ctx.lineTo(x2, tubeBottomY - 40); ctx.lineTo(x2, 90);
             ctx.stroke();
 
-            // 3. Малый поршень
+            // 3. Малый управляющий поршень
             ctx.fillStyle = '#ef4444'; 
             ctx.fillRect(x1 + 1, p1Y, w1 - 2, 14);
             ctx.fillStyle = '#475569';
             ctx.fillRect(x1 + w1/2 - 3, p1Y - 40, 6, 40);
             
-            // Динамический вывод силы F1 (если ищем её — пишем знак '?')
-            let f1Label = (currentTask && currentTask.hide === "f1") ? "F₁ = ?" : `F₁ = ${currentTask ? currentTask.f1 : 0} Н`;
+            // --- СИСТЕМА ЗАЩИТЫ ОТ СПОЙЛЕРОВ ---
+            let hideSystem = currentTask && currentTask.hide ? currentTask.hide : "";
+
+            // Проверяем силу F1 (если есть в списке скрытия — выводим '?')
+            let f1Label = hideSystem.includes("f1") ? "F₁ = ?" : `F₁ = ${currentTask ? currentTask.f1 : 0} Н`;
             drawForceArrow(x1 + w1/2, p1Y - 45, true, f1Label);
 
-            // 4. Большой поршень
+            // 4. Большой силовой поршень и гиря груза
             ctx.fillStyle = '#3b82f6'; 
             ctx.fillRect(x2 + 1, p2Y, w2 - 2, 18);
             ctx.fillStyle = '#475569';
             ctx.fillRect(x2 - 10, p2Y - 8, w2 + 20, 8);
             
-            // Груз на прессе
             let gx = x2 + w2/2 - 30;
             let gy = p2Y - 58;
             ctx.fillStyle = '#334155';
             ctx.fillRect(gx, gy, 60, 50); 
             ctx.beginPath(); ctx.arc(x2 + w2/2, gy, 12, 0, Math.PI, true); ctx.stroke(); 
 
-            // --- ЗАЩИТА ОТ ПОДСКАЗОК (Правка №1) ---
-            // Проверяем, какую величину ищет ученик, и прячем её на схеме чертежа!
-            let s1Label = (currentTask && currentTask.hide === "s1") ? "S₁ = ?" : `S₁ = ${currentTask ? currentTask.s1 : 0} см²`;
-            let s2Label = (currentTask && currentTask.hide === "s2") ? "S₂ = ?" : `S₂ = ${currentTask ? currentTask.s2 : 0} см²`;
-            let f2Label = (currentTask && currentTask.hide === "f2") ? "F₂ = ?" : `${currentTask ? currentTask.f2 : 0} Н`;
+            // Проверяем площади поршней и силу веса F2 на большом поршне
+            let s1Label = hideSystem.includes("s1") ? "S₁ = ?" : `S₁ = ${currentTask ? currentTask.s1 : 0} см²`;
+            let s2Label = hideSystem.includes("s2") ? "S₂ = ?" : `S₂ = ${currentTask ? currentTask.s2 : 0} см²`;
+            let f2Label = hideSystem.includes("f2") ? "F₂ = ?" : `${currentTask ? currentTask.f2 : 0} Н`;
 
+            // Выводим все текстовые лейблы на свои места
             ctx.fillStyle = '#0f172a';
             ctx.font = 'bold 12px sans-serif';
             ctx.fillText(s1Label, x1 - 5, 80);
@@ -280,11 +284,11 @@
             ctx.font = 'bold 13px sans-serif';
             ctx.fillText(label, x + 10, y - 5);
         }
-        // Жестко заданные 5 уровней с нарастающей сложностью
+        // Базовый банк сюжетных задач на 5 уровней
         const questDatabase = [
             {
                 level: 1,
-                hide: "f2", // скрываем F2 на картинке
+                hide: "f2", // скрываем F2, её нужно найти
                 text: "<b>Уровень 1 (Базовый):</b> Площадь малого поршня гидравлического пресса S₁ = 5 см², а большого S₂ = 100 см². На малый поршень подействовали силой F₁ = 50 Н. Какую максимальную выталкивающую силу F₂ развивает большой поршень?",
                 inputLabel: "Вычисли силу F₂:",
                 unit: "Н",
@@ -293,8 +297,8 @@
             },
             {
                 level: 2,
-                hide: "f1", // скрываем F1 на картинке
-                text: "<b>Уровень 2 (Поиск силы нажатия):</b> Инженерам нужно, чтобы гидравлический подъемник удерживал вес F₂ = 8000 Н. Площадь большого цилиндра S₂ = 400 см², а малого управляющего S₁ = 10 см². Какую силу F₁ рабочий должен приложить к малому поршню?",
+                hide: "f1", // скрываем F1, её нужно найти
+                text: "<b>Уровень 2 (Поиск силы нажатия):</b> Инженерам нужно, чтобы гидравлический подъемник удерживал автомобиль весом F₂ = 8000 Н. Площадь большого поршня S₂ = 400 см², а малого управляющего S₁ = 10 см². Какую силу F₁ рабочий должен приложить к малому поршню?",
                 inputLabel: "Вычисли силу F₁:",
                 unit: "Н",
                 s1: 10, s2: 400, f1: 200, f2: 8000,
@@ -302,7 +306,7 @@
             },
             {
                 level: 3,
-                hide: "s1", // скрываем S1 на картинке
+                hide: "s1", // скрываем S1, её нужно найти
                 text: "<b>Уровень 3 (Поиск площади):</b> Гидравлическая машина создает выигрыш в силе, поднимая груз весом F₂ = 6000 Н при помощи силы F₁ = 150 Н. Найдите площадь малого поршня S₁, если площадь большого поршня S₂ составляет 200 см².",
                 inputLabel: "Вычисли площадь S₁:",
                 unit: "см²",
@@ -311,20 +315,20 @@
             },
             {
                 level: 4,
-                hide: "f2", // скрываем F2 на картинке, так как там вес, а в задаче дана МАССА
-                text: "<b>Уровень 4 (Переход от массы):</b> На платформу большого поршня площадью S₂ = 500 см² загнали тяжелый станок массой <b>m = 2.5 тонны (2500 кг)</b>. Какую силу нужно приложить к малому поршню площадью S₁ = 4 см², чтобы поднять этот станок? (Примите g = 10 Н/кг).",
+                hide: "f1 f2", // СКРЫТО ВСЁ: скрываем и F1 (ищем её), и F2 (в задаче дана масса груза, а не сила веса)
+                text: "<b>Уровень 4 (Переход от массы груза):</b> На платформу большого поршня площадью S₂ = 500 см² поместили тяжёлый станок массой <b>m = 2.5 тонны (2500 кг)</b>. Какую силу F₁ нужно приложить к малому поршню площадью S₁ = 4 см², чтобы сдвинуть систему? (Примите g = 10 Н/кг).",
                 inputLabel: "Вычисли силу F₁:",
                 unit: "Н",
-                s1: 4, s2: 500, f1: 200, f2: 25000, // F2 = 2500 * 10 = 25000 Н
+                s1: 4, s2: 500, f1: 200, f2: 25000, 
                 expected: 200
             },
             {
                 level: 5,
-                hide: "f1", // скрываем F1, так как на малый поршень давит еще и рычаг
-                text: "<b>Уровень 5 (Супер-инженер):</b> К малому поршню площадью S₁ = 2 см² прикрепили ручной рычаг, который дает дополнительный выигрыш в силе в <b>5 раз</b>. Пресс должен поднять груз массой 300 кг (F₂ = 3000 Н) на большом поршне площадью S₂ = 100 см². Какую силу нужно приложить к концу рычага?",
-                inputLabel: "Вычисли финальную силу на конце рычага:",
+                hide: "f1 f2", // СКРЫТО ВСЁ: скрываем и F1, и F2, так как на малый поршень дополнительно действует рычаг
+                text: "<b>Уровень 5 (Супер-инженер):</b> К малому поршню площадью S₁ = 2 см² прикрепили ручной рычаг, дающий дополнительный выигрыш в силе в <b>5 раз</b>. Пресс должен поднять груз массой 300 кг на большом поршне площадью S₂ = 100 см². Какую силу нужно приложить к концу рычага? (Примите g = 10 Н/кг).",
+                inputLabel: "Вычисли силу на конце рычага:",
                 unit: "Н",
-                s1: 2, s2: 100, f1: 60, f2: 3000, // Без рычага F1=60Н, а с рычагом 60 / 5 = 12Н
+                s1: 2, s2: 100, f1: 60, f2: 3000, 
                 expected: 12
             }
         ];
@@ -334,14 +338,14 @@
         function loadQuest(idx) {
             currentTask = questDatabase[idx];
             
-            // Обновляем прогресс-бар и тексты
+            // Заполнение шкал и обновление текстов интерфейса
             document.getElementById('progressFill').style.width = ((idx + 1) * 20) + "%";
             document.getElementById('levelTitle').innerText = `Уровень ${currentTask.level} из 5`;
             document.getElementById('taskLabel').innerHTML = currentTask.text;
             document.getElementById('inputLabel').innerText = currentTask.inputLabel;
             document.getElementById('unitLabel').innerText = currentTask.unit;
             
-            // Сброс графики поршней
+            // Возврат поршней в исходное состояние
             p1Y = 160; p2Y = 160;
             isAnimating = false;
             animationDirection = "none";
@@ -363,18 +367,20 @@
                     p2Y -= 0.5 * (currentTask.s1 / currentTask.s2 * 4.5);
                 } else {
                     isAnimating = false;
-                    // --- АВТОМАТИЧЕСКИЙ ПЕРЕХОД ПОСЛЕ АНИМАЦИИ (Правка №2) ---
+                    
+                    // Автопереключение на следующий уровень после завершения анимации
                     setTimeout(() => {
                         currentLevelIdx++;
                         if (currentLevelIdx < questDatabase.length) {
                             loadQuest(currentLevelIdx);
                         } else {
-                            // Финал квеста
-                            document.getElementById('taskLabel').innerHTML = "🏆 <b>ПОЗДРАВЛЯЕМ!</b> Ты прошел все 5 уровней инженерной гидравлики и доказал, что умеешь крутить закон Паскаля как мастер!";
+                            // Финальный экран победы
+                            document.getElementById('taskLabel').innerHTML = "🏆 <b>ВЕЛИКОЛЕПНО! КВЕСТ ПРОЙДЕН!</b> Ты успешно преодолел все 5 инженерных уровней и доказал, что умеешь безошибочно рассчитывать гидравлические системы любой сложности!";
                             document.getElementById('checkBtn').style.display = "none";
                             document.getElementById('feedbackBlock').style.display = "none";
+                            document.getElementById('progressFill').style.background = "#2563eb";
                         }
-                    }, 1500); // задержка в 1.5 секунды, чтобы ребенок успел порадоваться успеху
+                    }, 1500); 
                 }
             } else if (animationDirection === "fail") {
                 p1Y += 3;
@@ -386,9 +392,9 @@
             if (isAnimating) requestAnimationFrame(animatePress);
         }
 
-        // Обработчик проверки ответа
+        // Кнопка валидации ответа
         document.getElementById('checkBtn').addEventListener('click', () => {
-            if (isAnimating) return; // блокировка кликов во время движения
+            if (isAnimating) return; 
             
             const userAns = parseFloat(document.getElementById('userAnswer').value);
             const feed = document.getElementById('feedbackBlock');
@@ -396,14 +402,14 @@
 
             if (isNaN(userAns)) {
                 feed.className = "feedback error";
-                feed.innerText = "⚠️ Сначала введи числовой ответ в поле!";
+                feed.innerText = "⚠️ Сначала введите числовой ответ в поле!";
                 return;
             }
 
-            // Сравниваем ответ с эталоном
+            // Сравнение ответа с эталоном задачи
             if (Math.abs(userAns - currentTask.expected) < 0.1) {
                 feed.className = "feedback success";
-                feed.innerHTML = `🎉 Верно! Система пришла в движение. Поршни успешно выполняют работу!`;
+                feed.innerHTML = `🎉 Абсолютно верно! Давление передалось без потерь. Жидкость пришла в движение!`;
                 
                 document.getElementById('checkBtn').innerText = "🔄 Загрузка следующего уровня...";
                 isAnimating = true;
@@ -411,7 +417,7 @@
                 animatePress();
             } else {
                 feed.className = "feedback error";
-                feed.innerHTML = `❌ Расчет неверный. Система заклинила! Попробуй перепроверить пропорцию <b>F₂ / F₁ = S₂ / S₁</b> на бумаге еще раз.`;
+                feed.innerHTML = `❌ Расчёт неверный. Система заклинила! Попробуй перепроверить пропорцию <b>F₂ / F₁ = S₂ / S₁</b> на черновике ещё раз.`;
                 
                 isAnimating = true;
                 animationDirection = "fail";
@@ -419,7 +425,7 @@
             }
         });
 
-        // Первичный запуск квеста
+        // Первичный запуск игры
         loadQuest(currentLevelIdx);
     </script>
 </body>
