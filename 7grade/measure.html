@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Физический СИ-Декодер</title>
+    <title>Физический СИ-Декодер величин</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -181,14 +181,14 @@
         <div class="game-zone">
             <div class="quest-board" id="questText">Синхронизация данных...</div>
 
-            <!-- Шаг 1: Куда крутим математику -->
-            <label style="font-weight: bold; color: #94a3b8; display: block; margin-bottom: 8px; text-align:center;">1. Направление (число увеличится или уменьшиться?):</label>
+            <!-- Шаг 1 -->
+            <label style="font-weight: bold; color: #94a3b8; display: block; margin-bottom: 8px; text-align:center;">1. Направление (число увеличится или уменьшится?):</label>
             <div class="toggle-container">
                 <button class="toggle-btn" id="modeMult">✖ УМНОЖИТЬ</button>
                 <button class="toggle-btn" id="modeDiv">➗ ПОДЕЛИТЬ</button>
             </div>
 
-            <!-- Шаг 2: Схема сборки -->
+            <!-- Шаг 2 -->
             <label style="font-weight: bold; color: #94a3b8; display: block; margin-bottom: 8px; text-align:center;">2. Сборочный конвейер:</label>
             <div class="conveyor">
                 <div class="node" id="startNode">0</div>
@@ -198,14 +198,14 @@
                 <div class="node" id="resultNode">?</div>
             </div>
 
-            <!-- Шаг 3: Кубики-множители -->
+            <!-- Шаг 3 -->
             <label style="font-weight: bold; color: #94a3b8; display: block; margin-bottom: 5px;">3. Выбери кубик-основание:</label>
             <div class="blocks-grid" id="gridContainer"></div>
 
             <div class="feedback" id="feedbackMessage"></div>
         </div>
 
-        <!-- ПРАВАЯ КОЛОНКА: СТРОГАЯ ТАБЛИЦА ПРИСТАВОК -->
+        <!-- ПРАВАЯ КОЛОНКА: ТАБЛИЦА ПРИСТАВОК БЕЗ ЛИШНИХ СИМВОЛОВ -->
         <div class="cheat-sheet">
             <div class="cheat-title">📐 Международная система приставок (СИ)</div>
             <table class="cheat-table">
@@ -217,11 +217,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr style="background: rgba(239, 68, 68, 0.05);"><td><b>кило-</b></td><td>к</td><td>тысяча (\(1000\))</td></tr>
-                    <tr><td><b>гекто-</b></td><td>г</td><td>сто (\(100\))</td></tr>
-                    <tr style="background: rgba(239, 68, 68, 0.05);"><td><b>деци-</b></td><td>д</td><td>одна десятая (\(0.1\) или \(:10\))</td></tr>
-                    <tr><td><b>санти-</b></td><td>с</td><td>одна сотая (\(0.01\) или \(:100\))</td></tr>
-                    <tr style="background: rgba(239, 68, 68, 0.05);"><td><b>милли-</b></td><td>м</td><td>одна тысячная (\(0.001\) или \(:1000\))</td></tr>
+                    <tr style="background: rgba(239, 68, 68, 0.05);"><td><b>кило-</b></td><td>к</td><td>тысяча (1000)</td></tr>
+                    <tr><td><b>гекто-</b></td><td>г</td><td>сто (100)</td></tr>
+                    <tr style="background: rgba(239, 68, 68, 0.05);"><td><b>деци-</b></td><td>д</td><td>одна десятая (0.1 или :10)</td></tr>
+                    <tr><td><b>санти-</b></td><td>с</td><td>одна сотая (0.01 или :100)</td></tr>
+                    <tr style="background: rgba(239, 68, 68, 0.05);"><td><b>милли-</b></td><td>м</td><td>одна тысячная (0.001 или :1000)</td></tr>
                 </tbody>
             </table>
             
