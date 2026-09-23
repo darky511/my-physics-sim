@@ -181,21 +181,18 @@
         <div class="feedback" id="feedbackBlock"></div>
     </div>
     <script>
-        // Обширный список разноплановых задач на перевод единиц (Длина, Масса, Время, Скорость, Площадь, Объем)
+        // Список разноплановых задач на перевод единиц (Длина, Масса, Время, Скорость, Площадь, Объем)
         const siDatabase = [
             { quest: "Переведи 5 км в метры (СИ)", startVal: 5, action: "multiply", factor: 1000, final: 5000, unit: "м" },
             { quest: "Переведи 450 г в килограммы (СИ)", startVal: 450, action: "divide", factor: 1000, final: 0.45, unit: "кг" },
-            { quest: "Переведи 20 см в метры (СИ)", startVal: 20, action: "divide", factor: 1000, final: 0.2, unit: "м" }, // нюанс: обработаем слайдер под 100
+            { quest: "Переведи 20 см в метры (СИ)", startVal: 20, action: "divide", factor: 100, final: 0.2, unit: "м" },
             { quest: "Переведи 3 тонны в килограммы (СИ)", startVal: 3, action: "multiply", factor: 1000, final: 3000, unit: "кг" },
-            { quest: "Переведи 120 минут в секунды (СИ)", startVal: 120, action: "multiply", factor: 60, final: 7200, unit: "с", customFactor: true, factorText: "60 (минута)" },
-            { quest: "Переведи 500 мг в килограммы (СИ)", startVal: 500, action: "divide", factor: 1000000, final: 0.0005, unit: "кг", customFactor: true, factorText: "1 000 000" },
-            { quest: "Переведи 72 км/ч в метры в секунду (СИ)", startVal: 72, action: "divide", factor: 3.6, final: 20, unit: "м/с", customFactor: true, factorText: "3.6 (коэфф. скорости)" },
-            { quest: "Переведи 2 см² в квадратные метры (СИ)", startVal: 2, action: "divide", factor: 10000, final: 0.0002, unit: "м²", customFactor: true, factorText: "10 000" },
+            { quest: "Переведи 120 минут в секунды (СИ)", startVal: 120, action: "multiply", factor: 60, final: 7200, unit: "с", customFactor: true },
+            { quest: "Переведи 500 мг в килограммы (СИ)", startVal: 500, action: "divide", factor: 1000000, final: 0.0005, unit: "кг", customFactor: true },
+            { quest: "Переведи 72 км/ч в метры в секунду (СИ)", startVal: 72, action: "divide", factor: 3.6, final: 20, unit: "м/с", customFactor: true },
+            { quest: "Переведи 2 см² в квадратные метры (СИ)", startVal: 2, action: "divide", factor: 10000, final: 0.0002, unit: "м²", customFactor: true },
             { quest: "Переведи 5 литров в кубические метры (СИ)", startVal: 5, action: "divide", factor: 1000, final: 0.005, unit: "м³" }
         ];
-
-        // Массив стандартных значений для шагов слайдера
-        const standardFactors =;
 
         let currentId = 0;
         let selectedAction = ""; // "multiply" или "divide"
@@ -207,7 +204,7 @@
             document.getElementById('formulaStartVal').innerText = q.startVal;
             document.getElementById('targetUnit').innerText = q.unit;
             
-            // Сброс интерфейса
+            // Сброс интерфейса пульта
             selectedAction = "";
             document.getElementById('btnMultiply').classList.remove('active');
             document.getElementById('btnDivide').classList.remove('active');
@@ -215,13 +212,9 @@
             document.getElementById('finalAnswer').value = "";
             document.getElementById('feedbackBlock').style.display = "none";
             
-            // Динамическая адаптация слайдера под тип вопроса
+            // Настройка слайдера под тип вопроса
             const slider = document.getElementById('multSlider');
-            if (q.customFactor) {
-                slider.min = 0; slider.max = 4; slider.value = 2; // дадим свободу выбора
-            } else {
-                slider.min = 0; slider.max = 4; slider.value = 1;
-            }
+            slider.value = 1; 
             updateSliderView();
         }
 
@@ -229,10 +222,9 @@
             const q = siDatabase[currentId];
             const sliderIdx = parseInt(document.getElementById('multSlider').value);
             
-            // Задаем логику шагов коэффициента
+            // Задаем логику шагов коэффициента (теперь без синтаксических пустот!)
             if (q.customFactor) {
-                // Если задача нестандартная (скорость или площади), подкидываем нужные числа в спектр слайдера
-                const customSet = [3.6, 60, q.factor, 10000, 1000000];
+                const customSet = [3.6, 60, 100, 10000, 1000000];
                 currentFactor = customSet[sliderIdx];
             } else {
                 const standardSet =;
@@ -262,7 +254,7 @@
             updateSliderView();
         });
 
-        // Слушатель слайдера
+        // Слушатель изменения слайдера
         document.getElementById('multSlider').addEventListener('input', updateSliderView);
 
         // Кнопка проверки ответа
@@ -276,37 +268,36 @@
             // Шаг 1. Валидация знака действия
             if (selectedAction !== q.action) {
                 feed.className = "feedback error";
-                feed.innerText = "❌ Ошибка в узле действия! Подумай: единица измерения становится крупнее или мельче? При переводе в СИ мелких единиц (грамм, см) число должно уменьшаться (деление!).";
+                feed.innerText = "❌ Ошибка в узле действия! Подумай: исходная единица измерения крупнее или мельче системной (СИ)? Если переводим мелкие (г, см) в крупные СИ (кг, м) — число должно уменьшаться, выбирай деление!";
                 return;
             }
 
-            // Шаг 2. Валидация коэффициента
+            // Шаг 2. Валидация коэффициента приставки
             if (currentFactor !== q.factor) {
                 feed.className = "feedback error";
-                feed.innerText = `❌ Неверный коэффициент приставки! Ты выбрал ${currentFactor}, но между этими величинами другое соотношение нулей. Перепроверь слайдером.`;
+                feed.innerText = `❌ Неверный коэффициент! Ты выбрал ${currentFactor}, но для этой приставки нужно другое количество нулей. Передвинь слайдер!`;
                 return;
             }
 
-            // Шаг 3. Валидация вычислений
-            // Сравниваем с погрешностью на округление (особенно для 72 км/ч -> 3.6)
-            if (Math.abs(userFinal - q.final) > 0.0001) {
+            // Шаг 3. Валидация финальных расчетов
+            if (isNaN(userFinal) || Math.abs(userFinal - q.final) > 0.0001) {
                 feed.className = "feedback error";
-                feed.innerText = "❌ Математическая ошибка! Манипуляции со слайдером верны, но финальное деление/умножение в поле №4 посчитано неверно.";
+                feed.innerText = "❌ Ошибка вычислений! Пульт настроен верно, но итоговое математическое значение в поле №4 посчитано неверно.";
                 return;
             }
 
-            // Если всё пройдено успешно
+            // Успех!
             feed.className = "feedback success";
-            feed.innerHTML = `🎉 Идеально! Коллайдер запущен успешно! Энергия подана. <br><b>${q.startVal} ${q.quest.split(' ')[1]} = ${q.final} ${q.unit}</b>`;
+            feed.innerHTML = `🎉 Отлично! Узлы зафиксированы, энергия пошла! <br><b>Результат: ${q.final} ${q.unit}</b>`;
 
-            // Через 2.5 секунды переключаем на следующую задачу
+            // Автопереход к следующей карточке через 2.5 секунды
             setTimeout(() => {
                 currentId = (currentId + 1) % siDatabase.length;
                 loadQuestion(currentId);
             }, 2500);
         });
 
-        // Самый первый запуск игры
+        // Первичный старт конвертера при загрузке страницы
         loadQuestion(currentId);
     </script>
 </body>
