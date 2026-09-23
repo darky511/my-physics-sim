@@ -156,7 +156,7 @@
 </head>
 <body>
 
-    <h1>🧱 Лабораторный квест: Архимедово правило рычага</h1>
+    <h1>🧱 Интерактивная Лаборатория: Правило Моментов</h1>
     
     <div class="progress-bar-container">
         <div class="progress-fill" id="progressFill"></div>
@@ -166,7 +166,7 @@
         <div class="formula-visual">F₁ / F₂ = l₂ / l₁</div>
         <div class="formula-visual">M = F · l</div>
         <div class="formula-desc">
-            <b>Условие равновесия рычага:</b> Сумма моментов сил, вращающих его по часовой стрелке, должна быть строго равна сумме моментов сил, вращающих его против часовой стрелки.
+            <b>Условие равновесия:</b> Рычаг находится в балансе, когда вращающий момент сил против часовой стрелки равен моменту сил по часовой стрелке.
         </div>
     </div>
 
@@ -196,8 +196,8 @@
         const ctx = canvas.getContext('2d');
 
         let animationTime = 0;
-        let leverAngle = 0;       // Угол наклона рычага
-        let targetAngle = 0;      
+        let leverAngle = -0.15;   // Начальный дисбаланс (до ответа качели перекошены!)
+        let currentL2Pos = 180;   // Текущая отрисовочная координата X для перемещаемого кубика
         
         let gameState = "observing"; 
         let currentTask = null;
@@ -208,124 +208,141 @@
             const centerX = canvas.width / 2;
             const centerY = 220;
             const groundY = 320;
-            const pxPerMeter = 30; // Масштаб: 30 пикселей = 1 метр плеча
+            const pxPerMeter = 28; // Масштаб плеча
 
             animationTime += 0.04;
+            
+            // Физический движок реакций углов под состояние ответа
             if (gameState === "observing") {
-                leverAngle = Math.sin(animationTime) * 0.02; // лёгкое покачивание на ветру
+                // До ответа качели стабильно завалены в сторону перевеса + легкое покачивание
+                let baseAngle = (currentTask && currentTask.level === 3) ? 0 : currentTask.startAngle;
+                leverAngle = baseAngle + Math.sin(animationTime) * 0.01;
             } else if (gameState === "success_anim") {
-                leverAngle += (0 - leverAngle) * 0.1; // Идеальный ноль — горизонталь
+                leverAngle += (0 - leverAngle) * 0.08; // Плавный выход в идеальный горизонт
             } else if (gameState === "fail_anim") {
-                leverAngle += (targetAngle - leverAngle) * 0.1; // Откидывание в сторону перевеса
+                leverAngle += (currentTask.failAngle - leverAngle) * 0.08; 
             }
 
-            // 1. Окружение (Лужайка площадки/Дверной проём)
+            // 1. Окружение площадки
             ctx.fillStyle = '#f0fdfa'; ctx.fillRect(0, 0, canvas.width, groundY);
             ctx.fillStyle = '#e2e8f0'; ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
             ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(canvas.width, groundY); ctx.stroke();
 
+            // РЕНДЕР СТЕНДОВ КВЕСТА
             if (currentTask && currentTask.level === 3) {
-                // Специфический бэкграунд ДВЕРИ для 3-го уровня
-                ctx.fillStyle = '#fef08a'; // деревянная дверь
-                ctx.fillRect(centerX - 120, centerY - 120, 240, 220);
-                ctx.strokeStyle = '#78350f'; ctx.lineWidth = 6;
-                ctx.strokeRect(centerX - 120, centerY - 120, 240, 220);
+                // --- ПРАВКА №3: АНАТОМИЧЕСКИ ПРАВИЛЬНАЯ ДВЕРЬ ---
+                // Ось вращения (петли) слева: centerX - 100
+                let doorLeftX = centerX - 100;
                 
-                // Петли двери (Точка опоры)
+                ctx.save();
+                ctx.translate(doorLeftX, centerY);
+                ctx.rotate(leverAngle * 0.3); // Легкий поворот полотна при нажатии
+
+                // Дверное полотно: петли слева, доска уходит направо!
+                ctx.fillStyle = '#fef08a'; 
+                ctx.fillRect(0, -110, 200, 220);
+                ctx.strokeStyle = '#78350f'; ctx.lineWidth = 4;
+                ctx.strokeRect(0, -110, 200, 220);
+
+                // Петли крепления (строго слева на торце!)
                 ctx.fillStyle = '#475569';
-                ctx.fillRect(centerX - 124, centerY - 90, 8, 20);
-                ctx.fillRect(centerX - 124, centerY + 40, 8, 20);
+                ctx.fillRect(-6, -80, 6, 20); ctx.fillRect(-6, 60, 6, 20);
+
+                // Дверная ручка: ПРАВИЛЬНО вынесена на противоположный правый край полотна!
+                let handleX = currentTask.l1 * pxPerMeter * 6.5; // вынос на край
+                ctx.strokeStyle = '#475569'; ctx.lineWidth = 6;
+                ctx.beginPath(); ctx.moveTo(handleX - 15, 0); ctx.lineTo(handleX, 0); ctx.stroke();
+                ctx.fillStyle = '#ffd43b'; ctx.beginPath(); ctx.arc(handleX, 0, 7, 0, Math.PI*2); ctx.fill();
+
+                // Вектор силы младенца (Появляется только после верного ответа!)
+                if (gameState === "success_anim") {
+                    drawArrow(handleX, 0, handleX, 50, '#10b981', `F = ${currentTask.f1} Н`);
+                } else {
+                    drawArrow(handleX, 0, handleX, 35, '#94a3b8', "F = ?");
+                }
+
+                // Плечо силы l
+                ctx.fillStyle = '#0284c7'; ctx.font = '12px monospace';
+                ctx.fillText(`l = ${currentTask.l1} м`, handleX / 2 - 15, -15);
+                ctx.restore();
+
             } else {
-                // Стандартный опорный треугольник качелей для остальных уровней
+                // СТЕНД КАЧЕЛЕЙ ДЛЯ ОСТАЛЬНЫХ ЗАДАЧ
                 ctx.fillStyle = '#64748b';
-                ctx.beginPath();
-                ctx.moveTo(centerX, centerY);
-                ctx.lineTo(centerX - 20, groundY);
-                ctx.lineTo(centerX + 20, groundY);
-                ctx.fill();
-            }
+                ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(centerX - 15, groundY); ctx.lineTo(centerX + 15, groundY); ctx.fill();
 
-            // Трансформация контекста для вращения рычага качелей
-            ctx.save();
-            if (currentTask && currentTask.level === 3) {
-                // Для двери ось вращения (петли) находится слева
-                ctx.translate(centerX - 120, centerY);
-            } else {
-                // Для качелей ось вращения строго по центру
+                ctx.save();
                 ctx.translate(centerX, centerY);
-            }
-            ctx.rotate(leverAngle);
+                ctx.rotate(leverAngle);
 
-            // 2. Отрисовка самой твёрдой палочки (Рычага)
-            if (currentTask && currentTask.level === 3) {
-                // Дверная ручка-рычаг
-                ctx.strokeStyle = '#475569'; ctx.lineWidth = 8;
-                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(currentTask.l1 * pxPerMeter * 2, 0); ctx.stroke();
-                ctx.fillStyle = '#ffd43b'; ctx.beginPath(); ctx.arc(currentTask.l1 * pxPerMeter * 2, 0, 8, 0, Math.PI*2); ctx.fill();
-            } else {
                 // Доска качелей
-                ctx.strokeStyle = '#b45309'; ctx.lineWidth = 8;
+                ctx.strokeStyle = '#b45309'; ctx.lineWidth = 6;
                 ctx.beginPath(); ctx.moveTo(-200, 0); ctx.lineTo(200, 0); ctx.stroke();
-                // Разметка делений (метры)
-                ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 2;
+                
+                // Деления метров
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2;
                 for(let m = -180; m <= 180; m += pxPerMeter) {
                     if (m === 0) continue;
-                    ctx.beginPath(); ctx.moveTo(m, -4); ctx.lineTo(m, 4); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(m, -3); ctx.lineTo(m, 3); ctx.stroke();
                 }
-            }
 
-            // 3. ОТРИСОВКА ГРУЗОВ И ВЕКТОРОВ СИЛ (СТРОГО БЕЗ СПОЙЛЕРОВ)
-            let hideSystem = currentTask && currentTask.hide ? currentTask.hide : "";
+                // Сила 1 (Левая, всегда стабильна)
+                drawBoxAndForce(-currentTask.l1 * pxPerMeter, 20, '#ef4444', `F₁=${currentTask.f1}Н`, `l₁=${currentTask.l1}м`, true);
 
-            if (currentTask) {
-                if (currentTask.level === 3) {
-                    // Уровень 3: Младенец жмёт на ручку двери вертикально вниз
-                    let fLabel = hideSystem.includes("f") ? "F = ?" : `F = ${currentTask.f1} Н`;
-                    drawArrow(currentTask.l1 * pxPerMeter * 2, 0, currentTask.l1 * pxPerMeter * 2, 50, '#dc2626', fLabel);
+                // УПРАВЛЕНИЕ ДИНАМИКОЙ КУБИКОВ (Правки №1, №2, №4, №5)
+                if (currentTask.level === 1 || currentTask.level === 4) {
+                    // --- МЕХАНИКА ДЛЯ ПЛЕМЕН (Задачи 1 и 4) ---
+                    let targetXPos = currentTask.l2 * pxPerMeter;
+                    if (gameState === "success_anim") {
+                        // После верного ответа груз плавно подъезжает в точку баланса!
+                        currentL2Pos += (targetXPos - currentL2Pos) * 0.05;
+                    }
                     
-                    // Показ плеча линии l
-                    ctx.fillStyle = '#0284c7'; ctx.font = '11px monospace';
-                    let lLabel = hideSystem.includes("l") ? "l = ?" : `l = ${currentTask.l1} м`;
-                    ctx.fillText(lLabel, (currentTask.l1 * pxPerMeter), -10);
-                } else if (currentTask.level === 5) {
-                    // Уровень 5: Две силы справа, одна слева
-                    // Сила 1 (Слева)
-                    drawBoxAndForce(-currentTask.l1 * pxPerMeter, 20, '#ef4444', `F₁=${currentTask.f1}Н`, `l₁=${currentTask.l1}м`);
-                    // Сила 2 (Справа ближняя)
-                    drawBoxAndForce(currentTask.l2 * pxPerMeter, 15, '#3b82f6', `F₂=${currentTask.f2}Н`, `l₂=${currentTask.l2}м`);
-                    // Сила 3 (Справа дальняя, искомая)
-                    let f3Label = hideSystem.includes("f") ? "F₃ = ?" : `F₃ = ${currentTask.f3} Н`;
-                    drawBoxAndForce(currentTask.l3 * pxPerMeter, 12, '#10b981', f3Label, `l₃=${currentTask.l3}м`);
-                } else {
-                    // Стандартные уровни 1, 2, 4 (Одна сила слева, одна справа)
-                    // Сила 1 (Слева)
-                    let l1Label = hideSystem.includes("l1") ? "l₁ = ?" : `l₁ = ${currentTask.l1} м`;
-                    drawBoxAndForce(-currentTask.l1 * pxPerMeter, 22, '#ef4444', `F₁=${currentTask.f1}Н`, l1Label);
+                    let l2Label = gameState === "success_anim" ? `l₂=${currentTask.l2}м` : "l₂ = ?";
+                    drawBoxAndForce(currentL2Pos, currentTask.level === 1 ? 28 : 16, '#16a34a', `F₂=${currentTask.f2}Н`, l2Label, true);
 
-                    // Сила 2 (Справа)
-                    let f2Label = hideSystem.includes("f2") ? "F₂ = ?" : `F₂ = ${currentTask.f2} Н`;
-                    let l2Label = hideSystem.includes("l2") ? "l₂ = ?" : `l₂ = ${currentTask.l2} м`;
-                    drawBoxAndForce(currentTask.l2 * pxPerMeter, currentTask.level === 1 ? 30 : 18, '#16a34a', f2Label, l2Label);
+                } else if (currentTask.level === 2 || currentTask.level === 5) {
+                    // --- МЕХАНИКА ДЛЯ СИЛ (Задачи 2 и 5) ---
+                    // Правый груз лежит строго на своём законном месте l2
+                    if (currentTask.level === 2) {
+                        let showForceArrow = (gameState === "success_anim");
+                        let f2Label = showForceArrow ? `F₂=${currentTask.f2}Н` : "F₂ = ?";
+                        drawBoxAndForce(currentTask.l2 * pxPerMeter, 18, showForceArrow ? '#16a34a' : '#94a3b8', f2Label, `l₂=${currentTask.l2}м`, showForceArrow);
+                    } else if (currentTask.level === 5) {
+                        // Олимпиадный уровень: 3 груза
+                        drawBoxAndForce(currentTask.l2 * pxPerMeter, 15, '#3b82f6', `F₂=${currentTask.f2}Н`, `l₂=${currentTask.l2}м`, true);
+                        
+                        let showForceArrow = (gameState === "success_anim");
+                        let f3Label = showForceArrow ? `F₃=${currentTask.f3}Н` : "F₃ = ?";
+                        drawBoxAndForce(currentTask.l3 * pxPerMeter, 12, showForceArrow ? '#10b981' : '#94a3b8', f3Label, `l₃=${currentTask.l3}м`, showForceArrow);
+                    }
                 }
+
+                ctx.restore();
             }
 
-            ctx.restore(); // Возвращаем контекст из трансформаций
+            // Информационный подвал
+            ctx.fillStyle = '#0f172a'; ctx.font = 'bold 11px sans-serif';
+            ctx.fillText(`Лаборатория моментов: Стенд активен`, 20, groundY + 25);
         }
 
-        function drawBoxAndForce(x, boxSize, color, fText, lText) {
-            // Рисуем кубик груза, лежащий на доске рычага
+        function drawBoxAndForce(x, boxSize, color, fText, lText, drawVector) {
             ctx.fillStyle = color;
-            ctx.fillRect(x - boxSize/2, -boxSize - 4, boxSize, boxSize);
-            ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1;
-            ctx.strokeRect(x - boxSize/2, -boxSize - 4, boxSize, boxSize);
+            ctx.fillRect(x - boxSize/2, -boxSize - 3, boxSize, boxSize);
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.strokeRect(x - boxSize/2, -boxSize - 3, boxSize, boxSize);
 
-            // Вектор силы тяжести груза (вниз)
-            drawArrow(x, -boxSize/2, x, 45, color, fText);
+            // Стрелка вектора силы (рисуется яркой или серой/пустой до ответа)
+            if (drawVector) {
+                drawArrow(x, -boxSize/2, x, 45, color, fText);
+            } else {
+                drawArrow(x, -boxSize/2, x, 30, '#94a3b8', fText); // серый пунктирный набросок
+            }
 
-            // Метка плеча длины l над доской
+            // Текст плеча над кубиком
             ctx.fillStyle = '#475569'; ctx.font = 'bold 10px sans-serif';
-            ctx.fillText(lText, x - 15, -boxSize - 10);
+            ctx.fillText(lText, x - 14, -boxSize - 8);
         }
 
         function drawArrow(x1, y1, x2, y2, color, label) {
@@ -338,52 +355,60 @@
             ctx.fill();
             ctx.font = 'bold 11px sans-serif'; ctx.fillText(label, x2 + 6, y2 + (y2 < y1 ? 12 : -4));
         }
-        // Абсолютно разнородные 5 задач по Пёрышкину с выверенной тригонометрией
+        // Конфигурация 5 уровней согласно новым строгим требованиям интерактива
         const questDatabase = [
             {
                 level: 1,
-                hide: "l2", // скрываем правое плечо l2 мужчине
-                text: "<b>Уровень 1 (Качели-балансир):</b> На левом краю детских качелей на расстоянии l₁ = 4 м сидит худенький мальчик весом F₁ = 200 Н. Справа садится тяжёлый мужчина весом F₂ = 800 Н. На каком расстоянии l₂ от центра опоры должен сесть мужчина, чтобы качели пришли в идеальный баланс?",
+                hide: "l2",
+                text: "<b>Уровень 1 (Качели-балансир):</b> На левом краю качелей на расстоянии l₁ = 4 м сел мальчик весом F₁ = 200 Н. Справа садится мужчина весом F₂ = 800 Н. На каком расстоянии l₂ от центра опоры должен сесть мужчина, чтобы качели пришли в идеальный горизонтальный баланс?",
                 inputLabel: "Вычисли плечо силы l₂:",
                 unit: "м",
-                f1: 200, l1: 4, f2: 800, l2: 1, // Ожидаемый ответ: 200 * 4 = 800 * l2 => l2 = 1 м
-                expected: 1, failAngle: -0.2 // Перевешивает левая сторона мальчика
+                f1: 200, l1: 4, f2: 800, l2: 1, 
+                expected: 1, 
+                startAngle: -0.15, failAngle: -0.22, // Мальчик перевешивает до ответа
+                initL2Pos: 180 // Стартовая позиция кубика мужчины — на самом краю!
             },
             {
                 level: 2,
-                hide: "f2", // скрываем правую силу F2
-                text: "<b>Уровень 2 (Поиск неизвестной силы):</b> К левому концу лёгкого рычага на расстоянии l₁ = 3 м от опоры подвешен тяжелый металлический груз силой веса F₁ = 100 Н. Какую силу F₂ необходимо приложить к правому концу рычага на плече l₂ = 1.5 м, чтобы удержать рычаг в равновесии?",
+                hide: "f2",
+                text: "<b>Уровень 2 (Поиск неизвестной силы):</b> К левому плечу рычага длиной l₁ = 3 м подвешен груз весом F₁ = 100 Н. Справа на расстоянии l₂ = 1.5 м закреплен пустой подвес. Какую силу F₂ необходимо приложить к этому подвесу, чтобы удержать рычаг в равновесии?",
                 inputLabel: "Вычисли удерживающую силу F₂:",
                 unit: "Н",
-                f1: 100, l1: 3, f2: 200, l2: 1.5, // 100 * 3 = F2 * 1.5 => F2 = 200 Н
-                expected: 200, failAngle: -0.2
+                f1: 100, l1: 3, f2: 200, l2: 1.5, 
+                expected: 200, 
+                startAngle: -0.15, failAngle: -0.25, // До ответа силы нет, левая сторона упала
+                initL2Pos: 42 // Груз сразу стоит на 1.5м (1.5 * 28 = 42)
             },
             {
                 level: 3,
-                hide: "work", // Ищем момент силы, скрываем общую подпись работы/момента
-                text: "<b>Уровень 3 (Правило моментов двери):</b> На ручку двери, расположенную на расстоянии l = 0.8 м от петель (оси вращения), младенец нажимает рукой перпендикулярно плоскости двери с крошечной силой F = 10 Н. Вычислите вращающий <b>момент силы М</b>, который создаёт ребёнок.",
+                hide: "work", 
+                text: "<b>Уровень 3 (Правило моментов двери):</b> На ручку двери, расположенную на расстоянии l = 0.8 м от дверных петель (оси вращения), младенец нажимает рукой перпендикулярно полотну. Вычислите вращающий <b>момент силы М</b>, который создаёт ребёнок, если его сила равна F = 10 Н.",
                 inputLabel: "Вычисли момент силы M (Н·м):",
                 unit: "Н·м",
-                f1: 10, l1: 0.8, expected: 8, // M = F * l = 10 * 0.8 = 8 Н*м
-                failAngle: 0.02 // Дверь просто не откроется
+                f1: 10, l1: 0.8, expected: 8, 
+                startAngle: 0, failAngle: 0.01 
             },
             {
                 level: 4,
-                hide: "l2", // скрываем правое плечо, даны массы
-                text: "<b>Уровень 4 (Переход от массы груза):</b> На левое плечо рычага длиной l₁ = 2 м положили бетонный блок массой m₁ = 6 кг. На каком расстоянии l₂ от центра опоры нужно подвесить второй груз массой m₂ = 2 кг, чтобы рычаг уравновесился? (Примите g = 10 Н/кг).",
+                hide: "l2",
+                text: "<b>Уровень 4 (Переход от массы кирпича):</b> На левое плечо рычага длиной l₁ = 2 м положили блок массой m₁ = 6 кг. На каком расстоянии l₂ от центра опоры нужно положить второй груз массой m₂ = 2 кг, чтобы рычаг выровнялся? (Примите g = 10 Н/кг).",
                 inputLabel: "Вычисли плечо силы l₂:",
                 unit: "м",
-                f1: 60, l1: 2, f2: 20, l2: 6, // F1=60Н, F2=20Н. 60 * 2 = 20 * l2 => l2 = 6 м
-                expected: 6, failAngle: -0.2
+                f1: 60, l1: 2, f2: 20, l2: 6, 
+                expected: 6, 
+                startAngle: -0.15, failAngle: -0.25,
+                initL2Pos: 180 // Груз m2 лежит на самом краю (180px), создавая жесткий перекос
             },
             {
                 level: 5,
-                hide: "f", // скрываем силу F3 на олимпиадном уровне
-                text: "<b>Уровень 5 (Супер-инженер: Баланс трёх сил):</b> Рычаг нагружен тремя силами. Слева висит груз F₁ = 300 Н на плече l₁ = 2 м. Справа на расстоянии l₂ = 1 м висит груз F₂ = 200 Н. Какой силы груз F₃ нужно подвесить на самый правый край рычага (l₃ = 4 м), чтобы восстановилось равновесие?",
+                hide: "f",
+                text: "<b>Уровень 5 (Олимпиадный: Баланс трёх сил):</b> Слева от опоры на плече l₁ = 2 м висит груз F₁ = 300 Н. Справа на расстоянии l₂ = 1 м закреплен груз F₂ = 200 Н. Какую силу F₃ нужно приложить к самому правому краю рычага (l₃ = 4 м), чтобы восстановить баланс?",
                 inputLabel: "Вычисли компенсирующую силу F₃:",
                 unit: "Н",
-                f1: 300, l1: 2, f2: 200, l2: 1, f3: 100, l3: 4, // 300*2 = 200*1 + F3*4 => 600 = 200 + 4*F3 => F3 = 100 Н
-                expected: 100, failAngle: -0.2
+                f1: 300, l1: 2, f2: 200, l2: 1, f3: 100, l3: 4, 
+                expected: 100, 
+                startAngle: -0.12, failAngle: -0.22,
+                initL2Pos: 112 // l3 зафиксирован на 4м (4 * 28 = 112)
             }
         ];
 
@@ -399,7 +424,12 @@
             document.getElementById('inputLabel').innerText = currentTask.inputLabel;
             document.getElementById('unitLabel').innerText = currentTask.unit;
             
-            leverAngle = 0.05; // стартовый лёгкий перекос
+            leverAngle = currentTask.startAngle;
+            
+            // Загружаем стартовую позицию перемещаемого кубика (если он есть в условиях)
+            if (currentTask.initL2Pos !== undefined) {
+                currentL2Pos = currentTask.initL2Pos;
+            }
             
             document.getElementById('userAnswer').value = "";
             document.getElementById('feedbackBlock').style.display = "none";
@@ -409,10 +439,10 @@
 
         function updateGameLoop() {
             if (gameState === "success_anim") {
-                leverAngle += (0 - leverAngle) * 0.08; // Выравниваем строго в 0 (горизонт)
-                bodyOffset = 0;
+                // Выравнивание рычага в идеальный 0
+                leverAngle += (0 - leverAngle) * 0.06;
             } else if (gameState === "fail_anim") {
-                leverAngle += (currentTask.failAngle - leverAngle) * 0.08; // Откидываем в сторону падения
+                leverAngle += (currentTask.failAngle - leverAngle) * 0.06;
                 if (Math.abs(leverAngle - currentTask.failAngle) < 0.01) {
                     setTimeout(resetAfterFail, 1500);
                 }
@@ -424,6 +454,9 @@
 
         function resetAfterFail() {
             gameState = "observing";
+            if (currentTask.initL2Pos !== undefined) {
+                currentL2Pos = currentTask.initL2Pos;
+            }
             document.getElementById('checkBtn').style.display = "block";
         }
 
@@ -436,15 +469,14 @@
 
             if (isNaN(userAns)) {
                 feed.className = "feedback error";
-                feed.innerText = "⚠️ Сначала введите числовой ответ в поле бланка!";
+                feed.innerText = "⚠️ Сначала введите числовой ответ!";
                 return;
             }
 
             if (Math.abs(userAns - currentTask.expected) < 0.1) {
-                // УСПЕХ
                 gameState = "success_anim";
                 feed.className = "feedback success";
-                feed.innerHTML = `🎉 Верно! Моменты сил идеально скомпенсированы. Система находится в равновесии!`;
+                feed.innerHTML = `🎉 Абсолютно верно! Условие равновесия плеч и моментов выполнено.`;
                 document.getElementById('checkBtn').style.display = "none";
                 
                 setTimeout(() => {
@@ -452,20 +484,17 @@
                     if (currentLevelIdx < questDatabase.length) {
                         loadQuest(currentLevelIdx);
                     } else {
-                        document.getElementById('taskLabel').innerHTML = "🏆 <b>ТРИУМФ МЕХАНИКИ!</b> Ты успешно прошёл все 5 уровней, разгадал секрет плеча силы и правила моментов! Архимед гордился бы тобой!";
+                        document.getElementById('taskLabel').innerHTML = "🏆 <b>ПОЛНАЯ ПОБЕДА!</b> Ты успешно подчинил себе правило моментов Архимеда! Двери, рычаги и системы сил теперь в идеальном балансе!";
                     }
-                }, 3000);
+                }, 3500);
             } else {
-                // КАТАСТРОФА
                 gameState = "fail_anim";
-                targetAngle = currentTask.failAngle;
                 feed.className = "feedback error";
-                feed.innerHTML = `❌ Расчёт неверный! Рычаг опрокинулся. Сумма вращающих моментов не равна нулю. Перепроверь плечи сил на черновике!`;
+                feed.innerHTML = `❌ Дисбаланс моментов! Момент слева не равен моменту справа, система опрокинулась. Пересчитай пропорцию!`;
                 document.getElementById('checkBtn').style.display = "none";
             }
         });
 
-        // Старт
         loadQuest(currentLevelIdx);
         updateGameLoop();
     </script>
