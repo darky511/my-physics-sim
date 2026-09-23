@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Интерактивная физика: Битва за колпак</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e24;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #4dabf7; margin-bottom: 10px; text-align: center; }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 900px;
+            width: 100%;
+        }
+        .canvas-container { background: #2b2b36; border-radius: 12px; padding: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+        .controls {
+            flex: 1;
+            min-width: 280px;
+            background: #2b2b36;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-pump-in { background: #ff922b; color: #fff; }
+        .btn-pump-in:hover { background: #f76707; }
+        .btn-pump-out { background: #22b8cf; color: #fff; }
+        .btn-pump-out:hover { background: #0c8599; }
+        .btn-reset { background: #868e96; color: #fff; }
+        .btn-reset:hover { background: #495057; }
+        .stat-box {
+            background: #1e1e24;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #4dabf7;
+        }
+        .stat-value { font-weight: bold; color: #ffd43b; }
+    </style>
+</head>
+<body>
+
+    <h1>🎮 Лабораторный квест: Давление в сосуде</h1>
+    
+    <div class="container">
+        <!-- Визуализация -->
+        <div class="canvas-container">
+            <canvas id="physicsCanvas" width="360" height="450"></canvas>
+        </div>
+        
+        <!-- Пульт управления -->
+        <div class="controls">
+            <h3>Управление насосом:</h3>
+            <button class="btn-pump-in" id="pumpInBtn">💨 Накачать воздух в сосуд</button>
+            <button class="btn-pump-out" id="pumpOutBtn">🌪️ Откачать воздух из сосуда</button>
+            <button class="btn-reset" id="resetBtn">🔄 Сброс системы</button>
+            
+            <h3>Датчики показателей:</h3>
+            <div class="stat-box">Давление в сосуде: <span id="pVesselText" class="stat-value">100</span> кПа</div>
+            <div class="stat-box">Давление под колпаком: <span id="pInText" class="stat-value">110</span> кПа</div>
+            <div class="stat-box">Положение колпака: <span id="posText" class="stat-value">Стабильно</span></div>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('physicsCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Физические параметры
+        let pVessel = 100; // Начальное давление в сосуде (кПа)
+        let cylinderY = 220; // Начальная высота колпака (координата Y верхней стенки)
+        let targetY = 220;   // Куда колпак стремится по законам физики
+        const pistonY = 280; // Неподвижный поршень (координата верхушки поршня)
+        const mass = 15;     // Вес колпака в условных единицах давления
+
+        // Константы размеров
+        const vesselX = 60, vesselY = 40, vesselW = 240, vesselH = 360;
+        const pistonX = 140, pistonW = 80, pistonH = 12;
+        const rodX = 176, rodW = 8, rodH = 120;
+        const cylW = 96, cylH = 110, cylX = 132;
+
+        function drawSystem() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Внешний большой сосуд (фон давления)
+            let vesselAlpha = Math.min(0.8, pVessel / 300);
+            ctx.fillStyle = `rgba(77, 171, 247, ${vesselAlpha})`;
+            ctx.fillRect(vesselX, vesselY, vesselW, vesselH);
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(vesselX, vesselY, vesselW, vesselH);
+
+            // Входная труба насоса
+            ctx.beginPath();
+            ctx.moveTo(vesselX, vesselY + 40);
+            ctx.lineTo(vesselX - 25, vesselY + 40);
+            ctx.lineTo(vesselX - 25, vesselY + 70);
+            ctx.stroke();
+
+            // 2. Неподвижный поршень на ножке
+            ctx.fillStyle = '#868e96';
+            ctx.fillRect(rodX, pistonY + pistonH, rodW, rodH); // Ножка поршня ко дну
+            ctx.fillStyle = '#adb5bd';
+            ctx.fillRect(pistonX, pistonY, pistonW, pistonH); // Сам поршень
+
+            // 3. Запертый воздух внутри подвижного цилиндра (колпака)
+            // Считаем внутреннее давление по закону Бойля-Мариотта (приблизительно для визуала)
+            let volume = Math.max(10, pistonY - cylinderY);
+            let pInternal = Math.round((110 * 60) / volume);
+
+            let innerAlpha = Math.min(0.9, pInternal / 300);
+            ctx.fillStyle = `rgba(255, 107, 107, ${innerAlpha})`;
+            ctx.fillRect(cylX + 4, cylinderY + 4, cylW - 8, pistonY - cylinderY);
+
+            // 4. Подвижный цилиндр (колпак), надетый сверху
+            ctx.strokeStyle = '#ffd43b';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(cylX, pistonY + 30); // Левая стенка чуть ниже поршня
+            ctx.lineTo(cylX, cylinderY);    // Вверх до крышки
+            ctx.lineTo(cylX + cylW, cylinderY); // Крышка колпака
+            ctx.lineTo(cylX + cylW, pistonY + 30); // Правая стенка вниз
+            ctx.stroke();
+
+            // Обновляем текст на датчиках
+            document.getElementById('pVesselText').innerText = Math.round(pVessel);
+            document.getElementById('pInText').innerText = pInternal;
+            
+            // Логика статуса положения
+            let statusText = "Стабилен";
+            if (pInternal > pVessel + mass + 2) statusText = "🚀 Взлетает вверх!";
+            if (pInternal < pVessel + mass - 2) statusText = "📉 Опускается вниз!";
+            if (cylinderY <= vesselY + 5) statusText = "💥 Упёрся в потолок!";
+            if (cylinderY >= pistonY - 15) statusText = "⚠️ Сел на поршень!";
+            document.getElementById('posText').innerText = statusText;
+        }
+        function updatePhysics() {
+            // Рассчитываем идеальную высоту колпака из уравнения баланса сил:
+            // P_внутри * S = P_сосуда * S + mg  =>  P_внутри = P_сосуда + const_массы
+            // Отсюда через объём находим целевой Y
+            let targetVolume = (110 * 60) / (pVessel + mass);
+            targetY = pistonY - targetVolume;
+
+            // Ограничения движения (чтобы не улетел сквозь стены и не пробил поршень)
+            if (targetY < vesselY + 10) targetY = vesselY + 10;
+            if (targetY > pistonY - 10) targetY = pistonY - 10;
+
+            // Плавная анимация движения к целевой точке (эффект инерции)
+            cylinderY += (targetY - cylinderY) * 0.1;
+
+            drawSystem();
+            requestAnimationFrame(updatePhysics);
+        }
+
+        // Обработчики кнопок управления
+        document.getElementById('pumpInBtn').addEventListener('click', () => {
+            if (pVessel < 280) pVessel += 25; // Накачиваем
+        });
+
+        document.getElementById('pumpOutBtn').addEventListener('click', () => {
+            if (pVessel > 20) pVessel -= 25; // Откачиваем
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            pVessel = 100; // Сброс к норме
+        });
+
+        // Запуск симуляции
+        updatePhysics();
+    </script>
+</body>
+</html>
