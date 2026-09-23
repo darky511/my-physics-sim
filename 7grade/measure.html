@@ -2,12 +2,12 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Физическая Лаборатория: Перевод в СИ</title>
+    <title>Игровой СИ-Конструктор</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0b0f19;
-            color: #f1f5f9;
+            background: #0f172a;
+            color: #f8fafc;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -16,7 +16,7 @@
             user-select: none;
         }
         h1 { color: #38bdf8; font-size: 24px; margin-bottom: 5px; text-align: center; }
-        .subtitle { color: #64748b; font-size: 14px; margin-bottom: 25px; }
+        .subtitle { color: #64748b; font-size: 14px; margin-bottom: 25px; text-align: center; }
         .container {
             background: #1e293b;
             border-radius: 16px;
@@ -24,281 +24,203 @@
             max-width: 650px;
             width: 100%;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            border: 1px solid #334155;
         }
-        .quest-card {
-            background: #0f172a;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #ffd43b;
-            margin-bottom: 20px;
-            border-left: 5px solid #38bdf8;
-        }
-        /* Интерактивные переключатели действий */
-        .action-selector {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .action-btn {
-            background: #334155;
-            border: 2px solid #475569;
-            color: #fff;
-            padding: 12px 25px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex: 1;
-        }
-        .action-btn.active {
-            background: #0284c7;
-            border-color: #38bdf8;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-        }
-        /* Интерактивный слайдер множителей */
-        .multiplier-box {
+        /* Главное табло задачи */
+        .quest-board {
             background: #0f172a;
             padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            border-radius: 12px;
             text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffd43b;
+            margin-bottom: 25px;
+            border: 2px solid #334155;
         }
-        .slider-label { display: flex; justify-content: space-between; color: #94a3b8; font-size: 14px; margin-bottom: 10px; }
-        input[type=range] {
-            width: 100%;
-            cursor: pointer;
-            accent-color: #38bdf8;
-        }
-        .current-mult { font-size: 22px; font-weight: bold; color: #38bdf8; margin-top: 10px; font-family: monospace; }
-        
-        /* Живая сборка формулы */
-        .live-formula {
+        /* Визуальный конвейер трансформации числа */
+        .conveyor {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            background: #1e293b;
-            border: 2px dashed #475569;
-            padding: 15px;
+            gap: 12px;
+            background: #334155;
+            padding: 20px;
             border-radius: 10px;
-            font-size: 20px;
-            font-family: monospace;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
-        .num-block { background: #334155; padding: 5px 12px; border-radius: 6px; font-weight: bold; }
-        .num-block.highlight { color: #38bdf8; border: 1px solid #38bdf8; }
-        
-        .final-input-box {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .final-input-box input {
-            background: #0f172a;
-            border: 2px solid #475569;
-            color: #fff;
-            font-size: 22px;
-            padding: 10px;
+        .node {
+            background: #1e293b;
+            padding: 12px 20px;
             border-radius: 8px;
-            width: 180px;
-            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
             font-family: monospace;
+            border: 2px solid #475569;
+            min-width: 80px;
+            text-align: center;
         }
-        .final-input-box input:focus { border-color: #38bdf8; outline: none; }
-        
-        .btn-submit {
-            width: 100%;
-            padding: 15px;
-            background: #10b981;
-            color: #fff;
-            border: none;
+        .arrow { font-size: 24px; color: #94a3b8; }
+        /* Пустой слот для кубика */
+        .slot {
+            background: #0f172a;
+            border: 2px dashed #38bdf8;
+            color: #38bdf8;
+            min-width: 110px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 8px;
             font-size: 18px;
             font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
         }
-        .btn-submit:hover { background: #059669; }
-        .feedback { text-align: center; font-size: 16px; font-weight: bold; margin-top: 15px; padding: 10px; border-radius: 6px; display: none; }
-        .success { background: rgba(16, 185, 129, 0.2); color: #4ade80; border: 1px solid #10b981; }
-        .error { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        .slot.filled {
+            background: #0284c7;
+            color: white;
+            border-style: solid;
+        }
+        /* Сетка доступных кубиков-действий */
+        .blocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .cube-btn {
+            background: #475569;
+            color: white;
+            border: none;
+            padding: 15px 10px;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: monospace;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .cube-btn:hover { background: #64748b; transform: translateY(-2px); }
+        .cube-btn:active { transform: translateY(0); }
+        
+        .feedback {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .success { background: rgba(16, 185, 129, 0.15); color: #4ade80; border: 1px solid #10b981; }
+        .error { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #ef4444; }
     </style>
 </head>
 <body>
 
-    <h1>⚡ СИ-Конвертер: Запуск Коллайдера</h1>
-    <div class="subtitle">Настрой правильные математические узлы, чтобы перевести величину в СИ!</div>
+    <h1>⚡ СИ-Конструктор: Энергетический Мост</h1>
+    <div class="subtitle">Подбери правильный кубик-модификатор, чтобы перевести параметры в систему СИ!</div>
 
     <div class="container">
-        <!-- Текущая задача -->
-        <div class="quest-card" id="questLabel">Загрузка...</div>
+        <!-- Табло текущего квеста -->
+        <div class="quest-board" id="questText">Загрузка космической системы...</div>
 
-        <!-- Переключатель: Умножить или Поделить -->
-        <label style="font-weight: bold; margin-bottom: 8px; display: block;">1. Выбери действие с числом:</label>
-        <div class="action-selector">
-            <button class="action-btn" id="btnMultiply">✖ УМНОЖИТЬ (из больших в мелкие)</button>
-            <button class="action-btn" id="btnDivide">➗ ПОДЕЛИТЬ (из мелких в СИ)</button>
+        <!-- Схема физического конвейера -->
+        <div class="conveyor">
+            <div class="node" id="startNode">0</div>
+            <div class="arrow">➔</div>
+            <div class="slot" id="operatorSlot">[ Выбери кубик ]</div>
+            <div class="arrow">➔</div>
+            <div class="node" id="resultNode">?</div>
         </div>
 
-        <!-- Слайдер коэффициентов -->
-        <div class="multiplier-box">
-            <div class="slider-label">
-                <span>2. Выбери коэффициент (нулей):</span>
-                <span id="sliderValueText">10</span>
-            </div>
-            <input type="range" id="multSlider" min="0" max="4" step="1" value="1">
-            <div class="current-mult" id="currentMultValue">× 10</div>
-        </div>
+        <!-- Панель выбора интерактивных кубиков -->
+        <label style="font-weight: bold; color: #94a3b8; display: block; margin-bottom: 10px;">Доступные кубики-модификаторы:</label>
+        <div class="blocks-grid" id="gridContainer"></div>
 
-        <!-- Интерактивный интерактивный конструктор -->
-        <label style="font-weight: bold; margin-bottom: 8px; display: block;">3. Промежуточный узел сборки:</label>
-        <div class="live-formula">
-            <span class="num-block" id="formulaStartVal">0</span>
-            <span id="formulaSign">?</span>
-            <span class="num-block highlight" id="formulaMultVal">10</span>
-            <span>=</span>
-            <span>...</span>
-        </div>
-
-        <!-- Финальный ответ -->
-        <div class="final-input-box">
-            <label style="font-weight: bold; color: #94a3b8;">4. Итоговое значение в СИ:</label>
-            <div>
-                <input type="number" id="finalAnswer" placeholder="0.00" step="any">
-                <span style="font-size: 20px; font-weight: bold; margin-left: 10px;" id="targetUnit">м</span>
-            </div>
-        </div>
-
-        <button class="btn-submit" id="submitBtn">🔋 Проверить и подать энергию</button>
-        <div class="feedback" id="feedbackBlock"></div>
+        <!-- Уведомления об успехе/ошибке -->
+        <div class="feedback" id="feedbackMessage"></div>
     </div>
     <script>
-        // Список разноплановых задач на перевод единиц (Длина, Масса, Время, Скорость, Площадь, Объем)
-        const siDatabase = [
-            { quest: "Переведи 5 км в метры (СИ)", startVal: 5, action: "multiply", factor: 1000, final: 5000, unit: "м" },
-            { quest: "Переведи 450 г в килограммы (СИ)", startVal: 450, action: "divide", factor: 1000, final: 0.45, unit: "кг" },
-            { quest: "Переведи 20 см в метры (СИ)", startVal: 20, action: "divide", factor: 100, final: 0.2, unit: "м" },
-            { quest: "Переведи 3 тонны в килограммы (СИ)", startVal: 3, action: "multiply", factor: 1000, final: 3000, unit: "кг" },
-            { quest: "Переведи 120 минут в секунды (СИ)", startVal: 120, action: "multiply", factor: 60, final: 7200, unit: "с", customFactor: true },
-            { quest: "Переведи 500 мг в килограммы (СИ)", startVal: 500, action: "divide", factor: 1000000, final: 0.0005, unit: "кг", customFactor: true },
-            { quest: "Переведи 72 км/ч в метры в секунду (СИ)", startVal: 72, action: "divide", factor: 3.6, final: 20, unit: "м/с", customFactor: true },
-            { quest: "Переведи 2 см² в квадратные метры (СИ)", startVal: 2, action: "divide", factor: 10000, final: 0.0002, unit: "м²", customFactor: true },
-            { quest: "Переведи 5 литров в кубические метры (СИ)", startVal: 5, action: "divide", factor: 1000, final: 0.005, unit: "м³" }
+        // Полностью автономная и проверенная база задач без внешних зависимостей
+        const missions = [
+            { text: "Переведи путь: 5 км ➔ ? метров (СИ)", start: 5, blockLabel: "· 1000", resultStr: "5000 м", isCorrect: (label) => label === "· 1000" },
+            { text: "Переведи массу: 450 г ➔ ? килограмм (СИ)", start: 450, blockLabel: ": 1000", resultStr: "0.45 кг", isCorrect: (label) => label === ": 1000" },
+            { text: "Переведи размер: 20 см ➔ ? метров (СИ)", start: 20, blockLabel: ": 100", resultStr: "0.2 м", isCorrect: (label) => label === ": 100" },
+            { text: "Переведи время: 3 минуты ➔ ? секунд (СИ)", start: 3, blockLabel: "· 60", resultStr: "180 с", isCorrect: (label) => label === "· 60" },
+            { text: "Переведи скорость: 72 км/ч ➔ ? м/с (СИ)", start: 72, blockLabel: ": 3.6", resultStr: "20 м/с", isCorrect: (label) => label === ": 3.6" },
+            { text: "Переведи площадь: 5 см² ➔ ? м² (СИ)", start: 5, blockLabel: ": 10000", resultStr: "0.0005 м²", isCorrect: (label) => label === ": 10000" },
+            { text: "Переведи объём: 8 литров ➔ ? м³ (СИ)", start: 8, blockLabel: ": 1000", resultStr: "0.008 м³", isCorrect: (label) => label === ": 1000" }
         ];
 
-        let currentId = 0;
-        let selectedAction = ""; // "multiply" или "divide"
-        let currentFactor = 10;
+        // Все доступные варианты кубиков, которые мы разложим перед учеником на столе
+        const availablePool = ["· 1000", ": 1000", ": 100", "· 60", ": 3.6", ": 10000", "· 100", ": 60"];
 
-        function loadQuestion(id) {
-            const q = siDatabase[id];
-            document.getElementById('questLabel').innerText = `🎯 Задача: ${q.quest}`;
-            document.getElementById('formulaStartVal').innerText = q.startVal;
-            document.getElementById('targetUnit').innerText = q.unit;
+        let currentMissionIdx = 0;
+
+        // Генерация кнопок-кубиков на панели
+        function renderCubeButtons() {
+            const grid = document.getElementById('gridContainer');
+            grid.innerHTML = ""; // очистка
+
+            availablePool.forEach(label => {
+                const btn = document.createElement('button');
+                btn.className = 'cube-btn';
+                btn.innerText = label;
+                // Привязываем событие клика по кубику
+                btn.onclick = () => handleCubeClick(label);
+                grid.appendChild(btn);
+            });
+        }
+        function loadMission(idx) {
+            const mission = missions[idx];
             
-            // Сброс интерфейса пульта
-            selectedAction = "";
-            document.getElementById('btnMultiply').classList.remove('active');
-            document.getElementById('btnDivide').classList.remove('active');
-            document.getElementById('formulaSign').innerText = "?";
-            document.getElementById('finalAnswer').value = "";
-            document.getElementById('feedbackBlock').style.display = "none";
+            // Обновляем текстовые элементы на табло
+            document.getElementById('questText').innerText = mission.text;
+            document.getElementById('startNode').innerText = mission.start;
             
-            // Настройка слайдера под тип вопроса
-            const slider = document.getElementById('multSlider');
-            slider.value = 1; 
-            updateSliderView();
+            // Сбрасываем центральный слот в пустое состояние
+            const slot = document.getElementById('operatorSlot');
+            slot.innerText = "[ Выбери кубик ]";
+            slot.className = "slot";
+            
+            document.getElementById('resultNode').innerText = "?";
+            document.getElementById('feedbackMessage').style.display = "none";
         }
 
-        function updateSliderView() {
-            const q = siDatabase[currentId];
-            const sliderIdx = parseInt(document.getElementById('multSlider').value);
-            
-            // Задаем логику шагов коэффициента (теперь без синтаксических пустот!)
-            if (q.customFactor) {
-                const customSet = [3.6, 60, 100, 10000, 1000000];
-                currentFactor = customSet[sliderIdx];
-            } else {
-                const standardSet =;
-                currentFactor = standardSet[sliderIdx];
-            }
+        function handleCubeClick(chosenLabel) {
+            const mission = missions[currentMissionIdx];
+            const slot = document.getElementById('operatorSlot');
+            const feed = document.getElementById('feedbackMessage');
 
-            document.getElementById('sliderValueText').innerText = currentFactor;
-            
-            let signSymbol = selectedAction === "multiply" ? "×" : (selectedAction === "divide" ? "÷" : "?");
-            document.getElementById('currentMultValue').innerText = `${signSymbol} ${currentFactor}`;
-            document.getElementById('formulaMultVal').innerText = currentFactor;
-        }
-        // Обработка кликов по кнопкам действий (умножить/разделить)
-        document.getElementById('btnMultiply').addEventListener('click', () => {
-            selectedAction = "multiply";
-            document.getElementById('btnMultiply').className = "action-btn active";
-            document.getElementById('btnDivide').className = "action-btn";
-            document.getElementById('formulaSign').innerText = "×";
-            updateSliderView();
-        });
-
-        document.getElementById('btnDivide').addEventListener('click', () => {
-            selectedAction = "divide";
-            document.getElementById('btnDivide').className = "action-btn active";
-            document.getElementById('btnMultiply').className = "action-btn";
-            document.getElementById('formulaSign').innerText = "÷";
-            updateSliderView();
-        });
-
-        // Слушатель изменения слайдера
-        document.getElementById('multSlider').addEventListener('input', updateSliderView);
-
-        // Кнопка проверки ответа
-        document.getElementById('submitBtn').addEventListener('click', () => {
-            const q = siDatabase[currentId];
-            const userFinal = parseFloat(document.getElementById('finalAnswer').value);
-            const feed = document.getElementById('feedbackBlock');
-            
+            // Анимируем вставку кубика в слот конвейера
+            slot.innerText = chosenLabel;
+            slot.className = "slot filled";
             feed.style.display = "block";
 
-            // Шаг 1. Валидация знака действия
-            if (selectedAction !== q.action) {
+            // Проверяем, правильный ли кубик выбрал ученик
+            if (mission.isCorrect(chosenLabel)) {
+                // Если выбор верен
+                document.getElementById('resultNode').innerText = mission.resultStr;
+                feed.className = "feedback success";
+                feed.innerHTML = `🎉 Великолепно! Энергетический мост стабилен. <br> Выбран правильный масштаб приставки: <b>${mission.start} ${chosenLabel.replace('·', '×').replace(':', '÷')} = ${mission.resultStr}</b>`;
+
+                // Автопереход к следующей загадке через 3 секунды
+                setTimeout(() => {
+                    currentMissionIdx = (currentMissionIdx + 1) % missions.length;
+                    loadMission(currentMissionIdx);
+                }, 3000);
+            } else {
+                // Если кубик не подошел
+                document.getElementById('resultNode').innerText = "Ошибка";
                 feed.className = "feedback error";
-                feed.innerText = "❌ Ошибка в узле действия! Подумай: исходная единица измерения крупнее или мельче системной (СИ)? Если переводим мелкие (г, см) в крупные СИ (кг, м) — число должно уменьшаться, выбирай деление!";
-                return;
+                feed.innerText = `❌ Цепь разорвана! Модификатор "${chosenLabel}" не подходит для этой величины. Подумай, во сколько раз отличаются исходная единица и системная (СИ), и уменьшиться должно число или увеличиться?`;
             }
+        }
 
-            // Шаг 2. Валидация коэффициента приставки
-            if (currentFactor !== q.factor) {
-                feed.className = "feedback error";
-                feed.innerText = `❌ Неверный коэффициент! Ты выбрал ${currentFactor}, но для этой приставки нужно другое количество нулей. Передвинь слайдер!`;
-                return;
-            }
-
-            // Шаг 3. Валидация финальных расчетов
-            if (isNaN(userFinal) || Math.abs(userFinal - q.final) > 0.0001) {
-                feed.className = "feedback error";
-                feed.innerText = "❌ Ошибка вычислений! Пульт настроен верно, но итоговое математическое значение в поле №4 посчитано неверно.";
-                return;
-            }
-
-            // Успех!
-            feed.className = "feedback success";
-            feed.innerHTML = `🎉 Отлично! Узлы зафиксированы, энергия пошла! <br><b>Результат: ${q.final} ${q.unit}</b>`;
-
-            // Автопереход к следующей карточке через 2.5 секунды
-            setTimeout(() => {
-                currentId = (currentId + 1) % siDatabase.length;
-                loadQuestion(currentId);
-            }, 2500);
-        });
-
-        // Первичный старт конвертера при загрузке страницы
-        loadQuestion(currentId);
+        // Самый первый запуск игры при открытии файла в браузере
+        renderCubeButtons();
+        loadMission(currentMissionIdx);
     </script>
 </body>
 </html>
