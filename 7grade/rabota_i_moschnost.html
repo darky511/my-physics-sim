@@ -231,26 +231,35 @@
             ctx.strokeStyle = '#bae6fd'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(0, groundY - 60); ctx.lineTo(canvas.width, groundY - 60); ctx.stroke();
 
-            // 2. Отрисовка неподвижной стрелы крана
-            ctx.strokeStyle = '#64748b'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(craneX, groundY); 
-            ctx.lineTo(craneX, craneY); // вертикальная мачта
-            ctx.lineTo(boxX + boxW/2, craneY); // горизонтальная стрела
-            ctx.stroke();
-
-            // 3. Отрисовка троса под каждую задачу
-            ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(boxX + boxW/2, craneY);
-            ctx.lineTo(boxX + boxW/2 + windOffset, boxY);
-            ctx.stroke();
-
-            // 4. Отрисовка самого контейнера (груза)
+            // Динамические координаты контейнера
             let curX = boxX + windOffset;
             let curY = boxY;
 
-            ctx.fillStyle = '#0284c7'; // синий морской контейнер
+            // --- ИСПРАВЛЕНИЕ ДЛЯ СИНХРОНИЗАЦИИ 3-й ЗАДАЧИ ---
+            if (currentTask && currentTask.level === 3) {
+                // ПАЛУБА КОРАБЛЯ: Отрезаем трос крана, рисуем под контейнером стальную палубу
+                ctx.fillStyle = '#94a3b8'; // серая стальная палуба
+                ctx.fillRect(0, curY + boxH, canvas.width, 10);
+                ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, curY + boxH); ctx.lineTo(canvas.width, curY + boxH); ctx.stroke();
+            } else {
+                // КРАНОВАЯ ЗОНА: Рисуем стрелу крана и удерживающий трос для вертикальных задач
+                ctx.strokeStyle = '#64748b'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(craneX, groundY); 
+                ctx.lineTo(craneX, craneY); // вертикальная мачта
+                ctx.lineTo(boxX + boxW/2, craneY); // горизонтальная стрела
+                ctx.stroke();
+
+                ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(boxX + boxW/2, craneY);
+                ctx.lineTo(boxX + boxW/2 + windOffset, boxY);
+                ctx.stroke();
+            }
+
+            // 4. Отрисовка самого контейнера (груза)
+            ctx.fillStyle = '#0284c7'; 
             ctx.fillRect(curX, curY, boxW, boxH);
             ctx.strokeStyle = '#0369a1'; ctx.lineWidth = 3;
             ctx.strokeRect(curX, curY, boxW, boxH);
@@ -261,27 +270,27 @@
                 ctx.beginPath(); ctx.moveTo(l, curY + 2); ctx.lineTo(l, curY + boxH - 2); ctx.stroke();
             }
 
-            // 5. ОТОБРАЖЕНИЕ ВЕКТОРОВ СИЛ (СТРОГО БЕЗ ГОТОВЫХ ОТВЕТОВ)
+            // 5. ОТОБРАЖЕНИЕ ВЕКТОРОВ СИЛ
             let cenX = curX + boxW / 2;
             let cenY = curY + boxH / 2;
 
             if (currentTask) {
                 if (currentTask.level === 3) {
-                    // На 3 уровне груз двигается горизонтально, рисуем силу тяги и силу трения!
+                    // На 3 уровне груз на палубе: векторы строго по горизонтали!
                     drawArrow(cenX, cenY, cenX + 50, cenY, '#16a34a', "F_тяги");
                     drawArrow(cenX, cenY, cenX - 50, cenY, '#dc2626', "F_трения");
                 } else {
-                    // Вертикальные задачи: сила тяжести вниз, натяжение троса вверх
+                    // Вертикальные задачи
                     drawArrow(cenX, cenY, cenX, cenY + 45, '#dc2626', "F_тяж (вес)");
                     drawArrow(cenX, cenY, cenX, cenY - 45, '#16a34a', "F_тяги крана");
                 }
             }
 
-            // Информационный блок текущей телеметрии внизу чертежа
+            // Информационный блок телеметрии
             ctx.fillStyle = '#0f172a'; ctx.font = 'bold 11px sans-serif';
             let hideSystem = currentTask && currentTask.hide ? currentTask.hide : "";
 
-            let fText = `Сила (F) = ${currentTask ? currentTask.f : 0} Н`;
+            let fText = currentTask && currentTask.level === 3 ? `Сила трения (F) = ${currentTask.f} Н` : `Сила тяги (F) = ${currentTask ? currentTask.f : 0} Н`;
             let sText = hideSystem.includes("s") ? "Перемещение (s) = ?" : `Перемещение (s) = ${currentTask ? currentTask.s : 0} м`;
             let tText = `Время (t) = ${currentTask ? currentTask.t : 0} с`;
 
@@ -289,6 +298,7 @@
             ctx.fillText(sText, craneX + 10, groundY + 36);
             ctx.fillText(tText, craneX + 10, groundY + 52);
         }
+
 
         function drawArrow(x1, y1, x2, y2, color, label) {
             ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
@@ -305,7 +315,7 @@
             {
                 level: 1,
                 hide: "work",
-                text: "<b>Уровень 1 (Капкан Пёрышкина):</b> Портовый рабочий пытается поднять контейнер весом F = 5000 Н, но двигатель крана заклинило. Спортсмен безуспешно давит на рычаги в течение t = 10 секунд, но контейнер <b>не сдвинулся с места (s = 0 м)</b>. Какую механическую работу совершил кран?",
+                text: "<b>Уровень 1:</b> Портовый рабочий пытается поднять контейнер весом F = 5000 Н, но двигатель крана заклинило. Спортсмен безуспешно давит на рычаги в течение t = 10 секунд, но контейнер <b>не сдвинулся с места (s = 0 м)</b>. Какую механическую работу совершил кран?",
                 inputLabel: "Вычисли механическую работу А:",
                 unit: "Дж",
                 f: 5000, s: 0, t: 10, expected: 0,
