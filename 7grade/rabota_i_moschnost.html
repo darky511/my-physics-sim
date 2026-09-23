@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Живая физика: Работа и Мощность</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            user-select: none;
+        }
+        h1 { color: #0284c7; font-size: 24px; margin-bottom: 5px; text-align: center; }
+        
+        .progress-bar-container {
+            width: 100%;
+            max-width: 920px;
+            background: #e2e8f0;
+            height: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 20%;
+            background: #0284c7;
+            transition: width 0.5s ease;
+        }
+
+        .formula-card {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            max-width: 920px;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .formula-visual {
+            font-size: 22px;
+            font-weight: bold;
+            font-family: 'Cambria', serif;
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            color: #0369a1;
+        }
+        .formula-desc { font-size: 13px; color: #475569; max-width: 500px; line-height: 1.4; }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 950px;
+            width: 100%;
+            justify-content: center;
+        }
+        .canvas-container { 
+            background: #ffffff; 
+            border-radius: 16px; 
+            padding: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 2px solid #e2e8f0;
+        }
+        
+        .task-panel {
+            flex: 1;
+            min-width: 350px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 2px solid #e2e8f0;
+        }
+        .task-title { font-size: 16px; font-weight: bold; color: #0284c7; }
+        .task-text {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            border-left: 4px solid #0284c7;
+            font-weight: 500;
+            min-height: 110px;
+        }
+        
+        .input-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-box label { font-size: 14px; font-weight: bold; color: #334155; }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        input {
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            color: #0f172a;
+            font-size: 20px;
+            padding: 8px;
+            border-radius: 6px;
+            width: 140px;
+            text-align: center;
+            font-family: monospace;
+        }
+        input:focus { border-color: #0284c7; outline: none; }
+        .unit { font-size: 18px; font-weight: bold; color: #475569; }
+
+        .btn-action {
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+            background: #0284c7;
+            color: white;
+            box-shadow: 0 4px 10px rgba(2,132,199,0.2);
+        }
+        .btn-action:hover { background: #0369a1; }
+        
+        .feedback {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            line-height: 1.4;
+        }
+        .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    </style>
+</head>
+<body>
+
+    <h1>🏗️ Портовый Квест: Работа и Мощность Механизмов</h1>
+    
+    <div class="progress-bar-container">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    
+    <!-- Формулы курса физики Пёрышкина -->
+    <div class="formula-card">
+        <div class="formula-visual">A = F · s</div>
+        <div class="formula-visual">N = A / t</div>
+        <div class="formula-desc">
+            <b>Механическая работа (A)</b> совершается только при наличии силы и перемещения груза. <br>
+            <b>Мощность (N)</b> показывает скорость выполнения этой работы за единицу времени.
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="mechanicsCanvas" width="460" height="380"></canvas>
+        </div>
+        <div class="task-panel">
+            <div class="task-title" id="levelTitle">Уровень 1 из 5</div>
+            <div class="task-text" id="taskLabel">Инициализация строительного сектора...</div>
+            
+            <div class="input-box">
+                <label id="inputLabel">Твой ответ:</label>
+                <div class="input-row">
+                    <input type="number" id="userAnswer" placeholder="Значение" step="any">
+                    <span class="unit" id="unitLabel">Дж</span>
+                </div>
+            </div>
+
+            <button class="btn-action" id="checkBtn">⚡ Запустить двигатель крана</button>
+            <div class="feedback" id="feedbackBlock"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mechanicsCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let animationTime = 0;
+        let windOffset = 0;   // качание контейнера от ветра
+        let boxX = 180;       // положение контейнера по X
+        let boxY = 240;       // положение контейнера по Y
+        
+        let gameState = "observing"; // "observing", "success_anim", "fail_anim"
+        let currentTask = null;
+
+        function drawSystem() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const groundY = 320;
+            const craneX = 60;
+            const craneY = 80;
+            const boxW = 100, boxH = 60;
+
+            // Анимация ветра
+            animationTime += 0.03;
+            if (gameState === "observing") {
+                windOffset = Math.sin(animationTime) * 1.5;
+            } else {
+                windOffset = 0;
+            }
+
+            // 1. Отрисовка бэкграунда (море, причал)
+            ctx.fillStyle = '#f0fdfa'; // светлая портовая зона
+            ctx.fillRect(0, 0, canvas.width, groundY);
+            ctx.fillStyle = '#cbd5e1'; // бетонный пирс
+            ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+            // Линия горизонта/моря на заднем плане
+            ctx.strokeStyle = '#bae6fd'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, groundY - 60); ctx.lineTo(canvas.width, groundY - 60); ctx.stroke();
+
+            // 2. Отрисовка неподвижной стрелы крана
+            ctx.strokeStyle = '#64748b'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(craneX, groundY); 
+            ctx.lineTo(craneX, craneY); // вертикальная мачта
+            ctx.lineTo(boxX + boxW/2, craneY); // горизонтальная стрела
+            ctx.stroke();
+
+            // 3. Отрисовка троса под каждую задачу
+            ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(boxX + boxW/2, craneY);
+            ctx.lineTo(boxX + boxW/2 + windOffset, boxY);
+            ctx.stroke();
+
+            // 4. Отрисовка самого контейнера (груза)
+            let curX = boxX + windOffset;
+            let curY = boxY;
+
+            ctx.fillStyle = '#0284c7'; // синий морской контейнер
+            ctx.fillRect(curX, curY, boxW, boxH);
+            ctx.strokeStyle = '#0369a1'; ctx.lineWidth = 3;
+            ctx.strokeRect(curX, curY, boxW, boxH);
+            
+            // Текстура рёбер контейнера
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 2;
+            for(let l = curX + 15; l < curX + boxW; l += 15) {
+                ctx.beginPath(); ctx.moveTo(l, curY + 2); ctx.lineTo(l, curY + boxH - 2); ctx.stroke();
+            }
+
+            // 5. ОТОБРАЖЕНИЕ ВЕКТОРОВ СИЛ (СТРОГО БЕЗ ГОТОВЫХ ОТВЕТОВ)
+            let cenX = curX + boxW / 2;
+            let cenY = curY + boxH / 2;
+
+            if (currentTask) {
+                if (currentTask.level === 3) {
+                    // На 3 уровне груз двигается горизонтально, рисуем силу тяги и силу трения!
+                    drawArrow(cenX, cenY, cenX + 50, cenY, '#16a34a', "F_тяги");
+                    drawArrow(cenX, cenY, cenX - 50, cenY, '#dc2626', "F_трения");
+                } else {
+                    // Вертикальные задачи: сила тяжести вниз, натяжение троса вверх
+                    drawArrow(cenX, cenY, cenX, cenY + 45, '#dc2626', "F_тяж (вес)");
+                    drawArrow(cenX, cenY, cenX, cenY - 45, '#16a34a', "F_тяги крана");
+                }
+            }
+
+            // Информационный блок текущей телеметрии внизу чертежа
+            ctx.fillStyle = '#0f172a'; ctx.font = 'bold 11px sans-serif';
+            let hideSystem = currentTask && currentTask.hide ? currentTask.hide : "";
+
+            let fText = `Сила (F) = ${currentTask ? currentTask.f : 0} Н`;
+            let sText = hideSystem.includes("s") ? "Перемещение (s) = ?" : `Перемещение (s) = ${currentTask ? currentTask.s : 0} м`;
+            let tText = `Время (t) = ${currentTask ? currentTask.t : 0} с`;
+
+            ctx.fillText(fText, craneX + 10, groundY + 20);
+            ctx.fillText(sText, craneX + 10, groundY + 36);
+            ctx.fillText(tText, craneX + 10, groundY + 52);
+        }
+
+        function drawArrow(x1, y1, x2, y2, color, label) {
+            ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            let angle = Math.atan2(y2 - y1, x2 - x1);
+            ctx.beginPath(); ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - 6 * Math.cos(angle - Math.PI / 6), y2 - 6 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(x2 - 6 * Math.cos(angle + Math.PI / 6), y2 - 6 * Math.sin(angle + Math.PI / 6));
+            ctx.fill();
+            ctx.font = 'bold 11px sans-serif'; ctx.fillText(label, x2 + 6, y2 + (y2 < y1 ? 12 : -4));
+        }
+        // База данных 5 разнородных задач (Сверяем графику и текст на 100%)
+        const questDatabase = [
+            {
+                level: 1,
+                hide: "work",
+                text: "<b>Уровень 1 (Капкан Пёрышкина):</b> Портовый рабочий пытается поднять контейнер весом F = 5000 Н, но двигатель крана заклинило. Спортсмен безуспешно давит на рычаги в течение t = 10 секунд, но контейнер <b>не сдвинулся с места (s = 0 м)</b>. Какую механическую работу совершил кран?",
+                inputLabel: "Вычисли механическую работу А:",
+                unit: "Дж",
+                f: 5000, s: 0, t: 10, expected: 0,
+                startX: 180, startY: 240, targetX: 180, targetY: 240 // Контейнер неподвижен!
+            },
+            {
+                level: 2,
+                hide: "work",
+                text: "<b>Уровень 2 (Вертикальный подъём):</b> Кран успешно починили. Двигатель развивает постоянную силу тяги F = 2000 Н и плавно поднимает контейнер вертикально вверх на высоту s = 4 метра. Какую полезную механическую работу совершил двигатель крана?",
+                inputLabel: "Вычисли работу А:",
+                unit: "Дж",
+                f: 2000, s: 4, t: 8, expected: 8000,
+                startX: 180, startY: 240, targetX: 180, targetY: 140 // Идёт строго вверх
+            },
+            {
+                level: 3,
+                hide: "work",
+                text: "<b>Уровень 3 (Отрицательная работа трения):</b> Контейнер тянут по стальной палубе корабля. Ему мешает сила трения, равная F = 300 Н. Тяга передвинула груз горизонтально на расстояние s = 5 метров. Вычисли работу, совершённую именно <b>силой трения</b>!",
+                inputLabel: "Вычисли работу силы трения А (учитывай направление!):",
+                unit: "Дж",
+                f: 300, s: 5, t: 5, expected: -1500, // Работа отрицательная, так как сила против движения!
+                startX: 130, startY: 240, targetX: 250, targetY: 240 // Идёт по горизонтали палубы
+            },
+            {
+                level: 4,
+                hide: "power",
+                text: "<b>Уровень 4 (Мощность мотора):</b> Двигатель крана совершил механическую работу по перемещению контейнера, равную A = 12000 Дж. Вся операция заняла у механизма ровно t = 6 секунд. Какую механическую мощность развил двигатель за это время?",
+                inputLabel: "Вычисли мощность мотора N:",
+                unit: "Вт",
+                f: 2000, s: 6, t: 6, expected: 2000,
+                startX: 180, startY: 240, targetX: 180, targetY: 120
+            },
+            {
+                level: 5,
+                hide: "power",
+                text: "<b>Уровень 5 (Инженерный триумф):</b> Кран поднимает контейнер весом F = 3000 Н вертикально вверх с постоянной скоростью v = 2 м/с. Какую мощность N развивает лебёдка крана в этот момент? <br><i>Подсказка: свяжи формулы N = A/t и A = F·s через скорость!</i>",
+                inputLabel: "Вычисли мгновенную мощность N:",
+                unit: "Вт",
+                f: 3000, s: 2, t: 1, expected: 6000, // N = F * v = 3000 * 2 = 6000 Вт
+                startX: 180, startY: 240, targetX: 180, targetY: 130
+            }
+        ];
+
+        let currentLevelIdx = 0;
+
+        function loadQuest(idx) {
+            currentTask = questDatabase[idx];
+            gameState = "observing";
+            
+            document.getElementById('progressFill').style.width = ((idx + 1) * 20) + "%";
+            document.getElementById('levelTitle').innerText = `Уровень ${currentTask.level} из 5`;
+            document.getElementById('taskLabel').innerHTML = currentTask.text;
+            document.getElementById('inputLabel').innerText = currentTask.inputLabel;
+            document.getElementById('unitLabel').innerText = currentTask.unit;
+            
+            boxX = currentTask.startX;
+            boxY = currentTask.startY;
+            
+            document.getElementById('userAnswer').value = "";
+            document.getElementById('feedbackBlock').style.display = "none";
+            document.getElementById('checkBtn').style.display = "block";
+            document.getElementById('checkBtn').innerText = "⚡ Запустить двигатель крана";
+        }
+
+        function updateGameLoop() {
+            if (gameState === "success_anim") {
+                // Плавное физическое перемещение к целевой координате задачи
+                boxX += (currentTask.targetX - boxX) * 0.05;
+                boxY += (currentTask.targetY - boxY) * 0.05;
+                windOffset = 0; 
+            } else if (gameState === "fail_anim") {
+                // Сценарии аварийных физических ситуаций при ошибке расчёта
+                if (currentTask.level === 1) {
+                    // Тряска мотора подклинивающего крана
+                    windOffset = (Math.random() - 0.5) * 8;
+                    setTimeout(resetAfterFail, 1000);
+                } else {
+                    // Контейнер обрывается со строп и с грохотом падает вниз на пирс
+                    boxY += 8;
+                    if (boxY > 260) {
+                        boxY = 260; // упал на причал
+                        setTimeout(resetAfterFail, 1200);
+                    }
+                }
+            }
+
+            drawSystem();
+            requestAnimationFrame(updateGameLoop);
+        }
+
+        function resetAfterFail() {
+            gameState = "observing";
+            boxX = currentTask.startX;
+            boxY = currentTask.startY;
+            document.getElementById('checkBtn').style.display = "block";
+        }
+
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            if (gameState !== "observing") return;
+            
+            const userAns = parseFloat(document.getElementById('userAnswer').value);
+            const feed = document.getElementById('feedbackBlock');
+            feed.style.display = "block";
+
+            if (isNaN(userAns)) {
+                feed.className = "feedback error";
+                feed.innerText = "⚠️ Сначала введи числовой ответ в поле бланка!";
+                return;
+            }
+
+            // Проверка ответа
+            if (Math.abs(userAns - currentTask.expected) < 0.1) {
+                gameState = "success_anim";
+                feed.className = "feedback success";
+                feed.innerHTML = `🎉 Верно! Параметры системы рассчитаны идеально. Кран выполняет команду!`;
+                
+                document.getElementById('checkBtn').style.display = "none";
+                
+                setTimeout(() => {
+                    currentLevelIdx++;
+                    if (currentLevelIdx < questDatabase.length) {
+                        loadQuest(currentLevelIdx);
+                    } else {
+                        document.getElementById('taskLabel').innerHTML = "🏆 <b>ИНЖЕНЕРНЫЙ ТРИУМФ!</b> Ты прошёл весь живой квест по механической работе и мощности механизмов! Физические ловушки и знаки сил побеждены!";
+                    }
+                }, 3000);
+            } else {
+                gameState = "fail_anim";
+                feed.className = "feedback error";
+                feed.innerHTML = `❌ Расчёт неверный! Превышен предел нагрузки, автоматика аварийно сорвала цепь. Изучи последствия на стенде и перепровери формулы!`;
+                document.getElementById('checkBtn').style.display = "none";
+            }
+        });
+
+        // Запуск
+        loadQuest(currentLevelIdx);
+        updateGameLoop();
+    </script>
+</body>
+</html>
