@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Интерактивная физика: Гидравлический Пресс</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            user-select: none;
+        }
+        h1 { color: #38bdf8; font-size: 24px; margin-bottom: 5px; text-align: center; }
+        .task-card {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 12px;
+            max-width: 900px;
+            width: 100%;
+            border-left: 4px solid #f59e0b;
+            font-size: 15px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 930px;
+            width: 100%;
+            justify-content: center;
+        }
+        .canvas-container { background: #1e293b; border-radius: 16px; padding: 15px; box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+        .control-panel {
+            flex: 1;
+            min-width: 320px;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+        }
+        .slider-group {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+        .slider-label { display: flex; justify-content: space-between; font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
+        .val-highlight { color: #38bdf8; font-weight: bold; font-family: monospace; }
+        input[type=range] { width: 100%; accent-color: #38bdf8; cursor: pointer; }
+        
+        .pump-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 10px rgba(16, 185, 129, 0.3);
+            transition: all 0.1s;
+            text-align: center;
+        }
+        .pump-btn:hover { background: #059669; }
+        .pump-btn:active { transform: scale(0.97); }
+        
+        .telemetry {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            border-left: 4px solid #10b981;
+        }
+        .status-win { color: #4ade80; font-weight: bold; text-align: center; margin-top: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 Инженерный квест: Выигрыш в силе (Гидравлический пресс)</h1>
+    
+    <div class="task-card">
+        <strong>Миссия спасения:</strong> На платформе большого поршня находится застрявший суперкар весом <b>15 000 Н</b> (масса 1.5 тонны). Настройте площади поршней так, чтобы получить максимальный выигрыш в силе, и сделайте серию кликов по кнопке насоса, чтобы полностью поднять автомобиль!
+    </div>
+
+    <div class="container">
+        <!-- Анимация гидравлики -->
+        <div class="canvas-container">
+            <canvas id="pressCanvas" width="450" height="380"></canvas>
+        </div>
+
+        <!-- Пульт управления прессом -->
+        <div class="control-panel">
+            <h3>⚙️ Настройки пресса:</h3>
+            
+            <div class="slider-group">
+                <div class="slider-label">Площадь малого поршня (S₁): <span class="val-highlight" id="s1Text">2 см²</span></div>
+                <input type="range" id="s1Slider" min="2" max="10" step="1" value="2">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label">Площадь большого поршня (S₂): <span class="val-highlight" id="s2Text">200 см²</span></div>
+                <input type="range" id="s2Slider" min="100" max="500" step="50" value="200">
+            </div>
+
+            <button class="pump-btn" id="pumpBtn">🏋️ Качать ручку насоса!</button>
+
+            <h3>📊 Датчики и телеметрия:</h3>
+            <div class="telemetry">
+                Выигрыш в силе (S₂ / S₁): <span class="val-highlight" id="gainText">100 раз</span><br>
+                Необходимая сила нажатия (F₁): <span class="val-highlight" id="f1Text">150 Н</span> (~15 кг)<br>
+                Высота подъёма машины: <span class="val-highlight" id="heightText">0.0 см</span>
+            </div>
+            <div class="status-win" id="winLabel">🎉 Миссия выполнена! Суперкар спасен!</div>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('pressCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Геометрическая конфигурация пресса
+        const fluidY = 240; // базовый уровень масла
+        const tubeBottomY = 290;
+        
+        let s1 = 2;   // площадь малого поршня
+        let s2 = 200; // площадь большого поршня
+        
+        let p1Y = 160; // положение малого поршня по Y
+        let p2Y = 190; // положение большого поршня по Y (машина)
+        let carLift = 0; // высота подъема в реальных см
+
+        function drawSystem() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Динамические радиусы отрисовки поршней на основе площадей (визуальный масштаб)
+            let w1 = 20 + s1 * 4;
+            let w2 = 40 + (s2 / 5);
+
+            let x1 = 80;
+            let x2 = 340 - w2;
+
+            // 1. Отрисовка гидравлического масла (жидкости)
+            ctx.fillStyle = '#f59e0b'; // красивое янтарное масло
+            ctx.globalAlpha = 0.8;
+            
+            // Масляный столб 1
+            ctx.fillRect(x1, p1Y + 15, w1, tubeBottomY - p1Y - 15);
+            // Соединительная труба под дном
+            ctx.fillRect(x1, tubeBottomY - 40, (x2 + w2) - x1, 40);
+            // Масляный столб 2
+            ctx.fillRect(x2, p2Y + 20, w2, tubeBottomY - p2Y - 20);
+            ctx.globalAlpha = 1.0;
+
+            // 2. Отрисовка стальных стенок сообщающихся сосудов пресса
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            
+            // Левый узкий стакан
+            ctx.moveTo(x1, 100);
+            ctx.lineTo(x1, tubeBottomY);
+            ctx.lineTo(x2, tubeBottomY); // переход ко второму
+            
+            // Правый широкий стакан
+            ctx.lineTo(x2, 100);
+            ctx.moveTo(x2 + w2, 100);
+            ctx.lineTo(x2 + w2, tubeBottomY - 40);
+            ctx.lineTo(x1 + w1, tubeBottomY - 40); // внутренняя стенка перемычки
+            ctx.lineTo(x1 + w1, 100);
+            ctx.stroke();
+
+            // 3. Малый поршень (входной)
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(x1 + 2, p1Y, w1 - 4, 18);
+            // шток поршня
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(x1 + w1/2 - 4, p1Y - 60, 8, 60);
+
+            // 4. Большой поршень (выходной)
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(x2 + 2, p2Y, w2 - 4, 25);
+            // Шток большого поршня
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(x2 + w2/2 - 10, p2Y - 40, 20, 40);
+            // Опорная платформа для машины
+            ctx.fillRect(x2 - 15, p2Y - 45, w2 + 30, 8);
+
+            // 5. Отрисовка суперкара (эскиз веса 15000Н)
+            let cx = x2 + w2/2 - 45;
+            let cy = p2Y - 75;
+            ctx.fillStyle = '#e11d48'; // красная спортивная машина
+            ctx.fillRect(cx, cy + 15, 90, 15);
+            ctx.fillRect(cx + 15, cy, 55, 15);
+            ctx.fillStyle = '#000'; // колеса
+            ctx.beginPath(); ctx.arc(cx + 20, cy + 30, 10, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(cx + 70, cy + 30, 10, 0, Math.PI*2); ctx.fill();
+
+            // Стрелочки давления Паскаля внутри жидкости (наглядная визуализация)
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            if (p1Y > 162) { // рисуем стрелки направления только во время качания
+                ctx.fillStyle = '#fff';
+                // стрелка вниз под малым поршнем
+                drawArrow(x1 + w1/2, p1Y + 30, x1 + w1/2, p1Y + 50);
+                // стрелка вправо в трубе
+                drawArrow(canvas.width/2 - 20, tubeBottomY - 20, canvas.width/2 + 20, tubeBottomY - 20);
+                // стрелка вверх под большим поршнем
+                drawArrow(x2 + w2/2, p2Y + 60, x2 + w2/2, p2Y + 35);
+            }
+        }
+
+        function drawArrow(x1, y1, x2, y2) {
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            let angle = Math.atan2(y2 - y1, x2 - x1);
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - 6 * Math.cos(angle - Math.PI/6), y2 - 6 * Math.sin(angle - Math.PI/6));
+            ctx.lineTo(x2 - 6 * Math.cos(angle + Math.PI/6), y2 - 6 * Math.sin(angle + Math.PI/6));
+            ctx.fill();
+        }
+        const s1Slider = document.getElementById('s1Slider');
+        const s2Slider = document.getElementById('s2Slider');
+        const pumpBtn = document.getElementById('pumpBtn');
+
+        function updateMath() {
+            s1 = parseInt(s1Slider.value);
+            s2 = parseInt(s2Slider.value);
+
+            // Вывод значений на пульт
+            document.getElementById('s1Text').innerText = s1 + " см²";
+            document.getElementById('s2Text').innerText = s2 + " см²";
+
+            // Главная формула пресса: Выигрыш = S2 / S1
+            let gain = s2 / s1;
+            document.getElementById('gainText').innerText = gain.toFixed(0) + " раз";
+
+            // Сила F1 = F2 / выигрыш (где F2 = 15000 Н)
+            let f1 = 15000 / gain;
+            document.getElementById('f1Text').innerText = f1.toFixed(0) + " Н";
+
+            drawSystem();
+        }
+
+        // Кнопка интерактивного качания насоса
+        pumpBtn.addEventListener('click', () => {
+            if (carLift >= 5.0) return; // Уже финиш
+
+            // Анимируем резкий толчок малого поршня вниз
+            p1Y += 15;
+            
+            // Золотое правило механики: во сколько раз выиграли в силе, 
+            // во столько раз проиграли в расстоянии!
+            let gain = s2 / s1;
+            let liftStep = 15 / gain; // Большой поршень поднимается пропорционально меньше!
+            
+            p2Y -= liftStep;
+            carLift += (liftStep * 0.2); // перевод пикселей в условные сантиметры под дисплей
+
+            if (carLift > 5.0) carLift = 5.0;
+            document.getElementById('heightText').innerText = carLift.toFixed(1) + " см";
+
+            if (carLift >= 5.0) {
+                document.getElementById('winLabel').style.display = "block";
+                pumpBtn.innerText = "⚡ Эвакуация завершена!";
+                pumpBtn.style.background = "#0284c7";
+            }
+
+            // Возвращаем малый поршень назад (всасывание порции масла из резервуара)
+            setTimeout(() => {
+                p1Y = 160;
+                drawSystem();
+            }, 150);
+
+            drawSystem();
+        });
+
+        // Слушатели слайдеров изменения геометрии
+        s1Slider.addEventListener('input', () => {
+            // Если конфигурация пресса меняется, сбрасываем прогресс подъёма
+            carLift = 0;
+            p2Y = 190;
+            document.getElementById('heightText').innerText = "0.0 см";
+            document.getElementById('winLabel').style.display = "none";
+            pumpBtn.innerText = "🏋️ Качать ручку насоса!";
+            pumpBtn.style.background = "#10b981";
+            updateMath();
+        });
+        
+        s2Slider.addEventListener('input', () => {
+            carLift = 0; p2Y = 190;
+            document.getElementById('heightText').innerText = "0.0 см";
+            document.getElementById('winLabel').style.display = "none";
+            pumpBtn.innerText = "🏋️ Качать ручку насоса!";
+            pumpBtn.style.background = "#10b981";
+            updateMath();
+        });
+
+        // Самый первый запуск вычислений
+        updateMath();
+    </script>
+</body>
+</html>
