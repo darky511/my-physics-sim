@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ОГЭ Физика: Полицейский перехват</title>
+    <style>
+        :root { --bg: #0b0f19; --panel: #1e293b; --blue: #38bdf8; --green: #4ade80; --red: #f87171; --white: #f1f5f9; }
+        body { margin: 0; padding: 20px; background: var(--bg); color: var(--white); font-family: sans-serif; display: flex; justify-content: center; }
+        #wrapper { width: 1000px; display: flex; flex-direction: column; gap: 15px; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+        h1 { margin: 0; font-size: 22px; color: var(--blue); }
+        #status-bar { background: #020617; padding: 6px 12px; border-radius: 6px; border: 1px solid #334155; font-family: monospace; }
+        #track-view { position: relative; width: 1000px; height: 260px; background: #020617; border: 3px solid #334155; border-radius: 12px; overflow: hidden; }
+        #ship { position: absolute; left: 50px; bottom: 100px; width: 50px; height: 30px; z-index: 10; transition: transform 0.1s; }
+        #ship-body { width: 100%; height: 100%; background: linear-gradient(90deg, #f43f5e, #e11d48); border-radius: 4px 15px 15px 4px; box-shadow: 0 0 15px #f43f5e; }
+        .laser-gate { position: absolute; top: 0; width: 25px; height: 100%; background: rgba(248,113,113,0.2); border-left: 2px dashed var(--red); border-right: 2px dashed var(--red); box-shadow: 0 0 10px var(--red); display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 11px; color: var(--red); }
+        #terminal { display: grid; grid-template-columns: 1.2fr 1fr 0.8fr; gap: 15px; }
+        .panel { background: var(--panel); border: 1px solid #334155; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+        .panel h3 { margin: 0 0 10px 0; font-size: 15px; border-bottom: 1px solid #475569; padding-bottom: 5px; color: var(--blue); }
+        .panel p { font-size: 12px; line-height: 1.4; color: #cbd5e1; margin: 4px 0; }
+        #hint-box { margin-top: auto; background: #0f172a; padding: 8px; border-left: 3px solid var(--blue); font-size: 11px; font-family: monospace; color: #94a3b8; }
+        #slots-area { display: flex; align-items: center; justify-content: center; gap: 5px; background: #0f172a; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+        .slot { width: 45px; height: 32px; background: #1e293b; border: 1px dashed #475569; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: monospace; }
+        .slot.filled { border-style: solid; border-color: var(--blue); color: var(--blue); background: rgba(56,189,248,0.1); }
+        .sign { font-size: 14px; color: #64748b; font-weight: bold; }
+        #tokens-area { display: flex; justify-content: center; gap: 6px; margin-bottom: 10px; }
+        .token { background: #334155; color: white; border: 1px solid #475569; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 12px; }
+        .token.used { opacity: 0.2; pointer-events: none; }
+        .input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+        .input-group label { font-size: 11px; color: #94a3b8; font-family: monospace; }
+        .input-group input { background: #0f172a; border: 1px solid #475569; border-radius: 4px; padding: 6px; color: white; font-family: monospace; width: 110px; }
+        .input-group input:disabled { opacity: 0.3; }
+        #btn-launch { width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; letter-spacing: 0.5px; }
+        #btn-launch:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+        .btn-reset { background: transparent; border: 1px solid #475569; color: #94a3b8; padding: 3px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin: 0 auto; display: block; }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <header>
+            <h1>ОГЭ Квест 1: Калибровка ускорения болида</h1>
+            <div id="status-bar">МОДУЛЬ: <span id="status-text">Ожидание программирования...</span></div>
+        </header>
+        <div id="track-view">
+            <div id="ship"><div id="ship-body"></div></div>
+            <div class="laser-gate" id="gate-element" style="left: 600px;">СТЕНА ШИПОВ</div>
+        </div>
+        <div id="terminal">
+            <div class="panel">
+                <h3>📋 Тактическое задание ОГЭ</h3>
+                <p id="task-text">Загрузка данных...</p>
+                <div id="hint-box">Инициализация систем корабля...</div>
+            </div>
+            <div class="panel" id="builder-panel">
+                <h3 id="builder-title">⚡ Сборщик уравнения</h3>
+                <p style="font-size:11px; color:#94a3b8; margin-bottom:8px;">Собери нужную структуру формулы кликами:</p>
+                <div id="slots-area"></div>
+                <div id="tokens-area"></div>
+                <button class="btn-reset" id="btn-clear">Сбросить код</button>
+            </div>
+            <div class="panel">
+                <h3>🧮 Вычислительный терминал</h3>
+                <div id="inputs-area"></div>
+                <button id="btn-launch" disabled>АКТИВИРОВАТЬ ДВИГАТЕЛИ</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const levels = [
+            {
+                id: 0,
+                type: "formula_speed", // Учим формулу v = v0 - at
+                gateDistance: 600, 
+                task: "Впереди стена шипов! Болид мчится со скоростью v0 = 40 м/с. До препятствия ровно 4 секунды пути. Чтобы не врезаться, болид должен ПОЛНОСТЬЮ ОСТАНОВИТЬСЯ (v = 0 м/с) ровно у стены. Собери верную формулу МГНОВЕННОЙ СКОРОСТИ с учетом характера движения и рассчитай модуль необходимого тормозного ускорения (a).",
+                slots: ["v", "=", "v0", "sign", "a", "*", "t"],
+                tokens: ["v", "v0", "a", "t", "+", "−"],
+                checkAnswer: (vals, formula) => {
+                    const signCorrect = formula[3] === "−"; // Ловушка ОГЭ: при торможении знак минус!
+                    const valCorrect = Math.abs(parseFloat(vals.a) - 10) < 0.1; // 0 = 40 - a*4 => a = 10
+                    return signCorrect && valCorrect;
+                },
+                errorHint: "Ловушка ОГЭ! Болид ТОРМОЗИТ, значит вектор ускорения направлен против оси, и проекция ax < 0. Знак формулы должен быть МИНУС! Формула: v = v0 − a * t. Расчет модуля: 0 = 40 − a * 4."
+            },
+            {
+                id: 1,
+                type: "formula_dist", // Учим формулу s = v0t - at^2/2
+                gateDistance: 450,
+                task: "Преграда обнаружена на расстоянии ровно s = 450 метров. Бортовой компьютер зафиксировал начальную скорость v0 = 50 м/с и время торможения до полной остановки t = 12 секунд. Рассчитай точное ускорение болида, чтобы остановиться вовремя. Собери формулу ПУТИ при торможении.",
+                slots: ["s", "=", "v0", "*", "t", "sign", "a", "*", "t²", "/", "2"],
+                tokens: ["s", "v0", "t", "a", "+", "−"],
+                checkAnswer: (vals, formula) => {
+                    const signCorrect = formula[5] === "−"; // Торможение
+                    const valCorrect = Math.abs(parseFloat(vals.a) - 2.08) < 0.05; // 450 = 50*12 - a*144/2 => 450 = 600 - 72a => 72a = 150 => a = 2.08
+                    return signCorrect && valCorrect;
+                },
+                errorHint: "Внимание! Снова торможение, формула пути ОБЯЗАНА содержать МИНУС перед ускорением: s = v0 * t − a * t² / 2. Уравнение: 450 = 50 * 12 − a * 144 / 2."
+            },
+            {
+                id: 2,
+                type: "formula_timeless", // Формула без времени
+                gateDistance: 800,
+                task: "Сбой систем: таймер времени (t) отключен! До лазерных ворот ровно s = 800 метров. Начальная скорость v0 = 80 м/с. Нам необходимо затормозить до полной остановки (v = 0). Собери формулу ПУТИ БЕЗ ВРЕМЕНИ при торможении и найди модуль нужного ускорения (a).",
+                slots: ["s", "=", "v0²", "/", "2", "*", "a"],
+                tokens: ["s", "v0²", "a", "2"], // Упрощенная для сборщика ОГЭ структура S = v0^2 / 2a
+                checkAnswer: (vals, formula) => {
+                    // Здесь знак берется по умолчанию как модуль для ОГЭ задания 4
+                    return Math.abs(parseFloat(vals.a) - 4) < 0.1; // 800 = 80^2 / 2a => 800 = 6400 / 2a => 1600a = 6400 => a = 4
+                },
+                errorHint: "Подсказка: Из свойства 4 методички, при торможении до остановки путь без времени: S = v0² / (2 * a). Из уравнения 800 = 80² / (2 * a) вырази ускорение."
+            }
+        ];
+
+        let currentLevel = 0;
+        let userFormula = [];
+        let isFormulaReady = false;
+        let animationInterval = null;
+        let shipX = 50;
+
+        const trackView = document.getElementById("track-view");
+        const shipEl = document.getElementById("ship");
+        const gateEl = document.getElementById("gate-element");
+        const taskTextEl = document.getElementById("task-text");
+        const hintBoxEl = document.getElementById("hint-box");
+        const slotsArea = document.getElementById("slots-area");
+        const tokensArea = document.getElementById("tokens-area");
+        const inputsArea = document.getElementById("inputs-area");
+        const btnLaunch = document.getElementById("btn-launch");
+        const statusTextEl = document.getElementById("status-text");
+        window.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("btn-clear").addEventListener("click", resetFormulaLayout);
+            btnLaunch.addEventListener("click", executeFlight);
+            loadLevel(currentLevel);
+        });
+
+        function loadLevel(lvlId) {
+            if (lvlId >= levels.length) {
+                showFinalVictory();
+                return;
+            }
+            const lvl = levels[lvlId];
+            statusTextEl.innerText = `Ожидание программирования уравнения уровня ${lvlId + 1}...`;
+            statusTextEl.style.color = "#38bdf8";
+            
+            taskTextEl.innerText = lvl.task;
+            hintBoxEl.innerText = "Используй токены, чтобы заполнить знаки вопроса '?' в формуле бортового компьютера.";
+            hintBoxEl.style.borderLeftColor = "#38bdf8";
+            
+            gateEl.style.left = lvl.gateDistance + "px";
+            shipX = 50;
+            shipEl.style.left = shipX + "px";
+
+            // Строим слоты формулы
+            slotsArea.innerHTML = "";
+            lvl.slots.forEach((item, idx) => {
+                if (item === "sign" || item === "?") {
+                    slotsArea.innerHTML += `<div class="slot" id="f-slot-${idx}">?</div>`;
+                } else {
+                    slotsArea.innerHTML += `<div class="math-sign">${item}</div>`;
+                }
+            });
+
+            // Строим токены
+            tokensArea.innerHTML = "";
+            lvl.tokens.forEach(tok => {
+                tokensArea.innerHTML += `<button class="token" onclick="addToken('${tok}', this)">${tok}</button>`;
+            });
+
+            // Строим калькулятор (ускорение всегда ищем)
+            inputsArea.innerHTML = `
+                <div class="input-group">
+                    <label>Модуль ускорения |a|:</label>
+                    <input type="number" step="any" id="input-acc" placeholder="Впиши расчет" disabled>
+                    <span style="font-size:11px; color:#64748b;"> м/с²</span>
+                </div>`;
+                
+            btnLaunch.disabled = true;
+            userFormula = Array(lvl.slots.length).fill(null);
+            isFormulaReady = false;
+        }
+
+        function addToken(val, element) {
+            const lvl = levels[currentLevel];
+            // Ищем первый пустой интерактивный слот
+            let targetIdx = lvl.slots.findIndex((item, i) => (item === "sign" || item === "?") && !userFormula[i]);
+            if (targetIdx === -1) return;
+
+            userFormula[targetIdx] = val;
+            element.classList.add("used");
+            
+            const slotEl = document.getElementById(`f-slot-${targetIdx}`);
+            slotEl.innerText = val;
+            slotEl.classList.add("filled");
+
+            // Проверяем, заполнена ли вся формула
+            let stillEmpty = lvl.slots.some((item, i) => (item === "sign" || item === "?") && !userFormula[i]);
+            if (!stillEmpty) {
+                evaluateFormulaStructure();
+            }
+        }
+
+        function evaluateFormulaStructure() {
+            const lvl = levels[currentLevel];
+            // Создаем полный массив собранной формулы для валидации
+            let fullCompiled = lvl.slots.map((item, i) => userFormula[i] || item);
+            
+            // Базовая проверка: для 1 и 2 уровней знак должен быть выбран
+            let signIdx = lvl.slots.indexOf("sign");
+            if (signIdx !== -1 && userFormula[signIdx] !== "−") {
+                hintBoxEl.innerText = "❌ Ошибка структуры! Твой знак заставит корабль разгоняться, а перед нами стена! Подумай над вектором ускорения.";
+                hintBoxEl.style.borderLeftColor = "#f87171";
+                return;
+            }
+
+            hintBoxEl.innerText = "✅ Структура уравнения принята бортом! Терминал ввода разблокирован. Рассчитай модуль ускорения 'a' на листке.";
+            hintBoxEl.style.borderLeftColor = "#4ade80";
+            document.getElementById("input-acc").disabled = false;
+            btnLaunch.disabled = false;
+        }
+
+        function resetFormulaLayout() {
+            loadLevel(currentLevel);
+        }
+
+        function executeFlight() {
+            btnLaunch.disabled = true;
+            document.getElementById("input-acc").disabled = true;
+            
+            const userAcc = document.getElementById("input-acc").value;
+            let fullCompiled = levels[currentLevel].slots.map((item, i) => userFormula[i] || item);
+            
+            const isCorrect = levels[currentLevel].checkAnswer({ a: userAcc }, fullCompiled);
+            const targetGateX = levels[currentLevel].gateDistance;
+
+            statusTextEl.innerText = "Двигатели запущены! Симуляция движения болида...";
+            statusTextEl.style.color = "#4ade80";
+
+            let currentSpeed = currentLevel === 0 ? 40 : (currentLevel === 1 ? 50 : 80);
+            let acceleration = parseFloat(userAcc) || 0;
+            
+            // Если формула собрана не со знаком минус, физика заставит его ускоряться!
+            let signIdx = levels[currentLevel].slots.indexOf("sign");
+            let isNegative = signIdx === -1 || userFormula[signIdx] === "−";
+            
+            let timeStep = 0.05;
+            
+            animationInterval = setInterval(() => {
+                // Законы кинематики в реальном времени ОГЭ!
+                if (isNegative) {
+                    currentSpeed -= acceleration * timeStep;
+                } else {
+                    currentSpeed += acceleration * timeStep;
+                }
+                
+                if (currentSpeed < 0 && isCorrect) currentSpeed = 0;
+
+                // Перемещение
+                shipX += currentSpeed * timeStep * 3; // Коэффициент масштаба для наглядности
+                shipEl.style.left = shipX + "px";
+
+                // Проверка остановки или аварии
+                if (shipX >= targetGateX - 45) { // Габариты носа корабля
+                    clearInterval(animationInterval);
+                    if (isCorrect) {
+                        statusTextEl.innerText = "ИДЕАЛЬНАЯ ОСТАНОВКА! Препятствие преодолено.";
+                        statusTextEl.style.color = "#4ade80";
+                        setTimeout(() => { currentLevel++; loadLevel(currentLevel); }, 1500);
+                    } else {
+                        statusTextEl.innerText = "КАТАСТРОФА! Болид на полной скорости протаранил стену!";
+                        statusTextEl.style.color = "#f87171";
+                        shipEl.style.transform = "scale(1.3) rotate(5deg)";
+                        setTimeout(() => {
+                            shipEl.style.transform = "none";
+                            hintBoxEl.innerText = levels[currentLevel].errorHint;
+                            hintBoxEl.style.borderLeftColor = "#f87171";
+                            loadLevel(currentLevel);
+                        }, 2500);
+                    }
+                } else if (currentSpeed <= 0 && isCorrect) {
+                    clearInterval(animationInterval);
+                    statusTextEl.innerText = "ИДЕАЛЬНАЯ ОСТАНОВКА! Препятствие преодолено.";
+                    statusTextEl.style.color = "#4ade80";
+                    setTimeout(() => { currentLevel++; loadLevel(currentLevel); }, 1500);
+                }
+            }, 30);
+        }
+
+        function showFinalVictory() {
+            statusTextEl.innerText = "КВЕСТ 1 ПОЛНОСТЬЮ ПРОЙДЕН!";
+            statusTextEl.style.color = "#4ade80";
+            taskTextEl.innerHTML = "<b style='color:#4ade80; font-size:14px;'>Великолепная калибровка!</b><br>Мальчик теперь точно запомнит, что при торможении проекция ускорения меняет знак формулы на МИНУС, и отработал формулу скорости, пути и уравнение без времени ОГЭ.";
+            hintBoxEl.style.display = "none";
+            document.getElementById("builder-panel").style.opacity = "0.3";
+        }
+    </script>
+</body>
+</html>
