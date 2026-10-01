@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ОГЭ Физика: Взломщик шифров</title>
+    <style>
+        :root { --bg: #0b0f19; --panel: #1e293b; --blue: #38bdf8; --green: #4ade80; --red: #f87171; --white: #f1f5f9; }
+        body { margin: 0; padding: 20px; background: var(--bg); color: var(--white); font-family: sans-serif; display: flex; justify-content: center; }
+        #wrapper { width: 1000px; display: flex; flex-direction: column; gap: 15px; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+        h1 { margin: 0; font-size: 20px; color: var(--blue); }
+        #status-bar { background: #020617; padding: 6px 12px; border-radius: 6px; border: 1px solid #334155; font-family: monospace; }
+        
+        #visual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; height: 320px; }
+        #track-view { position: relative; background: #020617; border: 3px solid #334155; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-around; padding: 10px 0; }
+        
+        .lane { position: relative; width: 100%; height: 50px; border-bottom: 1px dashed #334155; }
+        .lane-tag { position: absolute; left: 10px; top: 5px; font-size: 10px; font-family: monospace; color: #64748b; }
+        .car { position: absolute; left: 50px; width: 30px; height: 20px; border-radius: 4px; z-index: 10; bottom: 10px; }
+        #car-A { background: var(--blue); box-shadow: 0 0 10px var(--blue); }
+        #car-B { background: #e11d48; box-shadow: 0 0 10px #e11d48; }
+        
+        #graph-view { background: #020617; border: 3px solid #334155; border-radius: 12px; position: relative; }
+        canvas { width: 100%; height: 100%; display: block; }
+        
+        #terminal { display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 15px; }
+        .panel { background: var(--panel); border: 1px solid #334155; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+        .panel h3 { margin: 0 0 8px 0; font-size: 15px; border-bottom: 1px solid #475569; padding-bottom: 5px; color: var(--blue); }
+        .panel p { font-size: 12px; line-height: 1.4; color: #cbd5e1; margin: 4px 0; }
+        #hint-box { margin-top: auto; background: #0f172a; padding: 8px; border-left: 3px solid var(--blue); font-size: 11px; font-family: monospace; color: #94a3b8; min-height: 45px; }
+        
+        .options-container { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+        .option-btn { background: #334155; border: 1px solid #475569; color: var(--white); padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-size: 12px; transition: background 0.2s; }
+        .option-btn:hover { background: #475569; }
+        .option-btn.selected { background: var(--blue); border-color: var(--blue); color: #0b0f19; font-weight: bold; }
+        
+        #btn-submit { width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: auto; font-size: 14px; }
+        #btn-submit:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <header>
+            <h1>ОГЭ Квест 3: Дешифратор кинематических графиков</h1>
+            <div id="status-bar">АНАЛИЗ: <span id="status-text">Ожидание выбора гипотезы...</span></div>
+        </header>
+        
+        <div id="visual-grid">
+            <!-- Левая панель: движение тел -->
+            <div id="track-view">
+                <div class="lane"><span class="lane-tag">АВТОМОБИЛЬ А</span><div class="car" id="car-A"></div></div>
+                <div class="lane"><span class="lane-tag">АВТОМОБИЛЬ Б</span><div class="car" id="car-B"></div></div>
+            </div>
+            <!-- Правая панель: график -->
+            <div id="graph-view">
+                <canvas id="graphCanvas" width="480" height="300"></canvas>
+            </div>
+        </div>
+        
+        <div id="terminal">
+            <div class="panel">
+                <h3>📋 Данные графоанализа ОГЭ</h3>
+                <p id="task-text">Загрузка данных...</p>
+                <div id="hint-box">Внимательно изучи оси графика перед выбором ответа!</div>
+            </div>
+            
+            <div class="panel">
+                <h3>⚡ Варианты интерпретации (Выбери утверждение)</h3>
+                <div class="options-container" id="options-box"></div>
+                <button id="btn-submit" disabled>ПОДТВЕРДИТЬ ВЫБОР И ЗАПУСТИТЬ ТЕСТ</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const levels = [
+            {
+                id: 0,
+                axisType: "v-t", // График Скорость - Время
+                task: "Задание 1: Перед тобой графики проекций скоростей автомобилей А и Б в осях (v - t). Линии пересекаются в момент времени t1. Бортовой компьютер требует выбрать ИСТИННОЕ утверждение о том, что происходит в точке пересечения.",
+                options: [
+                    { id: "w1", text: "А) В момент времени t1 автомобили А и Б встретились (у них одинаковые координаты).", correct: false },
+                    { id: "c1", text: "Б) В момент времени t1 автомобили А и Б имеют одинаковые по модулю скорости.", correct: true },
+                    { id: "w2", text: "В) В момент времени t1 автомобиль Б остановился, а автомобиль А начал движение.", correct: false }
+                ],
+                errorHint: "Главная ловушка ОГЭ! График построен в осях Скорость-Время (v-t). Точка пересечения означает только то, что у них совпали показания спидометров (модули скоростей). Но координаты тел в этот момент разные!"
+            },
+            {
+                id: 1,
+                axisType: "v-t-area", // Геометрический смысл площади
+                task: "Задание 2: Автомобиль А стартует из состояния покоя (v0=0) и разгоняется до скорости 40 м/с за 10 секунд. Компьютер запрашивает расчет пройденного автомобилем пути (S) за эти 10 секунд через геометрический смысл графика скорости.",
+                options: [
+                    { id: "w1", text: "А) Путь равен 400 метров (просто перемножили максимальную скорость на время).", correct: false },
+                    { id: "c2", text: "Б) Путь равен 200 метров (численно равен площади треугольника под линией скорости).", correct: true },
+                    { id: "w2", text: "В) Путь равен 40 метров (разделили скорость на время).", correct: false }
+                ],
+                errorHint: "Подсказка ОГЭ: Пройденный путь численно равен площади фигуры под графиком скорости v(t). Для разгона из покоя фигура — это прямоугольный треугольник. Площадь = 0.5 * основание * высоту = 0.5 * 10 * 40 = 200 метров."
+            },
+            {
+                id: 2,
+                axisType: "x-t", // График Координата - Время
+                task: "Задание 3: Внимание! Окружение изменилось. Теперь перед тобой график зависимости КООРДИНАТЫ от времени x(t) для двух тел. Линии снова пересеклись. Что означает точка пересечения линий на графике координаты?",
+                options: [
+                    { id: "c3", text: "А) В этот момент времени произошла встреча двух тел (их координаты совпали).", correct: true },
+                    { id: "w1", text: "Б) В этот момент времени у тел абсолютно одинаковые скорости движения.", correct: false },
+                    { id: "w2", text: "В) В этот момент времени оба тела мгновенно остановились.", correct: false }
+                ],
+                errorHint: "Не путай графики! На графике координаты x(t) пересечение линий — это совпадение положения в пространстве, то есть реальная ВСТРЕЧА тел. Скорости при этом у них могут быть абсолютно разными."
+            }
+        ];
+
+        let currentLevel = 0;
+        let selectedOptionId = null;
+        let simInterval = null;
+        
+        // Переменные анимации шариков
+        let carAX = 50, carBX = 50;
+        let speedA = 0, speedB = 0;
+
+        const taskText = document.getElementById("task-text");
+        const hintBox = document.getElementById("hint-box");
+        const optionsBox = document.getElementById("options-box");
+        const btnSubmit = document.getElementById("btn-submit");
+        const statusText = document.getElementById("status-text");
+        const carA = document.getElementById("car-A");
+        const carB = document.getElementById("car-B");
+        const canvas = document.getElementById("graphCanvas");
+        const ctx = canvas.getContext("2d");
+        window.addEventListener("DOMContentLoaded", () => {
+            btnSubmit.addEventListener("click", processSubmission);
+            loadLevel(currentLevel);
+        });
+
+        function loadLevel(lvlId) {
+            if (lvlId >= levels.length) {
+                showUltimateVictory();
+                return;
+            }
+            const lvl = levels[lvlId];
+            statusText.innerText = "Ожидание выбора гипотезы...";
+            statusText.style.color = "#38bdf8";
+            taskText.innerText = lvl.task;
+            hintBox.innerText = "Внимательно изучи буквы на вертикальной оси графика!";
+            hintBox.style.borderLeftColor = "#38bdf8";
+            
+            // Сброс позиций машинок
+            carAX = 50; carBX = 50;
+            carA.style.left = carAX + "px";
+            carB.style.left = carBX + "px";
+            
+            selectedOptionId = null;
+            btnSubmit.disabled = true;
+
+            // Отрисовка статического графика
+            drawGraph(lvl.axisType);
+
+            // Рендер кнопок вариантов
+            optionsBox.innerHTML = "";
+            lvl.options.forEach(opt => {
+                optionsBox.innerHTML += `<button class="option-btn" id="${opt.id}" onclick="selectOption('${opt.id}')">${opt.text}</button>`;
+            });
+        }
+
+        function selectOption(id) {
+            document.querySelectorAll(".option-btn").forEach(b => b.classList.remove("selected"));
+            document.getElementById(id).classList.add("selected");
+            selectedOptionId = id;
+            btnSubmit.disabled = false;
+        }
+
+        function drawGraph(type) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Сетка и оси
+            ctx.strokeStyle = "#334155";
+            ctx.lineWidth = 1;
+            ctx.font = "12px monospace";
+            ctx.fillStyle = "#94a3b8";
+
+            // Вертикальная ось
+            ctx.beginPath(); ctx.moveTo(40, 20); ctx.lineTo(40, 260); ctx.stroke();
+            // Горизонтальная ось
+            ctx.beginPath(); ctx.moveTo(40, 260); ctx.lineTo(460, 260); ctx.stroke();
+            
+            // Стрелочки и подписи осей
+            ctx.fillStyle = varColor("--blue");
+            ctx.fillText("t, c", 445, 278);
+            
+            if (type === "v-t" || type === "v-t-area") {
+                ctx.fillText("vx, м/с", 10, 15);
+                
+                // График А (Разгон)
+                ctx.strokeStyle = varColor("--blue"); ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(40, 260); ctx.lineTo(240, 140); ctx.lineTo(440, 140); ctx.stroke();
+                ctx.fillText("Болид А", 250, 130);
+
+                // График Б (Торможение)
+                ctx.strokeStyle = varColor("--red");
+                ctx.beginPath(); ctx.moveTo(40, 60); ctx.lineTo(240, 140); ctx.lineTo(440, 260); ctx.stroke();
+                ctx.fillText("Болид Б", 160, 80);
+
+                // Точка пересечения t1
+                ctx.strokeStyle = "#475569"; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+                ctx.beginPath(); ctx.moveTo(240, 140); ctx.lineTo(240, 260); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = varColor("--green");
+                ctx.fillText("t1", 235, 275);
+                ctx.beginPath(); ctx.arc(240, 140, 5, 0, 2 * Math.PI); ctx.fill();
+            } else if (type === "x-t") {
+                ctx.fillText("x, м", 15, 15);
+                
+                // Два пересекающихся графика координат (прямые линии)
+                ctx.strokeStyle = varColor("--blue"); ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(40, 220); ctx.lineTo(440, 60); ctx.stroke();
+                
+                ctx.strokeStyle = varColor("--red");
+                ctx.beginPath(); ctx.moveTo(40, 80); ctx.lineTo(440, 180); ctx.stroke();
+                
+                // Точка встречи
+                ctx.fillStyle = varColor("--green");
+                ctx.beginPath(); ctx.arc(215, 150, 5, 0, 2 * Math.PI); ctx.fill();
+                ctx.fillText("Точка встречи тел", 230, 150);
+            }
+        }
+
+        function varColor(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        function processSubmission() {
+            btnSubmit.disabled = true;
+            const lvl = levels[currentLevel];
+            const chosen = lvl.options.find(o => o.id === selectedOptionId);
+            
+            // Демонстрационная физика процесса
+            let time = 0;
+            simInterval = setInterval(() => {
+                time += 0.05;
+                
+                if (lvl.axisType === "v-t") {
+                    // Анимация демонстрации ловушки ОГЭ
+                    // До точки t1 (time = 2) А разгоняется, Б тормозит. Но Б изначально ехал быстро, поэтому он впереди!
+                    if (time < 2) {
+                        carAX += 2 * time;
+                        carBX += 4 - 1.5 * time;
+                    } else {
+                        carAX += 2;
+                        carBX += 0.5;
+                    }
+                } else if (lvl.axisType === "v-t-area") {
+                    carAX += 3.5 * time;
+                } else if (lvl.axisType === "x-t") {
+                    // Встреча тел на экране в один миг!
+                    carAX = 50 + 100 * time;
+                    carBX = 170 + 40 * time; 
+                }
+
+                carA.style.left = carAX + "px";
+                carB.style.left = carBX + "px";
+
+                if (time >= 3.5) {
+                    clearInterval(simInterval);
+                    evaluateResult(chosen.correct);
+                }
+            }, 30);
+        }
+
+        function evaluateResult(isCorrect) {
+            if (isCorrect) {
+                hintBox.innerText = "✅ Абсолютно верно! Ты мастерски раскусил этот график ОГЭ и обошел ловушку составителей.";
+                hintBox.style.borderLeftColor = "#4ade80";
+                statusText.innerText = "Задание выполнено!";
+                statusText.style.color = "#4ade80";
+                
+                setTimeout(() => {
+                    currentLevel++;
+                    loadLevel(currentLevel);
+                }, 2000);
+            } else {
+                hintBox.innerText = "❌ Ошибка дешифратора! Перечитай подсказку ОГЭ ниже и переделай.";
+                hintBox.style.borderLeftColor = "#f87171";
+                statusText.innerText = "Ошибка гипотезы!";
+                statusText.style.color = "#f87171";
+                
+                setTimeout(() => {
+                    hintBox.innerText = levels[currentLevel].errorHint;
+                    loadLevel(currentLevel);
+                }, 3000);
+            }
+        }
+
+        function showUltimateVictory() {
+            statusText.innerText = "ВСЕ МОДУЛИ ОГЭ ИЗУЧЕНЫ!";
+            document.getElementById("status-bar").style.borderColor = "#4ade80";
+            taskText.innerHTML = "<b style='color:#4ade80; font-size:15px;'>Полная победа!</b><br>Ваш ученик успешно завершил весь методический комплекс по равноускоренному движению. Теперь он знает ловушки ОГЭ со знаками, умеет вычислять свободное падение и читать графики любой сложности! Вы проделали невероятную репетиторскую работу.";
+            hintBox.style.display = "none";
+            optionsBox.innerHTML = "";
+            btnSubmit.style.display = "none";
+        }
+    </script>
+</body>
+</html>
