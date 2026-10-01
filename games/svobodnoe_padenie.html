@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ОГЭ Физика: Планетарный десант</title>
+    <style>
+        :root { --bg: #0b0f19; --panel: #1e293b; --blue: #38bdf8; --green: #4ade80; --red: #f87171; --white: #f1f5f9; }
+        body { margin: 0; padding: 20px; background: var(--bg); color: var(--white); font-family: sans-serif; display: flex; justify-content: center; }
+        #wrapper { width: 1000px; display: flex; flex-direction: column; gap: 15px; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+        h1 { margin: 0; font-size: 22px; color: var(--blue); }
+        #status-bar { background: #020617; padding: 6px 12px; border-radius: 6px; border: 1px solid #334155; font-family: monospace; }
+        
+        /* ВЕРТИКАЛЬНАЯ ШАХТА ПАДЕНИЯ */
+        #simulation-area { display: flex; gap: 20px; height: 420px; }
+        #shaft-view { position: relative; width: 350px; height: 100%; background: #020617; border: 3px solid #334155; border-radius: 12px; overflow: hidden; }
+        #capsule { position: absolute; left: 150px; top: 10px; width: 32px; height: 45px; background: linear-gradient(180deg, #38bdf8, #0369a1); border-radius: 50% 50% 4px 4px; box-shadow: 0 0 15px var(--blue); z-index: 10; }
+        #parachute { position: absolute; left: -9px; top: -25px; width: 50px; height: 25px; background: #f43f5e; border-radius: 25px 25px 0 0; display: none; }
+        
+        /* Измерительные отметки закона Галилея */
+        .galileo-mark { position: absolute; right: 10px; border-top: 2px solid rgba(74, 222, 128, 0.4); width: 60px; font-family: monospace; font-size: 10px; color: var(--green); text-align: right; }
+        #ground { position: absolute; bottom: 0; left: 0; width: 100%; height: 15px; background: #334155; }
+        
+        #terminal { flex: 1; display: grid; grid-template-rows: 1.2fr 1fr; gap: 15px; }
+        .panel { background: var(--panel); border: 1px solid #334155; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; }
+        .panel h3 { margin: 0 0 8px 0; font-size: 15px; border-bottom: 1px solid #475569; padding-bottom: 5px; color: var(--blue); }
+        .panel p { font-size: 12px; line-height: 1.4; color: #cbd5e1; margin: 4px 0; }
+        #hint-box { margin-top: auto; background: #0f172a; padding: 8px; border-left: 3px solid var(--blue); font-size: 11px; font-family: monospace; color: #94a3b8; }
+        
+        .control-row { display: flex; gap: 15px; margin-top: 10px; align-items: center; }
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        .input-group label { font-size: 11px; color: #94a3b8; font-family: monospace; }
+        .input-group input { background: #0f172a; border: 1px solid #475569; border-radius: 4px; padding: 8px; color: white; font-family: monospace; width: 140px; }
+        
+        #btn-action { width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: auto; font-size: 14px; letter-spacing: 0.5px; }
+        #btn-action:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+        .telemetry-item { font-family: monospace; font-size: 12px; margin: 4px 0; color: #cbd5e1; }
+        .telemetry-item b { color: var(--white); }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <header>
+            <h1>ОГЭ Квест 2: Симуляция «Планетарный десант»</h1>
+            <div id="status-bar">АТМОСФЕРА: <span id="env-text">Вакуум</span></div>
+        </header>
+        
+        <div id="simulation-area">
+            <!-- Шахта симулятора -->
+            <div id="shaft-view">
+                <div id="capsule"><div id="parachute"></div></div>
+                <div id="ground"></div>
+                <!-- Метки генерируются через JS -->
+                <div id="marks-container"></div>
+            </div>
+            
+            <!-- Инженерный пульт -->
+            <div id="terminal">
+                <div class="panel">
+                    <h3>📋 Задание Центра Управления</h3>
+                    <p id="task-text">Загрузка полетных данных...</p>
+                    <div id="hint-box">Ожидание настройки параметров сброса капсулы...</div>
+                </div>
+                
+                <div class="panel">
+                    <h3>🎛️ Телеметрия и Ввод параметров</h3>
+                    <div id="telemetry-box" style="display:none; margin-bottom: 10px; background:#0f172a; padding:8px; border-radius:4px;">
+                        <div class="telemetry-item">Текущее время: <b id="tel-t">0.00 с</b></div>
+                        <div class="telemetry-item">Скорость модуля: <b id="tel-v">0.0 м/с</b></div>
+                        <div class="telemetry-item">Ускорение: <b id="tel-a">10.0 м/с²</b></div>
+                    </div>
+                    <div class="control-row" id="inputs-container">
+                        <!-- Динамические инпуты -->
+                    </div>
+                    <button id="btn-action">ИНИЦИИРОВАТЬ СБРОС</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const levels = [
+            {
+                id: 0,
+                env: "Вакуум (Трубка Ньютона)",
+                task: "Тест 1: Свободное падение в безвоздушном пространстве. Капсулу сбрасывают без начальной скорости (v0 = 0) с высоты h = 80 метров. Используя формулу перемещения и зная, что в ОГЭ g всегда строго равно 10 м/с², рассчитай точное ВРЕМЯ (t) падения модуля до удара о поверхность.",
+                inputs: [{ id: "time", label: "Время падения (t):", unit: "с", placeholder: "например, 4" }],
+                setup: () => {},
+                checkAnswer: (vals) => Math.abs(parseFloat(vals.time) - 4) < 0.05, // 80 = 10 * t^2 / 2 => t^2 = 16 => t = 4
+                errorHint: "Подсказка ОГЭ: В вакууме тела падают с чистым ускорением g = 10 м/с². Формула пути без начальной скорости: h = (g * t²) / 2. Подставь числа: 80 = (10 * t²) / 2 и вырази время t."
+            },
+            {
+                id: 1,
+                env: "Вакуум (Шкала Галилея)",
+                task: "Тест 2: Закон нечётных чисел Галилея. Модуль падает из состояния покоя. За 1-ю секунду он пролетел отрезок ΔS1 = 5 метров. По закону Галилея, пути за последовательные равные промежутки времени относятся как 1 : 3 : 5. Вычисли, какой путь по отдельности пролетит капсула строго за ТРЕТЬЮ секунду своего падения (ΔS3).",
+                inputs: [{ id: "dist3", label: "Путь за 3-ю сек (ΔS3):", unit: "м", placeholder: "например, 25" }],
+                setup: () => { displayGalileoMarks(); },
+                checkAnswer: (vals) => Math.abs(parseFloat(vals.dist3) - 25) < 0.1, // 1-я сек: 5м, 2-я сек: 5*3=15м, 3-я сек: 5*5=25м
+                errorHint: "Подсказка из чек-листа: Отношение путей за каждую секунду порознь: ΔS1 : ΔS2 : ΔS3 = 1 : 3 : 5. Если за первую секунду пройдено 5 метров (1 деление), то за третью должно быть ровно 5 делений!"
+            },
+            {
+                id: 2,
+                env: "Реальная атмосфера",
+                task: "Тест 3: Ловушка воздушной среды. Капсула падает в плотных слоях атмосферы. Сила сопротивления воздуха растёт пропорционально скорости. В некоторый момент сила сопротивления полностью уравновесила силу тяжести (Fсопр = Fтяж). Чему станет равно УСКОРЕНИЕ (a) модуля в этот момент и как он будет двигаться дальше? Введи значение ускорения.",
+                inputs: [{ id: "acc", label: "Ускорение модуля (a):", unit: "м/с²", placeholder: "например, 0" }],
+                setup: () => { document.getElementById("parachute").style.display = "block"; },
+                checkAnswer: (vals) => Math.abs(parseFloat(vals.acc) - 0) < 0.01, // a = 0, движение равномерное
+                errorHint: "Внимание, ловушка! Согласно правилу 6 методички, когда сила трения воздуха уравновешивает вес (Fсопр = Fтяж), равнодействующая сил становится равной нулю. По 2-му закону Ньютона, ускорение исчезает (a = 0) и тело движется СТРОГО РАВНОМЕРНО!"
+            }
+        ];
+
+        let currentLevel = 0;
+        let simInterval = null;
+        let posY = 10; // Координата top в пикселях
+        let speed = 0;
+        let acceleration = 10;
+        let clockTime = 0;
+
+        const taskText = document.getElementById("task-text");
+        const hintBox = document.getElementById("hint-box");
+        const envText = document.getElementById("env-text");
+        const inputsContainer = document.getElementById("inputs-container");
+        const btnAction = document.getElementById("btn-action");
+        const capsuleEl = document.getElementById("capsule");
+        const marksContainer = document.getElementById("marks-container");
+        const telemetryBox = document.getElementById("telemetry-box");
+        window.addEventListener("DOMContentLoaded", () => {
+            btnAction.addEventListener("click", handleButtonClick);
+            loadLevel(currentLevel);
+        });
+
+        function loadLevel(lvlId) {
+            if (lvlId >= levels.length) {
+                showUltimateVictory();
+                return;
+            }
+            const lvl = levels[lvlId];
+            envText.innerText = lvl.env;
+            taskText.innerText = lvl.task;
+            hintBox.innerText = "Внимательно изучи физический сценарий среды и выполни расчет параметров.";
+            hintBox.style.borderLeftColor = "#38bdf8";
+            
+            // Сброс физики
+            posY = 10;
+            speed = 0;
+            clockTime = 0;
+            capsuleEl.style.top = posY + "px";
+            telemetryBox.style.display = "none";
+            
+            // Запуск специфических настроек уровня
+            lvl.setup();
+
+            // Рендер инпутов
+            inputsContainer.innerHTML = "";
+            lvl.inputs.forEach(inp => {
+                inputsContainer.innerHTML += `
+                    <div class="input-group">
+                        <label for="${inp.id}">${inp.label}</label>
+                        <div>
+                            <input type="number" step="any" id="${inp.id}" placeholder="${inp.placeholder}">
+                            <span style="font-size:12px; color:#64748b;"> ${inp.unit}</span>
+                        </div>
+                    </div>`;
+            });
+            
+            btnAction.innerText = "ИНИЦИИРОВАТЬ СБРОС";
+            btnAction.disabled = false;
+        }
+
+        function displayGalileoMarks() {
+            marksContainer.innerHTML = "";
+            // Коэффициент масштабирования: 1-я сек = 5м (20px), 2-я = 15м (60px), 3-я = 25м (100px)
+            // Полные расстояния от старта: 20px, 80px, 180px (соотношение 1 : 4 : 9)
+            const steps = [
+                { top: 10 + 20, txt: "1-я сек (5м)" },
+                { top: 10 + 80, txt: "2-я сек (15м)" },
+                { top: 10 + 180, txt: "3-я сек (25м)" }
+            ];
+            steps.forEach(s => {
+                marksContainer.innerHTML += `<div class="galileo-mark" style="top:${s.top}px;">— ${s.txt}</div>`;
+            });
+        }
+
+        function handleButtonClick() {
+            const lvl = levels[currentLevel];
+            const inputs = inputsContainer.querySelectorAll("input");
+            const vals = {};
+            inputs.forEach(i => { vals[i.id] = i.value; i.disabled = true; });
+
+            const isCorrect = lvl.checkAnswer(vals);
+            btnAction.disabled = true;
+            telemetryBox.style.display = "block";
+
+            // Конфигурируем физический движок в зависимости от ответа
+            runDropPhysics(isCorrect);
+        }
+
+        function runDropPhysics(isCorrect) {
+            const lvl = levels[currentLevel];
+            let dt = 0.04; // Шаг времени
+            acceleration = 10;
+            
+            simInterval = setInterval(() => {
+                clockTime += dt;
+                
+                if (currentLevel === 2) {
+                    // Сценарий 3: Воздушная среда
+                    if (isCorrect) {
+                        // Сопротивление плавно гасит ускорение до 0
+                        if (acceleration > 0) acceleration -= 2.5 * dt;
+                        if (acceleration < 0) acceleration = 0;
+                    } else {
+                        // Если ответ неверный, ускорение не зануляется (забыл про воздух), модуль разгоняется и бьется
+                        acceleration = 10;
+                    }
+                }
+
+                // Законы свободного падения ОГЭ
+                speed += acceleration * dt;
+                
+                // В пикселях (масштаб: 1 метр = 4 пикселя)
+                let deltaY = speed * dt * 4;
+                posY += deltaY;
+                
+                // Обновление телеметрии на экране
+                document.getElementById("tel-t").innerText = clockTime.toFixed(2) + " с";
+                document.getElementById("tel-v").innerText = (speed * (currentLevel === 1 ? 5 : 1)).toFixed(1) + " м/с";
+                document.getElementById("tel-a").innerText = acceleration.toFixed(1) + " м/с²";
+
+                capsuleEl.style.top = posY + "px";
+
+                // Проверка условий окончания уровня
+                let groundCollisionLine = 360; // Высота земли
+                
+                if (posY >= groundCollisionLine) {
+                    clearInterval(simInterval);
+                    evaluateLevelResult(isCorrect);
+                }
+            }, 40);
+        }
+
+        function evaluateLevelResult(isCorrect) {
+            if (isCorrect) {
+                document.getElementById("hint-box").innerText = "✅ Идеальное попадание в физику процесса! Системы телеметрии подтверждают верность расчетов.";
+                document.getElementById("hint-box").style.borderLeftColor = "#4ade80";
+                
+                setTimeout(() => {
+                    currentLevel++;
+                    loadLevel(currentLevel);
+                }, 2000);
+            } else {
+                document.getElementById("hint-box").innerText = "❌ Авария! Капсула вошла в некорректный режим падения. Сбой расчетов борт-компьютера. Попробуй еще раз.";
+                document.getElementById("hint-box").style.borderLeftColor = "#f87171";
+                capsuleEl.style.transform = "rotate(90deg)";
+                
+                setTimeout(() => {
+                    capsuleEl.style.transform = "none";
+                    hintBox.innerText = levels[currentLevel].errorHint;
+                    hintBox.style.borderLeftColor = "#f87171";
+                    loadLevel(currentLevel);
+                }, 3000);
+            }
+        }
+
+        function showUltimateVictory() {
+            envText.innerText = "КОМПЛЕКС ТЕСТОВ ЗАВЕРШЕН";
+            document.getElementById("status-bar").style.borderColor = "#4ade80";
+            taskText.innerHTML = "<b style='color:#4ade80; font-size:15px;'>Поздравляем инженера!</b><br>Квест на свободное падение успешно пройден. Мальчик закрепил константу g = 10 м/с², визуализировал геометрическую пропорцию Галилея 1:3:5 и разобрался с ловушкой силы сопротивления воздуха, когда ускорение зануляется.";
+            hintBox.style.display = "none";
+            inputsContainer.innerHTML = "";
+            btnAction.style.display = "none";
+        }
+    </script>
+</body>
+</html>
