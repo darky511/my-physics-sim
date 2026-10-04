@@ -55,20 +55,12 @@
             left: 0;
         }
 
-        /* Перемещаемый ящик с грузом (Коричневый квадрат на дороге) */
+        /* Векторный ящик с грузом внутри SVG */
         #cargo-box {
-            width: 26px;
-            height: 26px;
-            background-color: #b87333;
-            border: 2px solid #5c3a21;
-            border-radius: 3px;
-            position: absolute;
-            left: 55px;  /* Точная стартовая координата X */
-            top: 287px;  /* Точная стартовая координата Y на линии дороги */
-            transform: translate(-50%, -50%);
-            transition: left 0.5s linear, top 0.5s linear;
-            z-index: 10;
-            box-sizing: border-box;
+            fill: #b87333;
+            stroke: #5c3a21;
+            stroke-width: 2px;
+            rx: 3px; /* Скругление углов */
         }
 
         /* Панель управления и условий задач */
@@ -139,10 +131,10 @@
             <!-- Ориентиры Старт и Финиш строго по вашему макету -->
             <text x="38" y="255" fill="#8C2D19" font-size="12" font-family="sans-serif" font-weight="bold">Старт</text>
             <text x="560" y="65" fill="#1E6B38" font-size="12" font-family="sans-serif" font-weight="bold">Финиш</text>
+            <!-- ВЕКТОРНЫЙ ЯЩИК ВНУТРИ SVG (Координаты x и y теперь жестко привязаны к сетке) -->
+            <rect id="cargo-box" x="42" y="274" width="26" height="26" />
         </svg>
 
-        <!-- Ящик с грузом (Позиционируется поверх схемы) -->
-        <div id="cargo-box"></div>
     </div>
 
     <!-- ИНТЕРФЕЙС ЗАДАЧИ -->
@@ -251,12 +243,14 @@
             }
 
             const box = document.getElementById('cargo-box');
-            box.style.left = points[index].x + 'px';
-            box.style.top = points[index].y + 'px';
-
+            // SVG-прямоугольник позиционируется от своего левого верхнего угла,
+            // поэтому мы вычитаем половину его ширины (13px), чтобы центрировать по траектории
+            box.setAttribute('x', points[index].x - 13);
+            box.setAttribute('y', points[index].y - 13);
+        
             setTimeout(() => {
                 animateCargoPath(points, index + 1, onComplete);
-            }, 600); // Тайминг шага перемещения
+            }, 600);
         }
     </script>
 </body>
