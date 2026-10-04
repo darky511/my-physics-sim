@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Космический погрузчик: Работа и Мощность</title>
+    <title>Тренажёр: Работа и Мощность в логистике</title>
     <style>
         :root {
             --brand-dark: #1A252C;
@@ -35,106 +35,45 @@
             letter-spacing: 1px;
         }
 
-        /* ИГРОВОЙ ЭКРАН */
-        #arena {
-            width: 800px;
-            height: 250px;
-            background: linear-gradient(to bottom, #111e25, #060b0e);
-            border: 4px solid var(--brand-teal);
+        /* ИГРОВОЙ КОНТЕЙНЕР (SVG-основа) */
+        #canvas-container {
+            width: 900px;
+            height: 350px;
             position: relative;
+            background-color: #ffffff;
+            border: 4px solid var(--brand-dark);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border-radius: 4px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        /* Платформа космодрома */
-        #ground {
+        svg {
+            width: 100%;
+            height: 100%;
             position: absolute;
-            bottom: 0;
+            top: 0;
             left: 0;
-            right: 0;
-            height: 40px;
-            background-color: #2c3e50;
-            border-top: 3px solid #34495e;
         }
 
-        /* Наш робот-погрузчик */
-        #robot-truck {
-            width: 70px;
-            height: 40px;
-            background-color: #f1c40f;
-            border: 3px solid #d35400;
-            border-radius: 6px;
-            position: absolute;
-            left: 50px;
-            bottom: 40px;
-            transition: left 1.5s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #000;
-            font-size: 11px;
-        }
-
-        /* Груз, который мы тащим или поднимаем */
+        /* Перемещаемый ящик с грузом (коричневый квадрат строго по эскизу) */
         #cargo-box {
-            width: 40px;
-            height: 40px;
-            background-color: #e67e22;
-            border: 3px solid #d35400;
-            border-radius: 4px;
+            width: 26px;
+            height: 26px;
+            background-color: #b87333;
+            border: 2px solid #5c3a21;
+            border-radius: 3px;
             position: absolute;
-            left: 125px;
-            bottom: 40px;
-            transition: left 1.5s ease-in-out, bottom 1.5s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: bold;
-            color: white;
+            left: 35px;
+            top: 285px; /* Исходная Точка 1 на земле */
+            transform: translate(-50%, -50%);
+            transition: left 0.5s linear, top 0.5s linear;
+            z-index: 10;
+            box-sizing: border-box;
         }
 
-        /* Ракета на финише */
-        #rocket {
-            width: 60px;
-            height: 120px;
-            background-color: #ecf0f1;
-            border: 3px solid #bdc3c7;
-            border-radius: 30px 30px 5px 5px;
-            position: absolute;
-            right: 60px;
-            bottom: 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .rocket-window {
-            width: 20px;
-            height: 20px;
-            background-color: #3498db;
-            border-radius: 50%;
-            margin-bottom: 10px;
-        }
-
-        /* Индикаторы текущего состояния физических величин */
-        .telemetry {
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            background-color: rgba(0,0,0,0.6);
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            border-left: 3px solid var(--brand-teal);
-        }
-
-        /* Панель управления */
+        /* Панель управления и условий задач */
         #control-panel {
-            width: 800px;
+            width: 900px;
             background-color: #151e24;
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 4px;
@@ -142,20 +81,17 @@
             padding: 20px;
             box-sizing: border-box;
         }
-
         #task-text {
             font-size: 16px;
             font-weight: 500;
             line-height: 1.4;
             margin-bottom: 15px;
         }
-
         .action-area {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-
         .num-input {
             background-color: var(--brand-dark);
             border: 2px solid var(--brand-teal);
@@ -167,7 +103,6 @@
             font-weight: bold;
             outline: none;
         }
-
         .submit-btn {
             background-color: var(--brand-teal);
             color: white;
@@ -179,7 +114,6 @@
             cursor: pointer;
             text-transform: uppercase;
         }
-
         .submit-btn:hover { background-color: #117880; }
         #info-msg { font-size: 14px; font-weight: bold; margin-top: 10px; min-height: 20px; }
         .text-success { color: var(--brand-success); }
@@ -188,118 +122,150 @@
 </head>
 <body>
 
-    <div id="game-title">Робот-погрузчик: Квест «Работа и Мощность»</div>
+    <div id="game-title">Логистический комплекс: Механическая Работа и Мощность</div>
 
-    <!-- ИГРОВОЙ ЭКРАН С СИМУЛЯЦИЕЙ -->
-    <div id="arena">
-        <div class="telemetry" id="telemetry-display">Текущий режим: Транспортировка груза</div>
-        
-        <!-- Объекты на сцене -->
-        <div id="robot-truck">РОБОТ</div>
-        <div id="cargo-box">📦</div>
-        
-        <div id="rocket">
-            <div class="rocket-window"></div>
-            <span style="color:#000; font-size:10px; font-weight:bold;">🚀</span>
-        </div>
-        
-        <div id="ground"></div>
+    <!-- ВЕКТОРНОЕ ОКНО СИМУЛЯЦИИ -->
+    <div id="canvas-container">
+        <svg viewBox="0 0 900 350">
+            <!-- Земля / Дорога (Серая линия внизу) -->
+            <line x1="0" y1="300" x2="900" y2="300" stroke="#b0b0b0" stroke-width="4" />
+
+            <!-- Здание 1 (Черный контур прямоугольника по эскизу) -->
+            <rect x="200" y="150" width="150" height="150" fill="none" stroke="#000000" stroke-width="4" />
+            
+            <!-- Здание 2 (Более высокое черное здание справа) -->
+            <rect x="480" y="80" width="200" height="220" fill="none" stroke="#000000" stroke-width="4" />
+
+            <!-- Маркеры Точек (Точки 1-6) и Старт/Финиш строго по позициям платформ -->
+            <text x="20" y="255" fill="#8C2D19" font-size="12" font-family="sans-serif" font-weight="bold">Старт</text>
+            <text x="20" y="320" fill="#666" font-size="11" font-family="sans-serif">Точка 1</text>
+            
+            <text x="165" y="320" fill="#666" font-size="11" font-family="sans-serif">Точка 2</text>
+            <text x="160" y="135" fill="#666" font-size="11" font-family="sans-serif">Точка 3</text>
+            
+            <text x="360" y="135" fill="#666" font-size="11" font-family="sans-serif">Точка 4</text>
+            <text x="430" y="65" fill="#666" font-size="11" font-family="sans-serif">Точка 5</text>
+            
+            <text x="690" y="65" fill="#666" font-size="11" font-family="sans-serif">Точка 6</text>
+            <text x="680" y="45" fill="#1E6B38" font-size="12" font-family="sans-serif" font-weight="bold">Финиш</text>
+        </svg>
+
+        <!-- Ящик с грузом (Позиционируется поверх схемы) -->
+        <div id="cargo-box"></div>
     </div>
 
-    <!-- ИНТЕРФЕЙС КВЕСТА -->
+    <!-- ИНТЕРФЕЙС ЗАДАЧИ -->
     <div id="control-panel">
         <div id="task-text">
-            <b>Задание 1 (Вычисление Работы):</b><br>
-            Робот толкает ящик к ракете с постоянной силой 50 Н. Он переместил его на расстояние 4 метра. Какую механическую работу в Джоулях (Дж) совершил робот?
+            <b>Этап 1 (От точки 1 до точки 2):</b><br>
+            Ящик перемещают горизонтально по земле на расстояние 6 метров. Сила трения, преодолеваемая при движении, составляет 40 Н. Какую механическую работу в Джоулях (Дж) необходимо совершить для этого перемещения?
         </div>
         <div class="action-area">
             <input type="number" class="num-input" id="answer-field" placeholder="Ответ в Дж">
-            <button class="submit-btn" onclick="checkQuestAnswer()">Подтвердить</button>
+            <button class="submit-btn" onclick="verifyLogisticsMove()">Отправить ответ</button>
         </div>
         <div id="info-msg"></div>
     </div>
     <script>
-        // Сценарий квеста: 4 простых шага без закрученных формулировок
-        const questStages = [
+        // Координаты путевых точек строго по геометрии чертежа (с учетом габаритов ящика)
+        const logisticsPath = [
+            // ЭТАП 1: Движение по горизонтали от Точки 1 к Точке 2
+            [
+                {x: 185, y: 285}
+            ],
+            // ЭТАП 2: Вертикальный подъём на крышу первого здания (Точка 2 -> Точка 3)
+            [
+                {x: 185, y: 135}, // Сначала поднимается вверх
+                {x: 215, y: 135}  // Встает на левый угол крыши (Точка 3)
+            ],
+            // ЭТАП 3: Горизонтальное движение по конвейеру первого здания (Точка 3 -> Точка 4)
+            [
+                {x: 335, y: 135}  // Перемещается на правый угол крыши (Точка 4)
+            ],
+            // ЭТАП 4: Перемещение подъёмным краном по вертикали и горизонтали (Точка 4 -> Точка 5)
+            [
+                {x: 335, y: 65},  // Кран поднимает вертикально вверх на уровень второй крыши
+                {x: 495, y: 65}   // Кран смещает горизонтально на левый угол второй крыши (Точка 5)
+            ],
+            // ЭТАП 5: Движение по верхнему конвейеру второго здания до Финиша (Точка 5 -> Точка 6)
+            [
+                {x: 665, y: 65}   // Достигает зоны разгрузки Финиш (Точка 6)
+            ]
+        ];
+
+        // Задачи КИМ ФИПИ без усложненных формулировок
+        const warehouseTasks = [
             {
-                // Шаг 1: Робот подъезжает к ящику и толкает его вперед
-                robotX: 550, cargoX: 620, cargoY: 40,
-                answer: 200, // 50 Н * 4 м = 200 Дж
-                telemetry: "Текущий режим: Загрузка в отсек ракеты",
-                nextTask: "<b>Задание 2 (Вычисление Силы через Работу):</b><br>Теперь нужно затащить ящик по вертикальному пандусу внутрь ракеты. Робот совершил работу 600 Дж, подняв ящик вертикально вверх на высоту 3 метра. С какой силой в Ньютонах (Н) робот тянул ящик вверх?"
+                answer: 240, // 40 Н * 6 м = 240 Дж
+                nextTask: "<b>Этап 2 (От точки 2 до точки 3):</b><br>Ящик массой 15 кг поднимают вертикально вверх на крышу первого здания высотой 4 метра. Чему равна работа, совершаемая против силы тяжести при этом подъёме? (Прими g = 10 Н/кг)."
             },
             {
-                // Шаг 2: Ящик поднимается вверх на уровень люка ракеты
-                robotX: 550, cargoX: 690, cargoY: 120,
-                answer: 200, // 600 Дж / 3 м = 200 Н
-                telemetry: "Текущий режим: Проверка мощности генератора",
-                nextTask: "<b>Задание 3 (Вычисление Мощности):</b><br>Ящик внутри! Робот переходит в режим ожидания. На закрытие бронелюка ракеты его мотор потратил 2 секунды, совершив при этом работу 800 Дж. Чему равна мощность мотора робота в Ваттах (Вт)?"
+                answer: 600, // 15 кг * 10 Н/кг * 4 м = 600 Дж
+                nextTask: "<b>Этап 3 (От точки 3 до точки 4):</b><br>На крыше здания расположен горизонтальный конвейер. Он обладает постоянной механической мощностью 40 Вт. Какое время в секундах (с) потребуется конвейеру, чтобы совершить работу, равную 320 Дж?"
             },
             {
-                // Шаг 3: Робот отъезжает назад, люк готов
-                robotX: 100, cargoX: 690, cargoY: 120,
-                answer: 400, // 800 Дж / 2 с = 400 Вт
-                telemetry: "Текущий режим: Расчет времени до старта",
-                nextTask: "<b>Задание 4 (Вычисление Времени через Мощность):</b><br>Финальный запуск топливных насосов! Насос работает со стабильной мощностью 500 Вт. Чтобы полностью заправить баки, ему необходимо совершить работу 4000 Дж. Сколько секунд (с) займет этот процесс?"
+                answer: 8, // 320 Дж / 40 Вт = 8 с
+                nextTask: "<b>Этап 4 (От точки 4 до точки 5):</b><br>Подъёмный кран перемещает ящик на крышу второго здания. Кран совершил вертикальную работу подъёма 900 Дж и горизонтальную работу перемещения 400 Дж. Чему равна общая (суммарная) механическая работа, выполненная краном?"
             },
             {
-                // Шаг 4: Финал, ракета улетает вверх
-                robotX: 100, cargoX: 690, cargoY: 400, // Ящик улетает вместе с ракетой вверх за экран
-                answer: 8, // 4000 Дж / 500 Вт = 8 секунд
-                telemetry: "МИССИЯ ВЫПОЛНЕНА!",
-                nextTask: "<b>Ракета успешно запущена в космос!</b>"
+                answer: 1300, // 900 + 400 = 1300 Дж
+                nextTask: "<b>Этап 5 (От точки 5 до точки 6):</b><br>Верхний конвейер перемещает ящик до Финиша за 5 секунд, совершая при этом механическую работу 450 Дж. Какова рабочая мощность этого конвейера в Ваттах (Вт)?"
+            },
+            {
+                answer: 90, // 450 Дж / 5 с = 90 Вт
+                nextTask: "<b>Логистический трек успешно пройден!</b><br>Ученик закрепил на практике все типы задач на работу (горизонтальную, вертикальную и суммарную) и мощность механизмов, наглядно сопоставляя формулы с типом движения груза."
             }
         ];
 
         let currentStageIndex = 0;
 
-        function checkQuestAnswer() {
+        function verifyLogisticsMove() {
             const userInputValue = parseFloat(document.getElementById('answer-field').value);
-            const messageLabel = document.getElementById('info-msg');
-            const currentStageData = questStages[currentStageIndex];
+            const msgLabel = document.getElementById('info-msg');
+            const targetAnswer = warehouseTasks[currentStageIndex].answer;
 
-            // Проверка численного ответа
-            if (Math.abs(userInputValue - currentStageData.answer) < 0.001) {
-                messageLabel.className = "text-success";
-                messageLabel.innerHTML = "✓ Абсолютно верно! Параметры приняты. Механизм приведён в действие.";
+            if (Math.abs(userInputValue - targetAnswer) < 0.001) {
+                msgLabel.className = "text-success";
+                msgLabel.innerHTML = "✓ Верно! Роботы и конвейеры запустили перемещение груза.";
                 
-                // Передвигаем робота и груз на экране
-                document.getElementById('robot-truck').style.left = currentStageData.robotX + 'px';
-                document.getElementById('cargo-box').style.left = currentStageData.cargoX + 'px';
-                document.getElementById('cargo-box').style.bottom = currentStageData.cargoY + 'px';
-                
-                // Если это финал — запускаем ракету вверх
-                if (currentStageIndex === 3) {
-                    document.getElementById('rocket').style.transition = "bottom 2.5s ease-in";
-                    document.getElementById('rocket').style.bottom = "400px";
-                }
-
-                // Переключаем на следующее задание
-                setTimeout(() => {
-                    if (currentStageIndex < questStages.length - 1) {
-                        document.getElementById('telemetry-display').innerText = currentStageData.telemetry;
-                        document.getElementById('task-text').innerHTML = currentStageData.nextTask;
+                // Запуск последовательной анимации перемещения ящика по точкам текущего этапа
+                animateCargoPath(logisticsPath[currentStageIndex], 0, () => {
+                    if (currentStageIndex < warehouseTasks.length - 1) {
+                        document.getElementById('task-text').innerHTML = warehouseTasks[currentStageIndex].nextTask;
                         document.getElementById('answer-field').value = "";
                         
-                        // Меняем плейсхолдер подсказки единиц измерения
-                        const placeholders = ["Ответ", "Ответ в Н", "Ответ в Вт", "Ответ в секундах"];
-                        document.getElementById('answer-field').placeholder = placeholders[currentStageIndex + 1];
+                        // Динамически меняем плейсхолдеры единиц измерения в инпуте
+                        const metricPlaceholders = ["Ответ в Дж", "Ответ в секундах", "Ответ в Дж", "Ответ в Вт"];
+                        document.getElementById('answer-field').placeholder = metricPlaceholders[currentStageIndex];
                         
-                        messageLabel.innerHTML = "";
+                        msgLabel.innerHTML = "";
                         currentStageIndex++;
                     } else {
-                        // Квест полностью завершен
-                        document.getElementById('telemetry-display').innerText = currentStageData.telemetry;
-                        document.getElementById('task-text').innerHTML = currentStageData.nextTask;
+                        document.getElementById('task-text').innerHTML = warehouseTasks[currentStageIndex].nextTask;
                         document.querySelector('.action-area').style.display = 'none';
-                        messageLabel.innerHTML = "";
+                        msgLabel.innerHTML = "";
                     }
-                }, 2000);
-
+                });
             } else {
-                messageLabel.className = "text-alert";
-                messageLabel.innerHTML = "❌ Ошибка в расчете. Робот заклинило! Проверь формулу на черновике.";
+                msgLabel.className = "text-alert";
+                msgLabel.innerHTML = "❌ Неверно! Системы автоматизации заблокированы. Перепроверь формулу на черновике.";
             }
+        }
+
+        // Аниматор последовательного скольжения ящика по углам зданий
+        function animateCargoPath(points, index, onComplete) {
+            if (index >= points.length) {
+                if (onComplete) onComplete();
+                return;
+            }
+
+            const box = document.getElementById('cargo-box');
+            box.style.left = points[index].x + 'px';
+            box.style.top = points[index].y + 'px';
+
+            setTimeout(() => {
+                animateCargoPath(points, index + 1, onComplete);
+            }, 600); // Тайминг шага перемещения
         }
     </script>
 </body>
