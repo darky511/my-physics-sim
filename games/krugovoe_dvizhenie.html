@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Центрифуга: Движение по окружности</title>
+    <style>
+        :root {
+            --brand-dark: #1A252C;
+            --brand-teal: #0D6066;
+            --brand-gray: #F4F6F7;
+            --brand-alert: #8C2D19;
+            --brand-success: #1E6B38;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--brand-dark);
+            color: var(--brand-gray);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #game-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ИГРОВОЙ ЭКРАН */
+        #canvas-container {
+            width: 800px;
+            height: 350px;
+            position: relative;
+            background: linear-gradient(to bottom, #111e25, #060b0e);
+            border: 4px solid var(--brand-teal);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Стрела центрифуги (вращающаяся линия) */
+        #centrifuge-arm {
+            transform-origin: 400px 175px;
+            transition: transform 0.1s linear;
+        }
+
+        /* Кабина космонавта на конце стрелы */
+        #capsule {
+            fill: #ecf0f1;
+            stroke: var(--brand-teal);
+            stroke-width: 3px;
+            transition: cx 0.5s ease-out; /* Плавное изменение радиуса */
+        }
+
+        /* Телеметрия на экране */
+        .telemetry {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background-color: rgba(0,0,0,0.6);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            border-left: 3px solid #5bc0de;
+        }
+
+        /* Панель управления */
+        #control-panel {
+            width: 800px;
+            background-color: #151e24;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #task-text {
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .action-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .num-input {
+            background-color: var(--brand-dark);
+            border: 2px solid var(--brand-teal);
+            color: white;
+            padding: 10px 12px;
+            font-size: 16px;
+            border-radius: 4px;
+            width: 140px;
+            font-weight: bold;
+            outline: none;
+        }
+
+        .submit-btn {
+            background-color: var(--brand-teal);
+            color: white;
+            border: none;
+            padding: 11px 22px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover { background-color: #117880; }
+        #info-msg { font-size: 14px; font-weight: bold; margin-top: 10px; min-height: 20px; }
+        .text-success { color: var(--brand-success); }
+        .text-alert { color: var(--brand-alert); }
+    </style>
+</head>
+<body>
+
+    <div id="game-title">Пульт управления центрифугой подготовки космонавтов</div>
+
+    <!-- ЭКРАН СИМУЛЯЦИИ -->
+    <div id="canvas-container">
+        <div class="telemetry" id="telemetry-display">Частота вращения: 0 Гц | Радиус: 40 м</div>
+        
+        <svg viewBox="0 0 800 350">
+            <!-- Опорная сетка/орбиты движения (невидимые ориентиры радиусов) -->
+            <circle cx="400" cy="175" r="40" fill="none" stroke="#2c3e50" stroke-width="1" stroke-dasharray="4" id="orbit-40"/>
+            <circle cx="400" cy="175" r="80" fill="none" stroke="#2c3e50" stroke-width="1" stroke-dasharray="4" id="orbit-80"/>
+            <circle cx="400" cy="175" r="120" fill="none" stroke="#2c3e50" stroke-width="1" stroke-dasharray="4" id="orbit-120"/>
+
+            <!-- Центральная неподвижная ось вращения -->
+            <circle cx="400" cy="175" r="12" fill="#34495e" stroke="#2c3e50" stroke-width="3" />
+
+            <!-- Вращающаяся механическая стрела -->
+            <g id="centrifuge-arm">
+                <line x1="400" y1="175" x2="440" y2="175" stroke="#7f8c8d" stroke-width="6" id="arm-line" />
+                <!-- Кабина космонавта (исходный радиус 40м) -->
+                <circle id="capsule" cx="440" cy="175" r="14" />
+                <circle cx="440" cy="175" r="4" fill="#3498db" /> <!-- Иллюминатор -->
+            </g>
+        </svg>
+    </div>
+
+    <!-- ИНТЕРФЕЙС КВЕСТА -->
+    <div id="control-panel">
+        <div id="task-text">
+            <b>Задание 1 (Связь Периода и Частоты):</b><br>
+            Центрифуга запущена в стартовом режиме. Кабина делает один полный оборот ровно за 4 секунды. Вычисли частоту обращения кабины в Герцах (Гц).
+        </div>
+        <div class="action-area">
+            <input type="number" step="0.01" class="num-input" id="answer-field" placeholder="Частота в Гц">
+            <button class="submit-btn" onclick="checkCentrifugeAnswer()">Ввод данных</button>
+        </div>
+        <div id="info-msg"></div>
+    </div>
+    <script>
+        // Сценарии шагов квеста по базовым характеристикам вращения
+        const centrifugeStages = [
+            {
+                answer: 0.25, // Частота ν = 1 / T = 1 / 4 = 0.25 Гц
+                speedDeg: 90, // Градусов в секунду (0.25 оборота в сек * 360)
+                radius: 40,
+                telemetry: "Частота вращения: 0.25 Гц | Радиус: 40 м",
+                nextTask: "<b>Задание 2 (Линейная скорость):</b><br>Стрелу карусели выдвинули до радиуса 80 метров. Частота вращения осталась прежней и равна 0.25 Гц. Вычисли модуль линейной скорости кабины в метрах в секунду (м/с). Прими число пи равным 3."
+            },
+            {
+                answer: 120, // v = 2 * pi * R * nu = 2 * 3 * 80 * 0.25 = 120 м/с
+                speedDeg: 90,
+                radius: 80,
+                telemetry: "Скорость кабины: 120 м/с | Радиус: 80 м",
+                nextTask: "<b>Задание 3 (Центростремительное ускорение):</b><br>Кабина летит по окружности радиусом 80 метров со скоростью 120 м/с. Чему равен модуль центростремительного ускорения кабины в м/с²?"
+            },
+            {
+                answer: 180, // a = v^2 / R = 14400 / 80 = 180 м/с2
+                speedDeg: 120, // Карусель разгоняется сильнее!
+                radius: 80,
+                telemetry: "Ускорение: 180 м/с² | Радиус: 80 м",
+                nextTask: "<b>Задание 4 (Изменение параметров):</b><br>Финальный перегрузочный маневр! Радиус карусели увеличили до 120 метров. Скорость кабины на этой новой орбите зафиксировали на отметке 60 м/с. Каким станет центростремительное ускорение космонавта в м/с²?"
+            },
+            {
+                answer: 30, // a = 3600 / 120 = 30 м/с2
+                speedDeg: 40, // Замедление для остановки
+                radius: 120,
+                telemetry: "Ускорение: 30 м/с² | ТРЕНИРОВКА ЗАВЕРШЕНА",
+                nextTask: "<b>Испытания центрифуги успешно завершены!</b><br>Ученик отработал в уме базовые формулы вращения: частоту (\(\nu = \frac{1}{T}\)), линейную скорость (\(v = 2\pi R\nu\)) и центростремительное ускорение (\(a_{\text{ц}} = \frac{v^2}{R}\)). Космонавты готовы к старту!"
+            }
+        ];
+
+        let currentStageIndex = 0;
+        let currentRotationAngle = 0;
+        let rotationSpeed = 0; // Изначально стоит на месте
+
+        // Постоянный цикл анимации вращения стрелы через requestAnimationFrame
+        function updateRotation() {
+            currentRotationAngle += rotationSpeed * 0.016; // 0.016 сек примерно один кадр при 60fps
+            document.getElementById('centrifuge-arm').style.transform = `rotate(${currentRotationAngle}deg)`;
+            requestAnimationFrame(updateRotation);
+        }
+        requestAnimationFrame(updateRotation);
+
+        function checkCentrifugeAnswer() {
+            const userInputValue = parseFloat(document.getElementById('answer-field').value);
+            const msgLabel = document.getElementById('info-msg');
+            const currentStageData = centrifugeStages[currentStageIndex];
+
+            if (Math.abs(userInputValue - currentStageData.answer) < 0.001) {
+                msgLabel.className = "text-success";
+                msgLabel.innerHTML = "✓ Параметры верны! Центрифуга перестроила режим работы.";
+                
+                // Физически меняем скорость вращения и длину стрелы на экране!
+                rotationSpeed = currentStageData.speedDeg;
+                
+                const nextRadius = currentStageData.radius;
+                document.getElementById('arm-line').setAttribute('x2', 400 + nextRadius);
+                document.getElementById('capsule').setAttribute('cx', 400 + nextRadius);
+                // Сдвигаем и иллюминатор внутри кабины
+                document.getElementById('centrifuge-arm').children[2].setAttribute('cx', 400 + nextRadius);
+
+                // Переход к следующему шагу
+                setTimeout(() => {
+                    if (currentStageIndex < centrifugeStages.length - 1) {
+                        document.getElementById('telemetry-display').innerText = currentStageData.telemetry;
+                        document.getElementById('task-text').innerHTML = currentStageData.nextTask;
+                        document.getElementById('answer-field').value = "";
+                        
+                        // Меняем подсказки в поле ввода
+                        const placeholders = ["Ответ", "Ответ в м/с", "Ответ в м/с²", "Ответ в м/с²"];
+                        document.getElementById('answer-field').placeholder = placeholders[currentStageIndex + 1];
+                        
+                        msgLabel.innerHTML = "";
+                        currentStageIndex++;
+                    } else {
+                        // Победа, плавная остановка
+                        rotationSpeed = 0;
+                        document.getElementById('telemetry-display').innerText = currentStageData.telemetry;
+                        document.getElementById('task-text').innerHTML = currentStageData.nextTask;
+                        document.querySelector('.action-area').style.display = 'none';
+                        msgLabel.innerHTML = "";
+                    }
+                }, 2200);
+
+            } else {
+                msgLabel.className = "text-alert";
+                msgLabel.innerHTML = "❌ Ошибка в расчетах! Датчики фиксируют перегрузку карусели. Перепроверь формулу.";
+            }
+        }
+    </script>
+</body>
+</html>
