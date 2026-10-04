@@ -35,117 +35,45 @@
             letter-spacing: 1px;
         }
 
-        /* ИГРОВОЕ ПОЛЕ */
-        #arena {
+        /* КОНТЕЙНЕР ЛАБИРИНТА: Фиксированное векторное окно */
+        #canvas-container {
             width: 900px;
             height: 300px;
+            position: relative;
             background-color: #ffffff;
             border: 4px solid var(--brand-dark);
-            position: relative;
-            overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border-radius: 4px;
+            overflow: hidden;
         }
 
-        /* Разделение лабиринта на 4 зоны с разными средами */
-        .zone {
+        svg {
+            width: 100%;
+            height: 100%;
             position: absolute;
             top: 0;
-            bottom: 0;
-            display: flex;
-            align-items: flex-start;
-            padding: 10px;
-            font-size: 11px;
-            font-weight: bold;
-            box-sizing: border-box;
+            left: 0;
         }
-        #zone-1 { left: 0; width: 220px; background-color: rgba(91, 192, 222, 0.15); color: #2b7a94; }
-        #zone-2 { left: 220px; width: 230px; background-color: rgba(140, 45, 25, 0.1); color: var(--brand-alert); }
-        #zone-3 { left: 450px; width: 230px; background-color: rgba(30, 107, 56, 0.1); color: var(--brand-success); }
-        #zone-4 { left: 680px; width: 220px; background-color: rgba(13, 96, 102, 0.15); color: var(--brand-teal); }
 
-        /* Черные перегородки лабиринта строго по рисунку */
-        .wall {
-            position: absolute;
-            background-color: #000000;
-            border-radius: 2px;
-        }
-        /* Первая линия ворот */
-        .w1-top { left: 235px; top: 0; width: 10px; height: 200px; }
-        .w1-bot { left: 235px; top: 255px; width: 10px; height: 45px; }
-        
-        /* Вторая линия ворот (Центральный лабиринт сбалансирован по сетке) */
-        .w2-top-v { left: 450px; top: 0; width: 10px; height: 100px; }
-        .w2-top-h { left: 450px; top: 90px; width: 155px; height: 10px; }
-        .w2-mid-v { left: 595px; top: 90px; width: 10px; height: 120px; } 
-        .w2-mid-h { left: 530px; top: 200px; width: 75px; height: 10px; }
-        .w2-bot-v { left: 530px; top: 200px; width: 10px; height: 100px; }
-        
-        /* Третья линия ворот в 4 отсеке */
-        .w3-mid { left: 710px; top: 0; width: 10px; height: 180px; }
-        .w3-mid-bot { left: 710px; top: 235px; width: 10px; height: 65px; } 
-        
-        /* Четвертая линия ворот (финальный выход) */
-        .w4-top { left: 885px; top: 0; width: 10px; height: 130px; }
-        .w4-bot { left: 885px; top: 185px; width: 10px; height: 115px; }
-
-        /* Движущийся физический шарик */
+        /* Интерактивный физический шарик */
         #player-ball {
             width: 30px;
             height: 30px;
             background-color: transparent;
-            border: 3px solid #000000;
+            border: 3.5px solid #000000;
             border-radius: 50%;
             position: absolute;
-            left: 35px;
-            top: 55px;
+            left: 40px;
+            top: 60px;
             transform: translate(-50%, -50%);
-            transition: left 2.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                        top 2.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                        width 0.5s ease, height 0.5s ease;
+            /* Плавное скольжение по углам вашей траектории */
+            transition: left 0.6s linear, top 0.6s linear, 
+                        width 0.4s ease, height 0.4s ease;
             z-index: 10;
             box-sizing: border-box;
         }
 
-        .label {
-            position: absolute;
-            font-size: 13px;
-            font-weight: bold;
-            color: #000000;
-        }
-        #start-lbl { left: 20px; top: 80px; color: var(--brand-alert); }
-        #finish-lbl { left: 830px; top: 155px; color: var(--brand-success); }
-    </style>
-</head>
-<body>
-
-    <div id="game-title">Тренажёр: Проводка зонда через лабиринт сред</div>
-
-    <!-- ТРАССА ЛАБИРИНТА -->
-    <div id="arena">
-        <!-- Зоны сред -->
-        <div class="zone" id="zone-1">1. Пресная вода (1000 кг/м³)</div>
-        <div class="zone" id="zone-2">2. Машинное масло (900 кг/м³)</div>
-        <div class="zone" id="zone-3">3. Солёная рапа (1200 кг/м³)</div>
-        <div class="zone" id="zone-4">4. Тяжёлый сироп (1400 кг/м³)</div>
-
-        <!-- Стены лабиринта по чертежу -->
-        <div class="wall w1-top"></div> <div class="wall w1-bot"></div>
-        <div class="wall w2-top-v"></div> <div class="wall w2-top-h"></div>
-        <div class="wall w2-mid-v"></div> <div class="wall w2-mid-h"></div> <div class="wall w2-bot-v"></div>
-        <div class="wall w3-mid"></div> <div class="wall w3-mid-bot"></div>
-        <div class="wall w4-top"></div> <div class="wall w4-bot"></div>
-
-        <!-- Маркеры Старт/Финиш -->
-        <div class="label" id="start-lbl">Старт</div>
-        <div class="label" id="finish-lbl">Финиш</div>
-
-        <!-- Интерактивный шарик -->
-        <div id="player-ball"></div>
-    </div>
-
-    <!-- ИНТЕРФЕЙС ЗАДАЧИ -->
-    <style>
+        /* Панель управления и задач */
         #control-panel {
             width: 900px;
             background-color: #151e24;
@@ -190,8 +118,56 @@
         }
         .submit-btn:hover { background-color: #117880; }
         #info-msg { font-size: 14px; font-weight: bold; margin-top: 10px; min-height: 20px; }
+        .text-success { color: var(--brand-success); }
+        .text-alert { color: var(--brand-alert); }
     </style>
+</head>
+<body>
 
+    <div id="game-title">Тренажёр: Проводка зонда через лабиринт сред</div>
+
+    <!-- ВЕКТОРНОЕ ПОЛЕ ЛАБИРИНТА -->
+    <div id="canvas-container">
+        <svg viewBox="0 0 900 300">
+            <!-- 1. Цветовые подложки четырех сред (ровно по 225px каждая) -->
+            <rect x="0" y="0" width="225" height="300" fill="rgba(91, 192, 222, 0.15)" />
+            <rect x="225" y="0" width="225" height="300" fill="rgba(140, 45, 25, 0.1)" />
+            <rect x="450" y="0" width="225" height="300" fill="rgba(30, 107, 56, 0.1)" />
+            <rect x="675" y="0" width="225" height="300" fill="rgba(13, 96, 102, 0.15)" />
+
+            <!-- Текстовые маркеры сред -->
+            <text x="10" y="20" fill="#2b7a94" font-size="11" font-family="sans-serif" font-weight="bold">1. Пресная вода (1000 кг/м³)</text>
+            <text x="235" y="20" fill="#8C2D19" font-size="11" font-family="sans-serif" font-weight="bold">2. Машинное масло (900 кг/м³)</text>
+            <text x="460" y="20" fill="#1E6B38" font-size="11" font-family="sans-serif" font-weight="bold">3. Солёная рапа (1200 кг/м³)</text>
+            <text x="685" y="20" fill="#0D6066" font-size="11" font-family="sans-serif" font-weight="bold">4. Тяжёлый сироп (1400 кг/м³)</text>
+
+            <text x="15" y="85" fill="#8C2D19" font-size="13" font-family="sans-serif" font-weight="bold">Старт</text>
+            <text x="825" y="165" fill="#1E6B38" font-size="13" font-family="sans-serif" font-weight="bold">Финиш</text>
+
+            <!-- 2. Черные монолитные стены лабиринта (Толщина 10px) -->
+            <!-- Первая перегородка (проход снизу) -->
+            <rect x="220" y="0" width="10" height="200" fill="#000000" />
+            
+            <!-- Вторая перегородка (излом лабиринта на стыке сред 2 и 3) -->
+            <rect x="445" y="0" width="10" height="100" fill="#000000" />
+            <rect x="445" y="90" width="160" height="10" fill="#000000" />
+            <rect x="595" y="90" width="10" height="110" fill="#000000" />
+            <rect x="530" y="190" width="75" height="10" fill="#000000" />
+            <rect x="530" y="190" width="10" height="110" fill="#000000" />
+
+            <!-- Третья перегородка (проход снизу) -->
+            <rect x="710" y="0" width="10" height="200" fill="#000000" />
+            
+            <!-- Четвертая перегородка (финальный створ перед финишем) -->
+            <rect x="885" y="0" width="10" height="130" fill="#000000" />
+            <rect x="885" y="190" width="10" height="110" fill="#000000" />
+        </svg>
+
+        <!-- Шарик позиционируется поверх SVG -->
+        <div id="player-ball"></div>
+    </div>
+
+    <!-- ИНТЕРФЕЙС ЗАДАЧИ -->
     <div id="control-panel">
         <div id="task-text">
             <b>Отсек 1 (Пресная вода, ρ = 1000 кг/м³):</b><br>
@@ -204,72 +180,102 @@
         <div id="info-msg"></div>
     </div>
     <script>
-        // Координаты движения шарика строго по нарисованной вами безопасной красной траектории
-        const labyrinthStages = [
+        // Координаты траектории движения разбиты на микро-шаги для огибания углов стен без пересечений
+        const pathAnimation = [
+            // ШАГ 1: Движение через первый отсек и проход под первой стеной
+            [
+                {x: 185, y: 60, size: 30},
+                {x: 185, y: 250, size: 30},
+                {x: 275, y: 250, size: 20} // Точка фиксации в отсеке 2
+            ],
+            // ШАГ 2: Обход центрального лабиринта по вашей траектории (огибание излома снизу)
+            [
+                {x: 400, y: 250, size: 20},
+                {x: 400, y: 145, size: 20},
+                {x: 495, y: 145, size: 20},
+                {x: 495, y: 250, size: 20},
+                {x: 650, y: 250, size: 45} // Точка фиксации в отсеке 3
+            ],
+            // ШАГ 3: Подъем вверх по дуге и проход через третьи ворота
+            [
+                {x: 650, y: 50, size: 45},
+                {x: 770, y: 50, size: 45},
+                {x: 770, y: 250, size: 30} // Точка фиксации в отсеке 4
+            ],
+            // ШАГ 4: Финальный выход к отметке Финиш
+            [
+                {x: 835, y: 250, size: 30},
+                {x: 835, y: 160, size: 30},
+                {x: 895, y: 160, size: 25} // Финиш
+            ]
+        ];
+
+        const taskScenarios = [
             {
-                // Узел 1: Шарик прошёл первые ворота снизу по дуге
-                x: 260, y: 228,
-                size: 20, 
-                nextTask: "<b>Отсек 2 (Машинное масло, ρ = 900 кг/м³):</b><br>Для продолжения движения по траектории сплошной <b>стальной шарик (плотность стали 7800 кг/м³)</b> настраивают на объём 0.05 м³. Вычисли модуль силы Архимеда в Ньютонах, которая будет выталкивать его в масле. (g = 10 Н/кг).",
-                answer: 20 // 200 / (1000 * 10) = 0.02 м3 = 20 литров
+                answer: 20,
+                nextTask: "<b>Отсек 2 (Машинное масло, ρ = 900 кг/м³):</b><br>Для безопасного прохождения лабиринта сплошной <b>стальной шарик (плотность стали 7800 кг/м³)</b> настраивают на фиксированный объём 0.05 м³. Вычисли модуль силы Архимеда в Ньютонах, которая будет действовать на него в масле. (g = 10 Н/кг)."
             },
             {
-                // Узел 2: Шарик обогнул центральную перегородку снизу через створ (между 200px и 300px) по вашему рисунку!
-                x: 505, y: 250,
-                size: 45,
-                nextTask: "<b>Отсек 3 (Солёная рапа, ρ = 1200 кг/м³):</b><br>На сплошной <b>алюминиевый шарик (плотность алюминия 2700 кг/м³)</b> действует сила Архимеда, равная 360 Н. Вычисли его объём в кубических метрах (м³), при котором возможен этот маневр.",
-                answer: 450 // 0.05 * 900 * 10 = 450 Н
+                answer: 450,
+                nextTask: "<b>Отсек 3 (Солёная рапа, ρ = 1200 кг/м³):</b><br>На сплошной <b>алюминиевый шарик (плотность алюминия 2700 кг/м³)</b> действует сила Архимеда, равная 360 Н. Вычисли его искомый объём в кубических метрах (м³), чтобы успешно пройти верхний поворот трассы."
             },
             {
-                // Узел 3: Шарик поднялся вверх по дуге и прошёл ворота 4 отсека
-                x: 755, y: 205,
-                size: 30,
-                nextTask: "<b>Отсек 4 (Тяжёлый сироп, ρ = 1400 кг/м³):</b><br>Сплошной <b>свинцовый шарик (плотность свинца 11300 кг/м³)</b> сжался до объёма 0.02 м³. Какая выталкивающая сила Архимеда в Ньютонах действует на него перед финишным створом?",
-                answer: 0.03 // 360 / (1200 * 10) = 0.03 м3
+                answer: 0.03,
+                nextTask: "<b>Отсек 4 (Тяжёлый сироп, ρ = 1400 кг/м³):</b><br>Сплошной <b>свинцовый шарик (плотность свинца 11300 кг/м³)</b> сжался до объёма 0.02 м³. Какая выталкивающая сила Архимеда в Ньютонах действует на него прямо перед финишным створом?"
             },
             {
-                // Узел 4: Финальный выход за пределы лабиринта сред
-                x: 895, y: 155,
-                size: 25,
-                nextTask: "<b>Лабиринт сред успешно пройден!</b><br>Все расчёты сил и объёмов выполнены верно. Ученик проигнорировал ловушки с плотностью материалов тел и использовал только параметры жидкостей.",
-                answer: 280 // 1400 * 10 * 0.02 = 280 Н
+                answer: 280,
+                nextTask: "<b>Лабиринт сред успешно пройден!</b><br>Все расчёты по закону Архимеда выполнены абсолютно верно. Ученик проигнорировал ловушки с плотностью материалов тел и использовал только параметры жидкостей."
             }
         ];
 
-        let stageIndex = 0;
+        let currentStage = 0;
 
         function verifyMove() {
             const userVal = parseFloat(document.getElementById('answer-field').value);
             const msg = document.getElementById('info-msg');
-            const target = labyrinthStages[stageIndex].answer;
+            const target = taskScenarios[currentStage].answer;
 
             if (Math.abs(userVal - target) < 0.001) {
                 msg.className = "text-success";
-                msg.innerHTML = "✓ Расчет верный! Шарик меняет габариты и продвигается по вашей траектории.";
+                msg.innerHTML = "✓ Расчет верный! Шарик меняет габариты и огибает стены по заданной траектории.";
                 
-                const ball = document.getElementById('player-ball');
-                ball.style.left = labyrinthStages[stageIndex].x + 'px';
-                ball.style.top = labyrinthStages[stageIndex].y + 'px';
-                ball.style.width = labyrinthStages[stageIndex].size + 'px';
-                ball.style.height = labyrinthStages[stageIndex].size + 'px';
-
-                setTimeout(() => {
-                    if (stageIndex < labyrinthStages.length - 1) {
-                        document.getElementById('task-text').innerHTML = labyrinthStages[stageIndex].nextTask;
+                // Запуск последовательной покадровой анимации микро-шагов
+                animateBallPath(pathAnimation[currentStage], 0, () => {
+                    // Коллбэк по завершении движения шарика
+                    if (currentStage < taskScenarios.length - 1) {
+                        document.getElementById('task-text').innerHTML = taskScenarios[currentStage].nextTask;
                         document.getElementById('answer-field').value = "";
                         msg.innerHTML = "";
-                        stageIndex++;
+                        currentStage++;
                     } else {
-                        document.getElementById('task-text').innerHTML = labyrinthStages[stageIndex].nextTask;
+                        document.getElementById('task-text').innerHTML = taskScenarios[currentStage].nextTask;
                         document.querySelector('.action-area').style.display = 'none';
                         msg.innerHTML = "";
                     }
-                }, 1800);
-
+                });
             } else {
                 msg.className = "text-alert";
                 msg.innerHTML = "❌ Ошибка в расчетах! Шарик застревает или сталкивается со стенами отсеков.";
             }
+        }
+
+        // Рекурсивный аниматор микро-шагов для плавного огибания углов перегородок
+        function animateBallPath(points, index, onComplete) {
+            if (index >= points.length) {
+                if (onComplete) onComplete();
+                return;
+            }
+
+            const ball = document.getElementById('player-ball');
+            ball.style.left = points[index].x + 'px';
+            ball.style.top = points[index].y + 'px';
+            ball.style.width = points[index].size + 'px';
+            ball.style.height = points[index].size + 'px';
+
+            setTimeout(() => {
+                animateBallPath(points, index + 1, onComplete);
+            }, 650); // Интервал перехода между углами коридоров
         }
     </script>
 </body>
