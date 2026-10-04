@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таможня: Масса и Плотность</title>
+    <style>
+        :root {
+            --brand-dark: #1A252C;
+            --brand-teal: #0D6066;
+            --brand-gray: #F4F6F7;
+            --brand-alert: #8C2D19;
+            --brand-success: #1E6B38;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--brand-dark);
+            color: var(--brand-gray);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #game-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ИГРОВОЙ ЭКРАН */
+        #canvas-container {
+            width: 800px;
+            height: 300px;
+            position: relative;
+            background: linear-gradient(to bottom, #111e25, #060b0e);
+            border: 4px solid var(--brand-teal);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Сканирующий рентгеновский контейнер */
+        #container-box {
+            width: 180px;
+            height: 180px;
+            border: 4px solid #7f8c8d;
+            background-color: rgba(255, 255, 255, 0.03);
+            position: relative;
+            transition: border-color 0.5s ease;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        /* Точки-молекулы внутри контейнера */
+        .molecule {
+            width: 6px;
+            height: 6px;
+            background-color: #5bc0de;
+            border-radius: 50%;
+            justify-self: center;
+            align-self: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .molecule.visible {
+            opacity: 1;
+        }
+
+        /* Сканирующий луч */
+        #scan-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background-color: #5bc0de;
+            box-shadow: 0 0 15px #5bc0de;
+            top: 0;
+            animation: scan 2s infinite ease-in-out;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        /* Информационное табло */
+        .telemetry {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background-color: rgba(0,0,0,0.6);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            border-left: 3px solid #5bc0de;
+        }
+
+        /* Панель управления */
+        #control-panel {
+            width: 800px;
+            background-color: #151e24;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #task-text {
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .action-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .num-input {
+            background-color: var(--brand-dark);
+            border: 2px solid var(--brand-teal);
+            color: white;
+            padding: 10px 12px;
+            font-size: 16px;
+            border-radius: 4px;
+            width: 150px;
+            font-weight: bold;
+            outline: none;
+        }
+
+        .submit-btn {
+            background-color: var(--brand-teal);
+            color: white;
+            border: none;
+            padding: 11px 22px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover { background-color: #117880; }
+        #info-msg { font-size: 14px; font-weight: bold; margin-top: 10px; min-height: 20px; }
+        .text-success { color: var(--brand-success); }
+        .text-alert { color: var(--brand-alert); }
+    </style>
+</head>
+<body>
+
+    <div id="game-title">Сканер Космической Таможни: Проверка Веществ</div>
+
+    <!-- ТАМОЖЕННЫЙ СКАНЕР -->
+    <div id="canvas-container">
+        <div class="telemetry" id="cargo-manifest">Груз: Контейнер №1 | Объём: 2 м³</div>
+        
+        <div id="container-box">
+            <div id="scan-line"></div>
+            <!-- Сетка из 100 скрытых ячеек для генерации точек -->
+            <script>
+                for(let i=0; i<100; i++) {
+                    document.write('<div class="molecule"></div>');
+                }
+            </script>
+        </div>
+    </div>
+
+    <!-- ИНТЕРФЕЙС ЗАДАЧИ -->
+    <div id="control-panel">
+        <div id="task-text">
+            <b>Задание 1 (Базовый расчёт массы):</b><br>
+            В таможенную зону завезли контейнер объёмом 2 м³. Датчики показали, что плотность вещества внутри равна 800 кг/м³. Чему равна масса этого груза в килограммах (кг)?
+        </div>
+        <div class="action-area">
+            <input type="number" class="num-input" id="answer-field" placeholder="Масса в кг">
+            <button class="submit-btn" onclick="checkCustomsAnswer()">Сканировать груз</button>
+        </div>
+        <div id="info-msg"></div>
+    </div>
+    <script>
+        // Сценарии квеста на перевод единиц и расчеты по формуле плотности
+        const customsStages = [
+            {
+                answer: 1600, // m = rho * V = 800 * 2 = 1600 кг
+                visibleMolecules: 25, // Средняя плотность упаковки точек
+                boxColor: "#5bc0de",
+                manifest: "Груз: Контейнер №2 | Объём: 2 м³",
+                nextTask: "<b>Задание 2 (Ловушка ОГЭ — Перевод из г/см³ в СИ):</b><br>Второй контейнер заполнен космическим льдом. Бортовой справочник показывает его плотность: 0.9 г/см³. Переведи эту плотность в систему СИ — в килограммы на кубический метр (кг/м³)."
+            },
+            {
+                answer: 900, // 0.9 г/см3 = 900 кг/м3
+                visibleMolecules: 40, // Плотность выше, точек становится больше!
+                boxColor: "#f1c40f",
+                manifest: "Груз: Контейнер №3 | Объём: 2 м³",
+                nextTask: "<b>Задание 3 (Расчёт объёма через плотность):</b><br>Сканер зафиксировал контейнер с плотностью жидкого метана 0.4 г/см³ (внимательно переведи в кг/м³!). Весы показали, что общая масса этого метана равна 800 кг. Вычисли истинный объём метана в кубических метрах (м³)."
+            },
+            {
+                answer: 2, // V = m / rho = 800 / 400 = 2 м3
+                visibleMolecules: 10, // Малая плотность — точек совсем мало на экране!
+                boxColor: "#e67e22",
+                manifest: "Груз: Контейнер №4 | Объём: 2 м³",
+                nextTask: "<b>Задание 4 (Финальный расчёт плотности):</b><br>Финальный сверхтяжёлый контейнер из платины! Его объём равен 2 м³, а весы зафиксировали колоссальную массу — 43000 кг. Вычисли плотность этого вещества в системе СИ (кг/м³)."
+            },
+            {
+                answer: 21500, // rho = 43000 / 2 = 21500 кг/м3
+                visibleMolecules: 100, // Максимальная плотность — все 100 ячеек забиты точками!
+                boxColor: "#1E6B38",
+                manifest: "ТАМОЖЕННЫЙ КОНТРОЛЬ ПРОЙДЕН С УСПЕХОМ!",
+                nextTask: "<b>Все контрабандные нули раскрыты!</b><br>Ученик блестяще освоил закон перевода единиц ($1\text{ г/см}^3 = 1000\text{ кг/м}^3$) и научился без ошибок находить массу, объём и плотность, визуально наблюдая концентрацию молекул в пространстве!"
+            }
+        ];
+
+        let currentStageIndex = 0;
+
+        // Функция динамического зажигания точек-молекул в зависимости от плотности вещества
+        function updateMoleculeDensity(count) {
+            const molecules = document.querySelectorAll('.molecule');
+            // Сначала тушим все
+            molecules.forEach(m => m.classList.remove('visible'));
+            
+            // Зажигаем ровно count случайных точек
+            let indices = Array.from({length: 100}, (_, i) => i);
+            indices.sort(() => Math.random() - 0.5); // Перемешиваем сетку
+            
+            for(let i = 0; i < count; i++) {
+                if(molecules[indices[i]]) {
+                    molecules[indices[i]].classList.add('visible');
+                }
+            }
+        }
+
+        // Запускаем стартовую визуализацию молекул (малая плотность на первом шаге)
+        updateMoleculeDensity(15);
+
+        function checkCustomsAnswer() {
+            const userInputValue = parseFloat(document.getElementById('answer-field').value);
+            const msgLabel = document.getElementById('info-msg');
+            const currentStageData = customsStages[currentStageIndex];
+
+            if (Math.abs(userInputValue - currentStageData.answer) < 0.01) {
+                msgLabel.className = "text-success";
+                msgLabel.innerHTML = "✓ Сканирование завершено. Вещество идентифицировано, декларация верна!";
+                
+                // Визуально перестраиваем плотность точек и рамку сканера под новое вещество
+                updateMoleculeDensity(currentStageData.visibleMolecules);
+                document.getElementById('container-box').style.borderColor = currentStageData.boxColor;
+
+                // Переход к следующей задаче КИМ
+                setTimeout(() => {
+                    if (currentStageIndex < customsStages.length - 1) {
+                        document.getElementById('cargo-manifest').innerText = currentStageData.manifest;
+                        document.getElementById('task-text').innerHTML = currentStageData.nextTask;
+                        document.getElementById('answer-field').value = "";
+                        
+                        // Смена плейсхолдеров единиц
+                        const placeholders = ["Ответ в кг", "Ответ в кг/м³", "Ответ в м³", "Ответ в кг/м³"];
+                        document.getElementById('answer-field').placeholder = placeholders[currentStageIndex + 1];
+                        
+                        msgLabel.innerHTML = "";
+                        currentStageIndex++;
+                    } else {
+                        // Квест завершен
+                        document.getElementById('cargo-manifest').innerText = currentStageData.manifest;
+                        document.getElementById('task-text').innerHTML = currentStageData.nextTask;
+                        document.querySelector('.action-area').style.display = 'none';
+                        msgLabel.innerHTML = "";
+                    }
+                }, 2200);
+
+            } else {
+                msgLabel.className = "text-alert";
+                msgLabel.innerHTML = "❌ Ошибка! Масса или перевод единиц плотности не сошлись. Таможня блокирует контейнер!";
+            }
+        }
+    </script>
+</body>
+</html>
