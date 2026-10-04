@@ -3,280 +3,483 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Архимедов Побег: Гидро-Лабиринт</title>
+    <title>Экспедиция «Архимед»: Погружение</title>
     <style>
-        :root { --bg-dark: #0f172a; --panel-bg: #1e293b; --neon-blue: #38bdf8; --neon-green: #4ade80; --neon-red: #f87171; --text-main: #f1f5f9; }
-        body { margin: 0; padding: 20px; background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; display: flex; justify-content: center; }
-        #game-wrapper { width: 1000px; display: flex; flex-direction: column; gap: 15px; }
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 10px; }
-        h1 { margin: 0; font-size: 22px; color: var(--neon-blue); }
-        #mission-status { background: #020617; padding: 6px 12px; border-radius: 6px; border: 1px solid #334155; font-family: monospace; }
-        #aquarium-container { position: relative; width: 1000px; height: 360px; background: #020617; border: 3px solid #334155; border-radius: 12px; overflow: hidden; }
-        #maze-track { position: absolute; left: 0; top: 0; display: flex; height: 100%; transition: left 0.6s ease-in-out; }
-        .sector { position: relative; width: 750px; height: 100%; }
-        .sector-tag { position: absolute; top: 15px; left: 20px; background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-family: monospace; }
-        .wall { position: absolute; right: 0; top: 0; width: 35px; height: 100%; background: #334155; }
-        .gate { position: absolute; left: 0; width: 100%; height: 65px; background: transparent; border-top: 3px solid var(--neon-blue); border-bottom: 3px solid var(--neon-blue); box-shadow: inset 0 0 15px rgba(56,189,248,0.4); }
-        #finish-zone { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--neon-green); font-size: 32px; font-weight: bold; }
-        #probe { position: absolute; left: 100px; bottom: 150px; width: 36px; height: 36px; z-index: 10; }
-        #probe-core { width: 100%; height: 100%; background: radial-gradient(circle, #f43f5e 0%, #9f1239 100%); border-radius: 50%; box-shadow: 0 0 15px #f43f5e; transition: transform 0.2s; }
-        .vector { position: absolute; left: 50%; width: 4px; background: white; transform: translateX(-50%); display: none; }
-        .vector::after { content: ''; position: absolute; left: 50%; border: 6px solid transparent; transform: translateX(-50%); }
-        .vector span { position: absolute; left: 10px; font-size: 11px; font-family: monospace; background: rgba(0,0,0,0.8); padding: 1px 4px; border-radius: 3px; }
-        .vector-up { bottom: 100%; background: var(--neon-blue); }
-        .vector-up::after { top: -12px; border-bottom-color: var(--neon-blue); }
-        .vector-up span { color: var(--neon-blue); bottom: 50%; }
-        .vector-down { top: 100%; background: var(--neon-red); }
-        .vector-down::after { bottom: -12px; border-top-color: var(--neon-red); }
-        .vector-down span { color: var(--neon-red); top: 50%; }
-        #terminal { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-        .terminal-panel { background: var(--panel-bg); border: 1px solid #334155; border-radius: 8px; padding: 15px; }
-        .terminal-panel h3 { margin: 0 0 10px 0; font-size: 15px; border-bottom: 1px solid #475569; padding-bottom: 5px; }
-        .terminal-panel p { font-size: 12px; line-height: 1.4; color: #cbd5e1; margin: 5px 0; }
-        .terminal-panel .sub { font-size: 11px; color: #94a3b8; }
-        #hint-box { margin-top: 10px; background: #0f172a; padding: 8px; border-left: 3px solid var(--neon-blue); font-size: 11px; font-family: monospace; color: #94a3b8; }
-        #formula-slots { display: flex; align-items: center; justify-content: center; gap: 6px; background: #0f172a; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
-        .slot { width: 40px; height: 32px; background: #1e293b; border: 1px dashed #475569; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: monospace; color: var(--neon-blue); }
-        .slot.filled { border-style: solid; border-color: var(--neon-blue); background: rgba(56,189,248,0.1); }
-        .math-sign { font-size: 14px; color: #64748b; }
-        #formula-tokens { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
-        .token { background: #334155; color: white; border: 1px solid #475569; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-family: monospace; font-weight: bold; }
-        .token.used { opacity: 0.3; pointer-events: none; }
-        .input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
-        .input-group label { font-size: 11px; color: #94a3b8; font-family: monospace; }
-        .input-group input { background: #0f172a; border: 1px solid #475569; border-radius: 4px; padding: 6px; color: white; font-family: monospace; width: 100px; }
-        button.btn-primary { width: 100%; background: #0284c7; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        button.btn-primary:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
-        button.btn-secondary { background: transparent; border: 1px solid #475569; color: #94a3b8; padding: 3px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; display: block; margin: 0 auto; }
+        :root {
+            --brand-dark: #1A252C;
+            --brand-teal: #0D6066;
+            --brand-gray: #F4F6F7;
+            --brand-alert: #8C2D19;
+            --brand-success: #1E6B38;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--brand-dark);
+            color: var(--brand-gray);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ЛЕВАЯ ПАНЕЛЬ: Весь трек квеста жестко зафиксирован на экране */
+        #track-panel {
+            width: 28%;
+            background-color: rgba(13, 96, 102, 0.1);
+            border-right: 2px solid var(--brand-teal);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #track-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--brand-teal);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .track-map {
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding-left: 30px;
+        }
+
+        .track-line {
+            position: absolute;
+            left: 10px;
+            top: 15px;
+            bottom: 15px;
+            width: 4px;
+            background: linear-gradient(to bottom, #5bc0de, var(--brand-teal), var(--brand-alert));
+            border-radius: 2px;
+            z-index: 1;
+        }
+
+        .step-node {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            opacity: 0.35;
+            transition: all 0.4s ease;
+        }
+
+        .step-node.active {
+            opacity: 1;
+            transform: scale(1.03);
+        }
+
+        .step-node.completed {
+            opacity: 0.8;
+        }
+
+        .node-marker {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--brand-dark);
+            border: 3px solid var(--brand-teal);
+            position: absolute;
+            left: -29px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .step-node.active .node-marker {
+            background-color: var(--brand-teal);
+            color: white;
+            box-shadow: 0 0 15px var(--brand-teal);
+        }
+
+        .step-node.completed .node-marker {
+            background-color: var(--brand-success);
+            border-color: var(--brand-success);
+            color: white;
+        }
+
+        .node-info {
+            background-color: rgba(255, 255, 255, 0.04);
+            padding: 10px 14px;
+            border-radius: 6px;
+            width: 100%;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+        }
+
+        .step-node.active .node-info {
+            background-color: rgba(13, 96, 102, 0.15);
+            border-color: var(--brand-teal);
+        }
+
+        .node-depth {
+            font-size: 11px;
+            color: #5bc0de;
+            font-weight: bold;
+        }
+
+        .node-name {
+            font-size: 13px;
+            margin-top: 3px;
+            font-weight: 500;
+        }
+
+        /* ПРАВАЯ ПАНЕЛЬ: Интерактивная рабочая область */
+        #work-panel {
+            width: 72%;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        #simulation-window {
+            height: 42%;
+            background: linear-gradient(to bottom, #0f191f, #040709);
+            border-bottom: 2px solid var(--brand-teal);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #fluid-environment {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            top: 25%;
+            background-color: rgba(13, 96, 102, 0.2);
+            transition: background-color 1.2s ease;
+        }
+
+        #submersible-probe {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle at 35% 35%, #5bc0de, #0d6066);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 25px rgba(91, 192, 222, 0.4);
+            transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.2), 
+                        height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.2),
+                        bottom 0.9s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #probe-core-text {
+            font-size: 11px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px #000000;
+        }
+
+        .env-indicator {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.65);
+            padding: 8px 14px;
+            border-radius: 4px;
+            border-left: 3px solid #5bc0de;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+
+        #quest-interface {
+            height: 58%;
+            padding: 25px 30px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-color: #141c21;
+        }
+
+        #scenario-text {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #cbd5e1;
+            margin-bottom: 15px;
+        }
+
+        .task-card {
+            background-color: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .task-condition {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #ffffff;
+            line-height: 1.4;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .quest-input {
+            background-color: var(--brand-dark);
+            border: 2px solid var(--brand-teal);
+            color: white;
+            padding: 10px 14px;
+            font-size: 16px;
+            border-radius: 4px;
+            width: 160px;
+            font-weight: bold;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .quest-input:focus {
+            border-color: #5bc0de;
+            box-shadow: 0 0 10px rgba(91, 192, 222, 0.25);
+        }
+
+        .quest-btn {
+            background-color: var(--brand-teal);
+            color: white;
+            border: none;
+            padding: 11px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background-color 0.2s;
+        }
+
+        .quest-btn:hover {
+            background-color: #117880;
+        }
+
+        #feedback-message {
+            font-size: 13.5px;
+            font-weight: bold;
+            margin-top: 12px;
+            min-height: 18px;
+        }
+
+        .text-success { color: #2eae5d; }
+        .text-alert { color: #ff5252; }
     </style>
 </head>
 <body>
-    <div id="game-wrapper">
-        <header>
-            <h1>Гидро-Лабиринт: Архимедов Побег</h1>
-            <div id="mission-status">СТАТУС: <span id="status-text">Ограничение калибровки...</span></div>
-        </header>
-        <div id="aquarium-container">
-            <div id="maze-track">
-                <div class="sector" id="sector-0" style="background: linear-gradient(180deg, #1e3a8a 0%, #172554 100%);"><div class="sector-tag">ОТСЕК 1: Пресная вода (ρ = 1000 кг/м³)</div><div class="wall"><div class="gate" id="gate-0"></div></div></div>
-                <div class="sector" id="sector-1" style="background: linear-gradient(180deg, #854d0e 0%, #422006 100%);"><div class="sector-tag">ОТСЕК 2: Машинное масло (ρ = 900 кг/м³)</div><div class="wall"><div class="gate" id="gate-1"></div></div></div>
-                <div class="sector" id="sector-2" style="background: linear-gradient(180deg, #115e59 0%, #042f2e 100%);"><div class="sector-tag">ОТСЕК 3: Крепкий рассол (ρ = 1200 кг/м³)</div><div class="wall"><div class="gate" id="gate-2"></div></div></div>
-                <div class="sector" id="sector-3" style="background: linear-gradient(180deg, #991b1b 0%, #450a0a 100%);"><div class="sector-tag">ОТСЕК 4: Тяжелая кислота (ρ = 1800 кг/м³)</div><div class="wall"><div class="gate" id="gate-3"></div></div></div>
-                <div class="sector" id="sector-4" style="background: linear-gradient(180deg, #581c87 0%, #2e1065 100%);"><div class="sector-tag">ОТСЕК 5: Жидкая ртуть (ρ = 13600 кг/м³)</div><div class="wall"><div class="gate" id="gate-4"></div></div></div>
-                <div class="sector" id="sector-final" style="background: #020617; width: 300px;"><div id="finish-zone">ФИНИШ</div></div>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ: КАРТА ТРЕКА ПОГРУЖЕНИЯ -->
+    <div id="track-panel">
+        <div id="track-title">Мониторинг Экспедиции</div>
+        <div class="track-map">
+            <div class="track-line"></div>
+            
+            <div class="step-node active" id="node-1">
+                <div class="node-marker">1</div>
+                <div class="node-info">
+                    <div class="node-depth">Этап 1: 10 метров</div>
+                    <div class="node-name">Калибровка в заливе</div>
+                </div>
             </div>
-            <div id="probe">
-                <div id="probe-core"></div>
-                <div class="vector vector-up" id="v-fa"><span>F<sub>А</sub></span></div>
-                <div class="vector vector-down" id="v-fg"><span>F<sub>тяж</sub></span></div>
+
+            <div class="step-node" id="node-2">
+                <div class="node-marker">2</div>
+                <div class="node-info">
+                    <div class="node-depth">Этап 2: 250 метров</div>
+                    <div class="node-name">Ртутная расщелина</div>
+                </div>
+            </div>
+
+            <div class="step-node" id="node-3">
+                <div class="node-marker">3</div>
+                <div class="node-info">
+                    <div class="node-depth">Этап 3: 1200 метров</div>
+                    <div class="node-name">Подземный лиман</div>
+                </div>
+            </div>
+
+            <div class="step-node" id="node-4">
+                <div class="node-marker">4</div>
+                <div class="node-info">
+                    <div class="node-depth">Этап 4: 11000 метров</div>
+                    <div class="node-name">Дно Марианского разлома</div>
+                </div>
             </div>
         </div>
-        <div id="terminal">
-            <div class="terminal-panel" id="briefing-panel"><h3>📋 Задание Борт-Компьютера</h3><p id="task-description">Загрузка...</p><div id="hint-box"></div></div>
-            <div class="terminal-panel" id="code-panel">
-                <h3>⚡ Конструктор Закона Архимеда</h3><p class="sub">Собери формулу силы Архимеда кликами:</p>
-                <div id="formula-slots"><div class="slot" id="slot-0">?</div><div class="math-sign">=</div><div class="slot" id="slot-1">?</div><div class="math-sign">×</div><div class="slot" id="slot-2">?</div><div class="math-sign">×</div><div class="slot" id="slot-3">?</div></div>
-                <div id="formula-tokens"><button class="token" data-val="Fa">F_A</button><button class="token" data-val="rho">ρ (rho)</button><button class="token" data-val="g">g</button><button class="token" data-val="V">V</button></div>
-                <button id="btn-clear-formula" class="btn-secondary">Сбросить</button>
+    </div>
+    <!-- ПРАВАЯ ПАНЕЛЬ: РАБОЧАЯ СИМУЛЯЦИЯ И СЮЖЕТ -->
+    <div id="work-panel">
+        <div id="simulation-window">
+            <div id="fluid-environment"></div>
+            <div id="submersible-probe">
+                <div id="probe-core-text">V = 0.010 м³</div>
             </div>
-            <div class="terminal-panel" id="calc-panel"><h3>🧮 Инженерный калькулятор</h3><div id="input-fields"></div><button id="btn-launch" class="btn-primary" disabled>ЗАПУСТИТЬ ЗОНД</button></div>
+            <div class="env-indicator" id="env-density-display">Среда: Пресная вода (1000 кг/м³)</div>
+        </div>
+
+        <div id="quest-interface">
+            <div>
+                <div id="scenario-text">
+                    Наш глубоководный исследовательский зонд запущен с научно-исследовательского судна. Чтобы начать управляемое погружение сквозь разнородные слои гидросферы, нам необходимо откалибровать его параметры. Зонд снабжен изменяемой геометрической оболочкой. Вектор силы тяжести тянет его на дно, а выталкивающая сила Архимеда удерживает на плаву.
+                </div>
+
+                <div class="task-card">
+                    <div class="task-condition" id="task-question">
+                        Шаг 1. Зонд завис под водой на глубине 10 метров. Сила тяжести, действующая на него, равна ровно 100 Н. Чтобы зонд оставался в идеальном равновесии (не тонул и не всплывал), сила Архимеда должна полностью компенсировать этот вес. Вычисли, какой геометрический объём должен иметь наш сферический зонд в пресной воде? (Прими g = 10 Н/кг).
+                    </div>
+                    <div class="input-group">
+                        <input type="number" step="0.001" class="quest-input" id="user-answer" placeholder="Ответ (м³)">
+                        <button class="quest-btn" onclick="checkAnswer()">Выполнить расчет</button>
+                    </div>
+                    <div id="feedback-message"></div>
+                </div>
+            </div>
         </div>
     </div>
     <script>
-        const g = 10;
-        const SECTOR_WIDTH = 750;
-
-        const levels = [
+        // Сценарии и физические константы шагов квеста
+        const questSteps = [
             {
-                id: 0, gateY: 150,
-                task: "Шлюз по центру (высота 150м). Масса зонда: m = 2 кг. Рассчитай объем (V) для нейтральной плавучести (F_A = F_тяж).",
-                inputs: [{ id: "volume", label: "Объем (V):", unit: "м³", placeholder: "0.002" }],
-                checkTarget: (v) => Math.abs(parseFloat(v.volume) - 0.002) < 0.0001,
-                errorHint: "Подсказка: Вырази объем из равенства сил: V = m / ρ. Твой расчет: 2 / 1000."
+                step: 1,
+                density: 13600,
+                envName: "Жидкая ртуть",
+                color: "rgba(140, 45, 25, 0.15)",
+                probeBottom: "65%",
+                scenario: "Калибровка завершена! Зонд пошёл вниз. Внезапно эхолот фиксирует аномалию: впереди глубокая тектоническая расщелина, заполненная жидкой ртутью! Наш аппарат погружается прямо туда. Параметры окружающей среды мгновенно перестраиваются.",
+                question: "Шаг 2. Зонд вошёл в ртутное озеро (плотность среды ρ = 13600 кг/м³). Под чудовищным давлением бортовые гидравлические приводы сжали внешнюю оболочку зонда, и его объём стал равен ровно 0.005 м³. Рассчитай модуль архимедовой силы (в Ньютонах), которая прямо сейчас выталкивает зонд наверх.",
+                correctAnswer: 680,
+                unit: "Н",
+                inputPlaceholder: "Ответ (Н)",
+                targetVolume: "0.005 м³",
+                scalePercent: 75
             },
             {
-                id: 1, gateY: 20,
-                task: "Шлюз у самого дна (высота 20м). Объем заклинило на V = 0.003 м³. Подбери массу (m), чтобы Сила тяжести превышала Силу Архимеда ровно на 5 Ньютонов.",
-                inputs: [{ id: "mass", label: "Масса (m):", unit: "кг", placeholder: "3.2" }],
-                checkTarget: (v) => Math.abs(parseFloat(v.mass) - 3.2) < 0.01,
-                errorHint: "Подсказка: Посчитай силу Архимеда F_A = ρ * g * V. Прибавь 5 Н (это будет вес F_тяж). Масса m = F_тяж / g."
+                step: 2,
+                density: 1200,
+                envName: "Солёный лиман",
+                color: "rgba(30, 107, 56, 0.15)",
+                probeBottom: "35%",
+                scenario: "Ртутное давление стремительно выталкивает зонд из расщелины. Мы пробиваем тонкий слой донных пород и падаем в изолированный древний резервуар с концентрированным соляным раствором. Плотность падает, но среда всё ещё тяжелее пресной воды.",
+                question: "Шаг 3. Мы находимся в сверхсолёном подземном лимане. Масса зонда изменилась из-за взятых проб, и действующая на него сила тяжести стала равна 240 Н. Встроенные датчики давления сообщают, что сила Архимеда при полном погружении сейчас идеально компенсирует этот вес и тоже равна 240 Н. Известно, что текущий объём зонда зафиксирован на отметке 0.02 м³. Вычисли плотность этой солёной воды.",
+                correctAnswer: 1200,
+                unit: "кг/м³",
+                inputPlaceholder: "Плотность",
+                targetVolume: "0.020 м³",
+                scalePercent: 125
             },
             {
-                id: 2, gateY: 280,
-                task: "Шлюз наверху (высота 280м). Масса: m = 3.6 кг. Рассчитай объем (V), при котором Сила Архимеда будет ровно на 12 Ньютонов больше Силы тяжести.",
-                inputs: [{ id: "volume", label: "Объем (V):", unit: "м³", placeholder: "0.004" }],
-                checkTarget: (v) => Math.abs(parseFloat(v.volume) - 0.004) < 0.0001,
-                errorHint: "Подсказка: Сила тяжести = m * g = 36 Н. Нужная F_A = 36 + 12 = 48 Н. Из формулы объема: V = F_A / (ρ * g)."
+                step: 3,
+                density: 1030,
+                envName: "Дно океана",
+                color: "rgba(20, 28, 33, 0.9)",
+                probeBottom: "12%",
+                scenario: "Поздравляю! Мы вышли на финишную прямую — перед нами открывается истинное дно Марианского разлома. Но здесь, на предельной глубине, плотность океанской воды из-за колоссального столба вышележащей жидкости сжалась со стандартных 1000 до 1030 кг/м³.",
+                question: "Шаг 4. Финальный рубеж! Зонд коснулся дна. Чтобы взять образцы глубинного грунта, нам необходимо сделать его тяжелее окружающей среды. Оператор сжимает корпус зонда до объёма 0.01 м³. Какая выталкивающая сила (в Ньютонах) действует на зонд на самом дне океана, если плотность сжатой воды равна 1030 кг/м³?",
+                correctAnswer: 103,
+                unit: "Н",
+                inputPlaceholder: "Ответ (Н)",
+                targetVolume: "0.010 м³",
+                scalePercent: 100
             },
             {
-                id: 3, gateY: 150,
-                task: "Шлюз по центру (150м). Сплошной зонд должен зависнуть внутри кислоты. Какова должна быть плотность материала зонда (ρ_тела)?",
-                inputs: [{ id: "rho_body", label: "Плотность тела:", unit: "кг/м³", placeholder: "1800" }],
-                checkTarget: (v) => Math.abs(parseFloat(v.rho_body) - 1800) < 1,
-                errorHint: "Подсказка: Чтобы сплошной объект завис на любой глубине, его плотность должна в точности равняться плотности жидкости."
-            },
-            {
-                id: 4, gateY: 210,
-                task: "Финальный шлюз (высота 210м). Рассчитай плотность сплошного зонда (ρ_тела), чтобы он погрузился в ртуть ровно наполовину (V_погр = 0.5 * V).",
-                inputs: [{ id: "rho_body", label: "Плотность тела:", unit: "кг/м³", placeholder: "6800" }],
-                checkTarget: (v) => Math.abs(parseFloat(v.rho_body) - 6800) < 5,
-                errorHint: "Подсказка: Из условия плавания на поверхности: если погружено ровно 50% объема, плотность тела в 2 раза меньше плотности жидкости."
+                step: 4,
+                density: 1030,
+                envName: "Дно океана",
+                color: "rgba(10, 15, 18, 0.95)",
+                probeBottom: "5%",
+                scenario: "МИССИЯ ВЫПОЛНЕНА! Ваш ученик успешно преодолел все гидростатические ловушки и завершил глубоководный квест. Зонд собрал пробы грунта и готов к подъёму. Он научился самостоятельно связывать силу, плотность и объём в уме без ленивых подсказок-конструкторов!",
+                question: "Квест пройден на отлично. Вы превосходный репетитор по физике!",
+                correctAnswer: null
             }
         ];
 
-        let currentLevel = 0;
-        let userFormula = [];
-        let isFormulaCorrect = false;
-        let probeX = 100, probeY = 150, targetY = 150;
-        let simInterval = null;
+        let currentStepIndex = 0;
+        let step1CorrectAnswer = 0.01; // 100 / (1000 * 10) = 0.01
 
-        const trackEl = document.getElementById("maze-track");
-        const probeEl = document.getElementById("probe");
-        const taskDescEl = document.getElementById("task-description");
-        const hintBoxEl = document.getElementById("hint-box");
-        const inputFieldsEl = document.getElementById("input-fields");
-        const btnLaunch = document.getElementById("btn-launch");
-        const statusTextEl = document.getElementById("status-text");
-        window.addEventListener("DOMContentLoaded", () => {
-            initFormulaTokens();
-            loadLevel(currentLevel);
-        });
-
-        function loadLevel(lvlId) {
-            if (lvlId >= levels.length) { showVictory(); return; }
-            const lvl = levels[lvlId];
-            statusTextEl.innerText = `Ожидание расчетов в отсеке ${lvlId + 1}...`;
-            statusTextEl.style.color = "#38bdf8";
+        function checkAnswer() {
+            const userAnswer = parseFloat(document.getElementById('user-answer').value);
+            const feedback = document.getElementById('feedback-message');
             
-            const gate = document.getElementById(`gate-${lvlId}`);
-            if (gate) gate.style.bottom = lvl.gateY + "px";
+            let expectedAnswer = currentStepIndex === 0 ? step1CorrectAnswer : questSteps[currentStepIndex - 1].correctAnswer;
 
-            taskDescEl.innerText = lvl.task;
-            hintBoxEl.innerText = "Откалибруй формулу! Собери закон Архимеда кликами по блокам величин.";
-            hintBoxEl.style.borderLeftColor = "#38bdf8";
-
-            inputFieldsEl.innerHTML = "";
-            lvl.inputs.forEach(inp => {
-                inputFieldsEl.innerHTML += `
-                    <div class="input-group">
-                        <label>${inp.label}</label>
-                        <div>
-                            <input type="number" step="any" id="${inp.id}" placeholder="${inp.placeholder}" disabled>
-                            <span style="font-size:11px; color:#64748b;"> ${inp.unit}</span>
-                        </div>
-                    </div>`;
-            });
-            btnLaunch.disabled = true;
-            resetFormula();
-        }
-
-        function initFormulaTokens() {
-            document.querySelectorAll(".token").forEach(token => {
-                token.addEventListener("click", () => {
-                    if (userFormula.length >= 4) return;
-                    userFormula.push(token.getAttribute("data-val"));
-                    token.classList.add("used");
-                    updateSlots();
-                    validateFormula();
-                });
-            });
-            document.getElementById("btn-clear-formula").addEventListener("click", resetFormula);
-            btnLaunch.addEventListener("click", launchProbe);
-        }
-
-        function updateSlots() {
-            for (let i = 0; i < 4; i++) {
-                const slot = document.getElementById(`slot-${i}`);
-                if (userFormula[i]) {
-                    slot.innerText = document.querySelector(`[data-val="${userFormula[i]}"]`).innerText;
-                    slot.classList.add("filled");
-                } else { slot.innerText = "?"; slot.classList.remove("filled"); }
-            }
-        }
-
-        function validateFormula() {
-            if (userFormula.length < 4) return;
-            const multipliers = userFormula.slice(1);
-            if (userFormula[0] === "Fa" && multipliers.includes("rho") && multipliers.includes("g") && multipliers.includes("V")) {
-                isFormulaCorrect = true;
-                hintBoxEl.innerText = "✅ Формула верна! Вычисли значение и введи в калькулятор.";
-                hintBoxEl.style.borderLeftColor = "#4ade80";
-                inputFieldsEl.querySelectorAll("input").forEach(i => i.disabled = false);
-                btnLaunch.disabled = false;
+            if (Math.abs(userAnswer - expectedAnswer) < 0.001) {
+                feedback.className = "text-success";
+                feedback.innerHTML = "✓ Расчет верный! Бортовые системы стабилизировали зонд. Выполняется маневр перехода.";
+                
+                setTimeout(() => {
+                    advanceQuest();
+                }, 2200);
             } else {
-                hintBoxEl.innerText = "❌ Ошибка. Формула должна быть: F_A = ρ × g × V. Сбрось и попробуй снова!";
-                hintBoxEl.style.borderLeftColor = "#f87171";
+                feedback.className = "text-alert";
+                feedback.innerHTML = "❌ Ошибка в расчетах! Плотность среды или объём не сошлись. Зонд теряет баланс, пересчитай закон Архимеда на черновике.";
             }
         }
 
-        function resetFormula() {
-            userFormula = []; isFormulaCorrect = false; updateSlots();
-            document.querySelectorAll(".token").forEach(t => t.classList.remove("used"));
-            inputFieldsEl.querySelectorAll("input").forEach(i => i.disabled = true);
-            btnLaunch.disabled = true;
-        }
-
-        function launchProbe() {
-            btnLaunch.disabled = true;
-            const vals = {};
-            inputFieldsEl.querySelectorAll("input").forEach(i => { vals[i.id] = i.value; i.disabled = true; });
-
-            const isCorrect = levels[currentLevel].checkTarget(vals);
-            const lvl = levels[currentLevel];
-
-            document.getElementById("v-fa").style.display = "block";
-            document.getElementById("v-fg").style.display = "block";
-
-            if (isCorrect) {
-                targetY = lvl.gateY + 15;
-                statusTextEl.innerText = "Расчеты приняты. Траектория стабильна!";
-                statusTextEl.style.color = "#4ade80";
-            } else {
-                targetY = currentLevel === 1 ? lvl.gateY + 150 : (currentLevel === 2 ? lvl.gateY - 150 : lvl.gateY + 100);
-                statusTextEl.innerText = "КРИТИЧЕСКАЯ ОШИБКА! Траектория смещена.";
-                statusTextEl.style.color = "#f87171";
+        function advanceQuest() {
+            if (currentStepIndex >= questSteps.length) return;
+            
+            const nextStepData = questSteps[currentStepIndex];
+            
+            // Гасим текущий активный шаг на карте и красим в зелёный
+            document.getElementById(`node-${currentStepIndex + 1}`).classList.remove('active');
+            document.getElementById(`node-${currentStepIndex + 1}`).classList.add('completed');
+            
+            if (nextStepData.correctAnswer === null) {
+                // Обработка финала
+                document.getElementById('scenario-text').innerHTML = nextStepData.scenario;
+                document.getElementById('task-question').innerHTML = nextStepData.question;
+                document.querySelector('.input-group').style.display = 'none';
+                document.getElementById('feedback-message').innerHTML = "";
+                return;
             }
 
-            let stopX = probeX + SECTOR_WIDTH - 50;
-            simInterval = setInterval(() => {
-                probeX += 6;
-                probeEl.style.left = probeX + "px";
-                if (Math.abs(probeY - targetY) > 2) { probeY += (targetY - probeY) * 0.06; probeEl.style.bottom = probeY + "px"; }
-
-                if (probeX >= stopX) {
-                    clearInterval(simInterval);
-                    if (isCorrect) {
-                        currentLevel++;
-                        setTimeout(() => {
-                            trackEl.style.left = `-${currentLevel * SECTOR_WIDTH}px`;
-                            probeX = (currentLevel * SECTOR_WIDTH) + 100;
-                            probeY = 150;
-                            probeEl.style.left = probeX + "px";
-                            probeEl.style.bottom = probeY + "px";
-                            document.getElementById("v-fa").style.display = "none";
-                            document.getElementById("v-fg").style.display = "none";
-                            loadLevel(currentLevel);
-                        }, 1000);
-                    } else {
-                        document.getElementById("probe-core").style.transform = "scale(1.2)";
-                        setTimeout(() => {
-                            probeX = (currentLevel * SECTOR_WIDTH) + 100; probeY = 150;
-                            probeEl.style.left = probeX + "px"; probeEl.style.bottom = probeY + "px";
-                            document.getElementById("probe-core").style.transform = "scale(1)";
-                            hintBoxEl.innerText = levels[currentLevel].errorHint;
-                            hintBoxEl.style.borderLeftColor = "#f87171";
-                            inputFieldsEl.querySelectorAll("input").forEach(i => i.disabled = false);
-                            btnLaunch.disabled = false;
-                        }, 1800);
-                    }
-                }
-            }, 20);
-        }
-
-        function showVictory() {
-            statusTextEl.innerText = "МИССИЯ ВЫПОЛНЕНА!"; statusTextEl.style.color = "#4ade80";
-            taskDescEl.innerHTML = "<b style='color:#4ade80;'>Поздравляем!</b><br>Все шлюзы пройдены. Гидро-лабиринт полностью покорён вашим учеником!";
-            hintBoxEl.style.display = "none";
+            // Зажигаем следующий узел на карте слева
+            document.getElementById(`node-${nextStepData.step + 1}`).classList.add('active');
+            
+            // Физически меняем визуализацию среды и надпись плотности
+            document.getElementById('env-density-display').innerHTML = `Среда: ${nextStepData.envName} (${nextStepData.density} кг/м³)`;
+            document.getElementById('fluid-environment').style.backgroundColor = nextStepData.color;
+            
+            // Масштабируем и перемещаем зонд-шарик по глубине
+            const probe = document.getElementById('submersible-probe');
+            probe.style.bottom = nextStepData.probeBottom;
+            probe.style.width = `${nextStepData.scalePercent}px`;
+            probe.style.height = `${nextStepData.scalePercent}px`;
+            document.getElementById('probe-core-text').innerText = `V = ${nextStepData.targetVolume}`;
+            
+            // Переключаем тексты сюжета и задачи
+            document.getElementById('scenario-text').innerHTML = nextStepData.scenario;
+            document.getElementById('task-question').innerHTML = nextStepData.question;
+            
+            // Очищаем форму ввода для следующего шага
+            document.getElementById('user-answer').value = "";
+            document.getElementById('user-answer').placeholder = nextStepData.inputPlaceholder;
+            document.getElementById('feedback-message').innerHTML = "";
+            
+            currentStepIndex++;
         }
     </script>
 </body>
