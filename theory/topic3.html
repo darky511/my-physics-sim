@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тренажер физического чутья & Конструктор формул ОГЭ</title>
+    <title>Тема 3. Движение по окружности. Плотность вещества</title>
     <style>
         :root {
             --primary: #34495e;
@@ -47,7 +47,7 @@
         .scene-title { font-size: 16px; color: var(--primary); font-weight: bold; }
         .scene-desc { font-size: 12px; color: #7f8c8d; }
         
-        /* Сцена 1: Модульная сетка Drag & Drop */
+        /* Сцена 1: Drag & Drop */
         .dnd-container { display: flex; gap: 15px; flex: 1; overflow: hidden; }
         .dnd-column { flex: 1; background: #f8f9f9; padding: 10px; border-radius: 6px; border: 1px dashed var(--border); display: flex; flex-direction: column; overflow-y: auto; }
         .dnd-column h3 { font-size: 13px; text-align: center; margin-bottom: 8px; color: var(--primary-light); flex-shrink: 0; }
@@ -56,13 +56,13 @@
         .drop-zone.hovered { border-color: var(--secondary); background: #eaf2f8; }
         .drop-zone-label { font-weight: bold; color: var(--secondary); font-size: 12px; margin-bottom: 3px; }
         
-        /* Сцена 2 и Сцена 3: Основные контейнеры */
+        /* Сцена 2 и Сцена 3 */
         .grid-container { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; padding-right: 5px; }
         .case-card { background: #fdfefe; border: 1px solid var(--border); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s; }
         .case-text { font-size: 13px; font-weight: 500; margin-bottom: 8px; line-height: 1.4; }
         .formula-select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid var(--border); font-size: 13px; outline: none; background-color: white; }
         
-        /* Уникальные стили Сцены 3: Банк символов и Конструктор */
+        /* Уникальные стили Сцены 3 */
         .s3-layout { display: flex; flex-direction: column; flex: 1; overflow: hidden; gap: 10px; }
         .math-bank { background: #f2f4f4; padding: 10px; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
         .bank-title { font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--primary-light); margin-bottom: 6px; }
@@ -74,10 +74,13 @@
         .constructor-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
         .constructor-row { background: #fdfefe; border: 1px solid var(--border); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 6px; position: relative; }
         .constructor-row.active-row { border-color: var(--secondary); box-shadow: 0 0 5px rgba(41, 128, 185, 0.2); }
+        .row-header-box { display: flex; justify-content: space-between; align-items: center; }
         .row-info { font-size: 12px; font-weight: 500; color: var(--primary); }
-        .build-zone { min-height: 42px; background: #fafbfc; border: 2px dashed #bdc3c7; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px; cursor: pointer; }
+        .clear-row-btn { background: #f2f4f4; border: 1px solid #cbd5e1; color: #64748b; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-weight: 500; }
+        .clear-row-btn:hover { background: #e2e8f0; color: #334155; }
+        .build-zone { min-height: 42px; background: #fafbfc; border: 2px dashed #bdc3c7; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 5px; cursor: pointer; }
         
-        /* Общие компоненты */
+        /* Кнопки и плашки */
         .action-area { margin-top: 10px; padding-top: 5px; border-top: 1px solid #f2f4f4; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .check-btn { padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; }
         .check-btn:hover { background: #219653; }
@@ -91,15 +94,15 @@
 </head>
 <body>
     <header>
-        <h1>Тренажер физического чутья & Конструктор формул ОГЭ</h1>
+        <h1>Тема 3. Движение по окружности. Плотность вещества</h1>
         <div class="navigator">
-            <button class="nav-btn active" onclick="switchScene(1)">Сцена 1: Соответствие</button>
-            <button class="nav-btn" onclick="switchScene(2)">Сцена 2: Чутьё и Инструменты</button>
-            <button class="nav-btn" onclick="switchScene(3)">Сцена 3: Конструктор формул</button>
+            <button class="nav-btn active" onclick="switchScene(1)">Уровень 1: Соответствие</button>
+            <button class="nav-btn" onclick="switchScene(2)">Уровень 2: Выбор</button>
+            <button class="nav-btn" onclick="switchScene(3)">Уровень 3: Конструктор формул</button>
         </div>
     </header>
 
-    <!-- СЦЕНА 1: СООТВЕТСТВИЕ -->
+    <!-- СЦЕНА 1 -->
     <div id="scene1" class="scene active">
         <div class="scene-header">
             <div class="scene-title">Уровень 1: Синхронизация понятий</div>
@@ -107,40 +110,39 @@
         </div>
         <div class="dnd-container">
             <div class="dnd-column" id="drop-zones-container"><h3>Физические величины</h3></div>
-            <div class="dnd-column" id="drag-items-container"><h3>Формулировки и математические выражения</h3></div>
+            <div class="dnd-column" id="drag-items-container"><h3>Формулировки и выражения</h3></div>
         </div>
         <div class="action-area">
             <div id="result-scene1" class="result-badge"></div>
-            <button class="check-btn" onclick="checkScene1()">Проверить Сцену 1</button>
+            <button class="check-btn" onclick="checkScene1()">Проверить</button>
         </div>
     </div>
 
-    <!-- СЦЕНА 2: ЧУТЬЁ И ИНСТРУМЕНТЫ -->
+    <!-- СЦЕНА 2 -->
     <div id="scene2" class="scene">
         <div class="scene-header">
-            <div class="scene-title">Уровень 2: Физическое чутьё (Выбор инструмента)</div>
-            <div class="scene-desc">Изучите условия эксперимента. Какая базовая формула является ключом к ответу?</div>
+            <div class="scene-title">Уровень 2: Выбор инструмента</div>
+            <div class="scene-desc">Изучите условия эксперимента. Какая формула является кратчайшим ключом к ответу?</div>
         </div>
         <div class="grid-container" id="scene2-grid"></div>
         <div class="action-area">
             <div id="result-scene2" class="result-badge"></div>
-            <button class="check-btn" onclick="checkScene2()">Проверить Сцену 2</button>
+            <button class="check-btn" onclick="checkScene2()">Проверить</button>
         </div>
     </div>
 
-    <!-- СЦЕНА 3: МАТЕМАТИЧЕСКИЙ КОНСТРУКТОР ФОРМУЛ -->
+    <!-- СЦЕНА 3 -->
     <div id="scene3" class="scene">
         <div class="scene-header">
-            <div class="scene-title">Уровень 3: Самостоятельная сборка формул</div>
-            <div class="scene-desc">Выберите поле-конструктор кликом, а затем кликайте по символам из банка выше для сборки правильной формулы под задачу.</div>
+            <div class="scene-title">Уровень 3: Конструктор формул</div>
+            <div class="scene-desc">Выберите поле-конструктор кликом, а затем соберите формулу из магнитных карточек. Соседние буквы умножаются автоматически!</div>
         </div>
         
         <div class="s3-layout">
-            <!-- Общая панель букв и знаков из методички -->
             <div class="math-bank">
-                <div class="bank-title">Магнитный банк символов и знаков методички</div>
+                <div class="bank-title">Банк символов и знаков</div>
                 <div class="token-pool" id="s3-token-pool">
-                    <!-- Буквы -->
+                    <!-- Буквы и цифры -->
                     <div class="math-token" onclick="addToken('T')">T</div>
                     <div class="math-token" onclick="addToken('ν')">ν</div>
                     <div class="math-token" onclick="addToken('a_n')">a_n</div>
@@ -151,27 +153,26 @@
                     <div class="math-token" onclick="addToken('m')">m</div>
                     <div class="math-token" onclick="addToken('V')">V</div>
                     <div class="math-token" onclick="addToken('ρ')">ρ</div>
-                    <!-- Математические операторы -->
+                    <div class="math-token operator" onclick="addToken('1')">1</div>
+                    <div class="math-token operator" onclick="addToken('2')">2</div>
+                    <!-- Математические знаки (без умножения) -->
                     <div class="math-token operator" onclick="addToken('=')">=</div>
                     <div class="math-token operator" onclick="addToken('/')">/</div>
-                    <div class="math-token operator" onclick="addToken('·')">·</div>
-                    <div class="math-token operator" onclick="addToken('2')">2</div>
                 </div>
             </div>
 
-            <!-- Исчерпывающий набор независимых полей-конструкторов -->
             <div class="constructor-list" id="s3-constructor-container">
-                <!-- Рендерится через JS -->
+                <!-- Конструкторы рендерятся из JS -->
             </div>
         </div>
 
         <div class="action-area">
             <div id="result-scene3" class="result-badge"></div>
-            <button class="check-btn" onclick="checkScene3()">Проверить Сцену 3</button>
+            <button class="check-btn" onclick="checkScene3()">Проверить</button>
         </div>
     </div>
     <script>
-        // СЦЕНА 1 ДАННЫЕ
+        // ДАННЫЕ СЦЕНЫ 1
         const s1Data = [
             { id: "1", label: "Период вращения (T)", exact: "Время 1 полного оборота [c]" },
             { id: "2", label: "Частота вращения (ν)", exact: "Число оборотов в секунду [Гц]" },
@@ -183,7 +184,7 @@
             { id: "8", label: "Перевод плотности воды в СИ", exact: "1 г/см³ = 1000 кг/м³" }
         ];
 
-        // СЦЕНА 2 ДАННЫЕ
+        // ДАННЫЕ СЦЕНЫ 2
         const s2Data = [
             {
                 text: "Кейс 1: Колесо вращается с постоянной частотой. Нужно выяснить, во сколько раз линейная скорость точек на краю диска больше скорости точек на внутреннем радиусе. Какая формула связывает v, ν и R?",
@@ -196,21 +197,21 @@
                 ans: "a_n = v²/R"
             },
             {
-                text: "Кейс 3: На лабораторной работе даны три кубика равного объема, но из разных материалов. Нужно теоретически рассчитать массу каждого кубика. Какое базовое выражение выражает массу через параметры вещества?",
+                text: "Кейс 3: На лабораторной работе даны три кубика равного объема, но из разных материалов. Нужно теоретически рассчитать массу каждого кубика. Какое выражение связывает плотность, массу и объем?",
                 options: ["Выберите формулу...", "ρ = m/V", "v = 2πRν", "T = 1/ν", "a_n = v²/R"],
                 ans: "ρ = m/V"
             }
         ];
 
-        // СЦЕНА 3 ДАННЫЕ (Поля-конструкторы)
+        // СЦЕНА 3 ДАННЫЕ (Без знаков умножения!)
         const s3Data = [
             { id: 0, text: "Задание 1. Соберите базовую формулу расчета плотности вещества:", target: ["ρ", "=", "m", "/", "V"] },
             { id: 1, text: "Задание 2. Соберите формулу расчета центростремительного ускорения через линейную скорость и радиус траектории:", target: ["a_n", "=", "v²", "/", "R"] },
-            { id: 2, text: "Задание 3. Соберите базовую формулу взаимосвязи периода вращения и частоты:", target: ["T", "=", "1", "/", "ν"], altTarget: ["ν", "=", "1", "/", "T"] },
-            { id: 3, text: "Задание 4. Соберите формулу линейной скорости тела при известном радиусе и периоде вращения:", target: ["v", "=", "2", "·", "π", "·", "R", "/", "T"] }
+            { id: 2, text: "Задание 3. Соберите формулу связи периода вращения через частоту:", target: ["T", "=", "1", "/", "ν"], altTarget: ["ν", "=", "1", "/", "T"] },
+            { id: 3, text: "Задание 4. Соберите формулу линейной скорости тела через радиус и период вращения (подразумевая умножение):", target: ["v", "=", "2", "π", "R", "/", "T"] }
         ];
 
-        let activeS3Row = 0; // Какое поле-конструктор сейчас редактируется
+        let activeS3Row = 0;
         let s3UserAnswers = { 0: [], 1: [], 2: [], 3: [] };
 
         function switchScene(num) {
@@ -224,7 +225,7 @@
             const zones = document.getElementById('drop-zones-container');
             const items = document.getElementById('drag-items-container');
             zones.innerHTML = '<h3>Физические величины</h3>';
-            items.innerHTML = '<h3>Формулировки и математические выражения</h3>';
+            items.innerHTML = '<h3>Формулировки и выражения</h3>';
 
             s1Data.forEach(d => {
                 const z = document.createElement('div');
@@ -260,7 +261,7 @@
             });
             const b = document.getElementById('result-scene1');
             b.className = correct === s1Data.length ? "result-badge success" : "result-badge error";
-            b.innerText = correct === s1Data.length ? "Успех! Сцена 1 пройдена." : `Ошибки. Очки: ${correct}/${s1Data.length}`;
+            b.innerText = correct === s1Data.length ? "Успех!" : `Ошибки. Очки: ${correct}/${s1Data.length}`;
         }
 
         // ЛОГИКА СЦЕНЫ 2
@@ -284,10 +285,10 @@
             });
             const b = document.getElementById('result-scene2');
             b.className = correct === s2Data.length ? "result-badge success" : "result-badge error";
-            b.innerText = correct === s2Data.length ? "Отлично! Физический выбор верен." : `Ошибки в логике. Верно: ${correct}/${s2Data.length}`;
+            b.innerText = correct === s2Data.length ? "Отлично!" : `Ошибки в логике. Верно: ${correct}/${s2Data.length}`;
         }
 
-        // ЛОГИКА СЦЕНЫ 3 (Интерактивный конструктор)
+        // ЛОГИКА СЦЕНЫ 3 (Конструктор без умножения + Очистка строк)
         function initScene3() {
             const container = document.getElementById('s3-constructor-container');
             container.innerHTML = '';
@@ -297,10 +298,21 @@
                 row.id = `s3-row-${d.id}`;
                 row.onclick = () => selectRow(d.id);
 
+                const headerBox = document.createElement('div');
+                headerBox.className = 'row-header-box';
+
                 const info = document.createElement('div');
                 info.className = 'row-info';
                 info.innerText = d.text;
-                row.appendChild(info);
+                headerBox.appendChild(info);
+
+                const clearBtn = document.createElement('button');
+                clearBtn.className = 'clear-row-btn';
+                clearBtn.innerText = 'Очистить';
+                clearBtn.onclick = (e) => { e.stopPropagation(); clearRow(d.id); };
+                headerBox.appendChild(clearBtn);
+
+                row.appendChild(headerBox);
 
                 const buildZone = document.createElement('div');
                 buildZone.className = 'build-zone';
@@ -328,13 +340,18 @@
             renderUserTokens(rowId);
         }
 
+        function clearRow(rowId) {
+            s3UserAnswers[rowId] = [];
+            renderUserTokens(rowId);
+        }
+
         function renderUserTokens(rowId) {
             const zone = document.getElementById(`build-zone-${rowId}`);
             zone.innerHTML = '';
             s3UserAnswers[rowId].forEach((token, idx) => {
                 const t = document.createElement('div');
                 t.className = 'math-token';
-                if(['=', '/', '·', '2'].includes(token)) t.classList.add('operator');
+                if(['=', '/', '1', '2'].includes(token)) t.classList.add('operator');
                 t.innerText = token;
                 t.onclick = (e) => { e.stopPropagation(); removeToken(rowId, idx); };
                 zone.appendChild(t);
@@ -347,7 +364,6 @@
                 const rowElement = document.getElementById(`s3-row-${d.id}`);
                 const userArr = s3UserAnswers[d.id];
                 
-                // Простая валидация совпадения массивов
                 const matchPrimary = userArr.length === d.target.length && userArr.every((v, i) => v === d.target[i]);
                 const matchAlt = d.altTarget && userArr.length === d.altTarget.length && userArr.every((v, i) => v === d.altTarget[i]);
 
@@ -359,7 +375,6 @@
                 }
             });
             
-            // Если была сменена подсветка активной строки, восстановим её рамку
             const activeRowEl = document.getElementById(`s3-row-${activeS3Row}`);
             if(activeRowEl) activeRowEl.classList.add('active-row');
 
