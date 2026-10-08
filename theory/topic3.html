@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренажер ОГЭ по Физике</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --primary-dark: #3b5984;
+            --secondary: #16a085;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #bdc3c7;
+            --success: #2ecc71;
+            --error: #e74c3c;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; padding: 20px; }
+        header { text-align: center; margin-bottom: 30px; padding: 20px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { color: var(--primary-dark); font-size: 24px; margin-bottom: 10px; }
+        .navigator { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
+        .nav-btn { padding: 10px 20px; border: 2px solid var(--primary); background: transparent; color: var(--primary); font-weight: bold; cursor: pointer; border-radius: 20px; transition: all 0.3s; }
+        .nav-btn.active { background: var(--primary); color: white; }
+        .scene { display: none; background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 1000px; margin: 0 auto; }
+        .scene.active { display: block; }
+        .scene-title { border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-bottom: 20px; color: var(--primary-dark); }
+        
+        /* Сцена 1 */
+        .dnd-container { display: flex; gap: 20px; margin-top: 20px; }
+        .dnd-column { flex: 1; background: #f8faf9; padding: 15px; border-radius: 8px; border: 1px dashed var(--border-color); min-height: 400px; }
+        .dnd-column h3 { margin-bottom: 15px; text-align: center; font-size: 16px; color: #7f8c8d; }
+        .drag-item { background: white; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid var(--border-color); cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.02); user-select: none; }
+        .drop-zone { background: #fff; border: 2px dashed #bdc3c7; border-radius: 8px; margin-bottom: 15px; padding: 15px; min-height: 80px; transition: all 0.3s; }
+        .drop-zone.hovered { border-color: var(--primary); background: #edf2f7; }
+        .drop-zone-label { font-weight: bold; color: var(--primary-dark); margin-bottom: 5px; font-size: 14px; }
+        
+        /* Сцена 2 */
+        .constructor-item { margin-bottom: 25px; background: #fdfefe; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .constructor-target { min-height: 50px; border: 2px dashed var(--border-color); border-radius: 6px; padding: 5px; display: flex; flex-wrap: wrap; gap: 8px; background: #f8fafc; margin-bottom: 15px; }
+        .blocks-pool { display: flex; flex-wrap: wrap; gap: 8px; }
+        .word-block { background: #e2e8f0; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; border: 1px solid #cbd5e1; user-select: none; }
+        .word-block.used { opacity: 0.4; pointer-events: none; }
+        
+        /* Сцена 3 */
+        .theory-text { font-size: 16px; line-height: 2; }
+        .theory-p { margin-bottom: 20px; background: #fafbfc; padding: 15px; border-radius: 6px; border-left: 4px solid var(--primary); }
+        .fill-input { border: none; border-bottom: 2px solid var(--primary); background: transparent; padding: 2px 5px; font-size: 15px; font-weight: bold; color: var(--primary-dark); text-align: center; outline: none; }
+        
+        /* Общие компоненты */
+        .action-area { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .check-btn { padding: 12px 30px; background: var(--secondary); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .result-badge { font-size: 16px; font-weight: bold; padding: 10px 20px; border-radius: 6px; display: none; }
+        .result-badge.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .result-badge.error { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .correct-blink { background-color: #d4edda !important; border-color: #2ecc71 !important; }
+        .wrong-blink { background-color: #f8d7da !important; border-color: #e74c3c !important; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Комплексный тренажер ОГЭ: Физика</h1>
+        <p>Тема: Кинематика вращения и свойства плотности</p>
+        <div class="navigator">
+            <button class="nav-btn active" onclick="switchScene(1)">Сцена 1: Соответствие</button>
+            <button class="nav-btn" onclick="switchScene(2)">Сцена 2: Конструктор</button>
+            <button class="nav-btn" onclick="switchScene(3)">Сцена 3: Пропуски</button>
+        </div>
+    </header>
+
+    <!-- СЦЕНА 1 -->
+    <div id="scene1" class="scene active">
+        <h2 class="scene-title">Уровень 1: Карточки понятий, формул и определений</h2>
+        <div class="dnd-container">
+            <div class="dnd-column" id="drop-zones-container"><h3>Целевые зоны</h3></div>
+            <div class="dnd-column" id="drag-items-container"><h3>Карточки</h3></div>
+        </div>
+        <div class="action-area">
+            <div id="result-scene1" class="result-badge"></div>
+            <button class="check-btn" onclick="checkScene1()">Проверить сцену 1</button>
+        </div>
+    </div>
+
+    <!-- СЦЕНА 2 -->
+    <div id="scene2" class="scene">
+        <h2 class="scene-title">Уровень 2: Конструктор физических утверждений</h2>
+        <div id="constructor-container"></div>
+        <div class="action-area">
+            <div id="result-scene2" class="result-badge"></div>
+            <button class="check-btn" onclick="checkScene2()">Проверить сцену 2</button>
+        </div>
+    </div>
+
+    <!-- СЦЕНА 3 -->
+    <div id="scene3" class="scene">
+        <h2 class="scene-title">Уровень 3: Слепой ввод теории (Максимальный контроль)</h2>
+        <div class="theory-text">
+            <div class="theory-p">
+                <strong>1. Вращение:</strong> При равномерном движении по окружности модуль скорости остается <input type="text" class="fill-input" data-ans="постоянным" style="width:120px">, но меняется <input type="text" class="fill-input" data-ans="направление" style="width:120px"> вектора. Время одного полного оборота — это <input type="text" class="fill-input" data-ans="период" style="width:90px"> в <input type="text" class="fill-input" data-ans="секундах" style="width:100px">. Число оборотов за 1 секунду — <input type="text" class="fill-input" data-ans="частота" style="width:90px"> в <input type="text" class="fill-input" data-ans="Герцах" style="width:80px">. Формула связи: ν = <input type="text" class="fill-input" data-ans="1/T" style="width:60px">. Линейная скорость v = <input type="text" class="fill-input" data-ans="2piR/T" style="width:100px">, направлена по <input type="text" class="fill-input" data-ans="касательной" style="width:120px">. Центростремительное ускорение a_n = <input type="text" class="fill-input" data-ans="v^2/R" style="width:70px">, направлено к <input type="text" class="fill-input" data-ans="центру" style="width:80px">. Угол между v и a равен <input type="text" class="fill-input" data-ans="90" style="width:50px"> градусов.
+            </div>
+            <div class="theory-p">
+                <strong>2. Масса и вещество:</strong> Величина единицы объема — <input type="text" class="fill-input" data-ans="плотность" style="width:110px">. Вычисляется по формуле: ρ = <input type="text" class="fill-input" data-ans="m/V" style="width:65px">. В СИ: 1 г/см³ равен <input type="text" class="fill-input" data-ans="1000" style="width:70px"> кг/м³. Если от куска отрезать 3/4 части, его плотность <input type="text" class="fill-input" data-ans="не изменится" style="width:130px">.
+            </div>
+            <div class="theory-p">
+                <strong>3. Анализ ловушек:</strong> Если скорость постоянна, а радиус увеличить в 2 раза, ускорение <input type="text" class="fill-input" data-ans="уменьшится" style="width:120px"> в <input type="text" class="fill-input" data-ans="2" style="width:40px"> раза. При одинаковых массах наибольший объем займет кубик с <input type="text" class="fill-input" data-ans="минимальной" style="width:130px"> плотностью.
+            </div>
+        </div>
+        <div class="action-area">
+            <div id="result-scene3" class="result-badge"></div>
+            <button class="check-btn" onclick="checkScene3()">Проверить сцену 3</button>
+        </div>
+    </div>
+    <script>
+        // ДАННЫЕ СЦЕНЫ 1
+        const s1Data = [
+            { id: "1", label: "Период обращения (T)", exact: "Время одного полного оборота [c]" },
+            { id: "2", label: "Частота вращения (ν)", exact: "Число оборотов за 1 секунду [Гц]" },
+            { id: "3", label: "Формула линейной скорости", exact: "v = 2πR / T = 2πRν" },
+            { id: "4", label: "Направление вектора скорости", exact: "Всегда по касательной к окружности" },
+            { id: "5", label: "Центростремительное ускорение", exact: "a_n = v² / R, направлено к центру" },
+            { id: "6", label: "Формула плотности вещества", exact: "ρ = m / V" },
+            { id: "7", label: "Перевод 1 г/см³ в СИ", exact: "Умножить на 1000 (= 1000 кг/м³)" },
+            { id: "8", label: "Ловушка: Кусок металла делят пополам", exact: "Масса падает в 2 раза, плотность НЕ меняется" }
+        ];
+
+        // ДАННЫЕ СЦЕНЫ 2
+        const s2Data = [
+            {
+                title: "Соберите закон изменения центростремительного ускорения при росте радиуса (v = const):",
+                correctOrder: ["Если", "радиус", "увеличить", "в 2 раза", "ускорение", "уменьшится", "в 2 раза"],
+                pool: ["радиус", "в 2 раза", "ускорение", "Если", "увеличится", "увеличить", "уменьшится", "в 2 раза", "плотность"]
+            },
+            {
+                title: "Соберите правило зависимости параметров тел при равных массах (m = const):",
+                correctOrder: ["Наибольший", "объем", "замет", "кубик", "с", "минимальной", "плотностью"],
+                pool: ["кубик", "объем", "плотностью", "Наибольший", "массу", "с", "максимальной", "минимальной", "замет"]
+            },
+            {
+                title: "Соберите кинематическое правило направлений векторов:",
+                correctOrder: ["Вектор", "скорости", "и", "вектор", "ускорения", "всегда", "перпендикулярны"],
+                pool: ["скорости", "всегда", "сонаправлены", "ускорения", "перпендикулярны", "Вектор", "и", "вектор", "центральный"]
+            }
+        ];
+
+        // ПЕРЕКЛЮЧЕНИЕ СЦЕН
+        function switchScene(sceneNum) {
+            document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`scene${sceneNum}`).classList.add('active');
+            document.querySelectorAll('.navigator .nav-btn')[sceneNum-1].classList.add('active');
+        }
+        // ЛОГИКА СЦЕНЫ 1 (Drag & Drop)
+        function initScene1() {
+            const zonesContainer = document.getElementById('drop-zones-container');
+            const itemsContainer = document.getElementById('drag-items-container');
+            zonesContainer.innerHTML = '<h3>Целевые зоны</h3>';
+            itemsContainer.innerHTML = '<h3>Карточки</h3>';
+
+            s1Data.forEach(data => {
+                const zone = document.createElement('div');
+                zone.className = 'drop-zone';
+                zone.dataset.id = data.id;
+                zone.innerHTML = `<div class="drop-zone-label">${data.label}</div>`;
+                
+                zone.addEventListener('dragover', e => e.preventDefault());
+                zone.addEventListener('dragenter', function(e) { e.preventDefault(); this.classList.add('hovered'); });
+                zone.addEventListener('dragleave', function() { this.classList.remove('hovered'); });
+                zone.addEventListener('drop', function(e) {
+                    this.classList.remove('hovered');
+                    const itemId = e.dataTransfer.getData('text/plain');
+                    const draggedElement = document.getElementById(itemId);
+                    if(draggedElement) this.appendChild(draggedElement);
+                });
+                zonesContainer.appendChild(zone);
+            });
+
+            const shuffledItems = [...s1Data].sort(() => Math.random() - 0.5);
+            shuffledItems.forEach(data => {
+                const item = document.createElement('div');
+                item.className = 'drag-item';
+                item.id = `drag-${data.id}`;
+                item.dataset.ansId = data.id;
+                item.draggable = true;
+                item.innerText = data.exact;
+                item.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', item.id); });
+                itemsContainer.appendChild(item);
+            });
+        }
+
+        function checkScene1() {
+            const zones = document.querySelectorAll('.drop-zone');
+            let correctCount = 0;
+            zones.forEach(zone => {
+                const placedItem = zone.querySelector('.drag-item');
+                if (placedItem && placedItem.dataset.ansId === zone.dataset.id) {
+                    zone.className = 'drop-zone correct-blink';
+                    correctCount++;
+                } else { zone.className = 'drop-zone wrong-blink'; }
+            });
+            const badge = document.getElementById('result-scene1');
+            badge.className = correctCount === s1Data.length ? "result-badge success" : "result-badge error";
+            badge.innerText = correctCount === s1Data.length ? "Идеально! Все верно." : `Ошибки! Верно: ${correctCount} из ${s1Data.length}`;
+        }
+
+        // ЛОГИКА СЦЕНЫ 2 (Конструктор предложений)
+        function initScene2() {
+            const container = document.getElementById('constructor-container');
+            container.innerHTML = '';
+
+            s2Data.forEach((data, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'constructor-item';
+                
+                const title = document.createElement('p');
+                title.style.fontWeight = 'bold';
+                title.innerText = `${index + 1}. ${data.title}`;
+                wrapper.appendChild(title);
+
+                const targetZone = document.createElement('div');
+                targetZone.className = 'constructor-target';
+                targetZone.id = `target-${index}`;
+                wrapper.appendChild(targetZone);
+
+                const poolZone = document.createElement('div');
+                poolZone.className = 'blocks-pool';
+
+                const mixedPool = [...data.pool].sort(() => Math.random() - 0.5);
+                mixedPool.forEach((word, wIdx) => {
+                    const block = document.createElement('div');
+                    block.className = 'word-block';
+                    block.innerText = word;
+                    block.id = `word-${index}-${wIdx}`;
+                    
+                    block.onclick = () => {
+                        if (!block.classList.contains('used')) {
+                            block.classList.add('used');
+                            const clone = document.createElement('div');
+                            clone.className = 'word-block';
+                            clone.innerText = word;
+                            clone.dataset.originId = block.id;
+                            clone.onclick = () => {
+                                document.getElementById(clone.dataset.originId).classList.remove('used');
+                                clone.remove();
+                            };
+                            targetZone.appendChild(clone);
+                        }
+                    };
+                    poolZone.appendChild(block);
+                });
+                wrapper.appendChild(poolZone);
+                container.appendChild(wrapper);
+            });
+        }
+        function checkScene2() {
+            let totalCorrect = 0;
+            s2Data.forEach((data, index) => {
+                const targetZone = document.getElementById(`target-${index}`);
+                const userWords = Array.from(targetZone.querySelectorAll('.word-block')).map(b => b.innerText);
+                let isCorrect = userWords.length === data.correctOrder.length && userWords.every((v, i) => v === data.correctOrder[i]);
+                const wrapper = targetZone.closest('.constructor-item');
+                if (isCorrect) { wrapper.className = 'constructor-item correct-blink'; totalCorrect++; }
+                else wrapper.className = 'constructor-item wrong-blink';
+            });
+            const badge = document.getElementById('result-scene2');
+            badge.className = totalCorrect === s2Data.length ? "result-badge success" : "result-badge error";
+            badge.innerText = totalCorrect === s2Data.length ? "Супер! Конструкторы собраны." : `Ошибка. Верно: ${totalCorrect} из ${s2Data.length}`;
+        }
+
+        // ЛОГИКА СЦЕНЫ 3 (Пропуски)
+        function checkScene3() {
+            const inputs = document.querySelectorAll('#scene3 .fill-input');
+            let correctCount = 0;
+            inputs.forEach(input => {
+                const userVal = input.value.trim().toLowerCase();
+                const correctVal = input.dataset.ans.trim().toLowerCase();
+                if (userVal === correctVal || userVal.replace(/ /g, '') === correctVal.replace(/ /g, '')) {
+                    input.style.borderBottomColor = "var(--success)";
+                    input.style.color = "var(--success)";
+                    correctCount++;
+                } else {
+                    input.style.borderBottomColor = "var(--error)";
+                    input.style.color = "var(--error)";
+                }
+            });
+            const badge = document.getElementById('result-scene3');
+            badge.className = correctCount === inputs.length ? "result-badge success" : "result-badge error";
+            badge.innerText = correctCount === inputs.length ? "Потрясающе! Все пропуски заполнены верно." : `Ошибки! Верно: ${correctCount} из ${inputs.length}`;
+        }
+
+        // Инициализация при загрузке страницы
+        window.onload = () => {
+            initScene1();
+            initScene2();
+        };
+    </script>
+</body>
+</html>
