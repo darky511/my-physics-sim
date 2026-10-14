@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Визуальный блиц-контроль: Силы</title>
-    <!-- Место для стилей CSS (Часть 4) -->
+    <title>Ультра-Блиц Диагностика: Силы (7 класс)</title>
+    <!-- Место для стилей CSS (Часть 5) -->
 </head>
 <body>
 
@@ -12,76 +12,196 @@
     <!-- Слайд 1: Старт -->
     <div class="slide active" id="slide-1">
         <div class="visual-intro">
-            <svg viewBox="0 0 200 100" width="160" height="80">
-                <rect x="30" y="40" width="50" height="35" fill="#1e293b" stroke="#38bdf8" stroke-width="2" rx="4"/>
-                <line x1="80" y1="58" x2="130" y2="58" stroke="#ef4444" stroke-width="3" marker-end="url(#arr-m)"/>
-                <line x1="30" y1="58" x2="5" y2="58" stroke="#22c55e" stroke-width="2" marker-end="url(#arr-s)"/>
+            <svg viewBox="0 0 200 120" width="160" height="100">
+                <circle cx="100" cy="50" r="25" fill="#38bdf8" fill-opacity="0.2" stroke="#38bdf8" stroke-width="2"/>
+                <line x1="100" y1="50" x2="100" y2="105" stroke="#f43f5e" stroke-width="4" marker-end="url(#arr-main)"/>
+                <text x="115" y="85" fill="#f43f5e" font-weight="bold" font-size="16">F</text>
             </svg>
-            <h1 class="main-title">Разбор векторов сил</h1>
-            <p class="sub-title">Диагностика сложной графики без лишних слов.</p>
-            <button class="btn btn-next-step" onclick="goToSlide(1)">Начать блиц</button>
+            <h1 class="main-title">Супер-блиц: Силы</h1>
+            <p class="sub-title">10 визуальных задач на понимание векторов без лишних слов.</p>
+            <button class="btn btn-next-step" onclick="goToSlide(1)">Погнали</button>
         </div>
     </div>
 
-    <!-- Слайд 2: Схема 1 (Тяжесть, Вес, Трение) -->
+    <!-- Слайд 2: Вопрос 1 (Сила тяжести) -->
     <div class="slide" id="slide-2">
+        <div class="quiz-compact">
+            <div class="visual-pane">
+                <svg viewBox="0 0 200 150" width="100%" height="100%">
+                    <circle cx="100" cy="180" r="100" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                    <text x="75" y="120" fill="#64748b" font-size="12">Земля</text>
+                    <circle cx="100" cy="45" r="14" fill="#38bdf8"/>
+                    <line x1="100" y1="45" x2="100" y2="78" stroke="#f43f5e" stroke-width="3" marker-end="url(#arr-main)"/>
+                    <text x="110" y="68" fill="#f43f5e" font-weight="bold">F</text>
+                </svg>
+            </div>
+            <div class="action-pane">
+                <h2 class="slide-header">Задача 1. Яблоко падает. <br>Что за сила <span style="color:var(--accent-red)">F</span>?</h2>
+                <div class="quiz-options-buttons" data-quiz-id="q1">
+                    <button class="option-btn" data-correct="true">Тяжести</button>
+                    <button class="option-btn" data-correct="false">Упругости</button>
+                    <button class="option-btn" data-correct="false">Вес тела</button>
+                </div>
+                <div class="feedback-badge" id="fb-q1"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 3: Вопрос 2 (Вес тела) -->
+    <div class="slide" id="slide-3">
+        <div class="quiz-compact">
+            <div class="visual-pane">
+                <svg viewBox="0 0 200 150" width="100%" height="100%">
+                    <line x1="30" y1="110" x2="170" y2="110" stroke="#475569" stroke-width="3"/>
+                    <rect x="70" y="70" width="60" height="40" fill="#38bdf8" rx="2"/>
+                    <circle cx="100" cy="110" r="4" fill="#f43f5e"/>
+                    <line x1="100" y1="110" x2="100" y2="142" stroke="#f43f5e" stroke-width="3" marker-end="url(#arr-main)"/>
+                    <text x="112" y="132" fill="#f43f5e" font-weight="bold">P</text>
+                </svg>
+            </div>
+            <div class="action-pane">
+                <h2 class="slide-header">Задача 2. Сила давит <span class="highlight-underline">на опору</span>. <br>Как её называют?</h2>
+                <div class="quiz-options-buttons" data-quiz-id="q2">
+                    <button class="option-btn" data-correct="false">Тяжести</button>
+                    <button class="option-btn" data-correct="true">Вес тела</button>
+                    <button class="option-btn" data-correct="false">Трение</button>
+                </div>
+                <div class="feedback-badge" id="fb-q2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 4: Вопрос 3 (Сила упругости) -->
+    <div class="slide" id="slide-4">
+        <div class="quiz-compact">
+            <div class="visual-pane">
+                <svg viewBox="0 0 200 150" width="100%" height="100%">
+                    <line x1="20" y1="75" x2="50" y2="75" stroke="#64748b" stroke-width="4"/>
+                    <path d="M 50 75 Q 60 60 70 75 Q 80 90 90 75 Q 100 60 110 75 Q 120 90 130 75 L 150 75" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+                    <rect x="150" y="55" width="30" height="40" fill="#475569"/>
+                    <line x1="150" y1="75" x2="100" y2="75" stroke="#f43f5e" stroke-width="3" marker-end="url(#arr-main)"/>
+                    <text x="110" y="65" fill="#f43f5e" font-weight="bold">F</text>
+                </svg>
+            </div>
+            <div class="action-pane">
+                <h2 class="slide-header">Задача 3. Пружину растянули. <br>Что тянет её назад?</h2>
+                <div class="quiz-options-buttons" data-quiz-id="q3">
+                    <button class="option-btn" data-correct="false">Архимеда</button>
+                    <button class="option-btn" data-correct="false">Трение</button>
+                    <button class="option-btn" data-correct="true">Упругости</button>
+                </div>
+                <div class="feedback-badge" id="fb-q3"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Слайд 5: Вопрос 4 (Сила трения) -->
+    <div class="slide" id="slide-5">
+        <div class="quiz-compact">
+            <div class="visual-pane">
+                <svg viewBox="0 0 200 150" width="100%" height="100%">
+                    <line x1="20" y1="100" x2="180" y2="100" stroke="#475569" stroke-width="2"/>
+                    <rect x="75" y="65" width="50" height="35" fill="#38bdf8"/>
+                    <line x1="125" y1="82" x2="165" y2="82" stroke="#34d399" stroke-width="2" marker-end="url(#arr-sub)"/>
+                    <text x="140" y="75" fill="#34d399" font-size="11">Движение</text>
+                    <line x1="75" y1="95" x2="35" y2="95" stroke="#f43f5e" stroke-width="3" marker-end="url(#arr-main)"/>
+                    <text x="45" y="85" fill="#f43f5e" font-weight="bold">F</text>
+                </svg>
+            </div>
+            <div class="action-pane">
+                <h2 class="slide-header">Задача 4. Брусок скользит. <br>Какая сила тормозит?</h2>
+                <div class="quiz-options-buttons" data-quiz-id="q4">
+                    <button class="option-btn" data-correct="true">Трение</button>
+                    <button class="option-btn" data-correct="false">Тяжести</button>
+                    <button class="option-btn" data-correct="false">Вес тела</button>
+                </div>
+                <div class="feedback-badge" id="fb-q4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 6: Вопрос 5 (Архимед) -->
+    <div class="slide" id="slide-6">
+        <div class="quiz-compact">
+            <div class="visual-pane">
+                <svg viewBox="0 0 200 150" width="100%" height="100%">
+                    <rect x="40" y="50" width="120" height="80" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+                    <line x1="40" y1="65" x2="160" y2="65" stroke="#38bdf8" stroke-opacity="0.6" stroke-width="2"/>
+                    <rect x="85" y="75" width="30" height="30" fill="#34d399"/>
+                    <line x1="100" y1="75" x2="100" y2="35" stroke="#f43f5e" stroke-width="3" marker-end="url(#arr-main)"/>
+                    <text x="110" y="50" fill="#f43f5e" font-weight="bold">F</text>
+                </svg>
+            </div>
+            <div class="action-pane">
+                <h2 class="slide-header">Задача 5. Груз тонет в воде. <br>Что толкает его вверх?</h2>
+                <div class="quiz-options-buttons" data-quiz-id="q5">
+                    <button class="option-btn" data-correct="false">Упругости</button>
+                    <button class="option-btn" data-correct="true">Архимеда</button>
+                    <button class="option-btn" data-correct="false">Вес</button>
+                </div>
+                <div class="feedback-badge" id="fb-q5"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайд 7: Комплексная схема 1 (Тяжесть, Вес, Трение) -->
+    <div class="slide" id="slide-7">
         <div class="quiz-compact">
             <div class="visual-pane">
                 <svg viewBox="0 0 200 160" width="100%" height="100%">
                     <line x1="10" y1="110" x2="190" y2="110" stroke="#475569" stroke-width="2"/>
                     <rect x="65" y="65" width="60" height="45" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" rx="3"/>
-                    <line x1="95" y1="87" x2="95" y2="135" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="95" y1="87" x2="95" y2="135" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <circle cx="95" cy="87" r="3" fill="#ef4444"/>
                     <text x="103" y="130" fill="#ef4444" font-weight="bold" font-size="14">1</text>
-                    <line x1="105" y1="110" x2="105" y2="155" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="105" y1="110" x2="105" y2="155" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <circle cx="105" cy="110" r="3" fill="#38bdf8"/>
                     <text x="113" y="150" fill="#38bdf8" font-weight="bold" font-size="14">2</text>
-                    <line x1="65" y1="110" x2="20" y2="110" stroke="#fb923c" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="65" y1="110" x2="20" y2="110" stroke="#fb923c" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <text x="25" y="102" fill="#fb923c" font-weight="bold" font-size="14">3</text>
                     <text x="135" y="80" fill="#6b7280" font-size="11">Движение &rarr;</text>
                 </svg>
             </div>
             <div class="action-pane">
-                <h2 class="slide-header">Схема 1. Брусок тянут вправо.</h2>
+                <h2 class="slide-header">Задача 6. Идентифицируй силы на стыках.</h2>
                 <div class="select-group" data-group-id="g1">
-                    <div class="selector-row"><span>Стрелка 1:</span><select id="s1-1"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
-                    <div class="selector-row"><span>Стрелка 2:</span><select id="s1-2"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
-                    <div class="selector-row"><span>Стрелка 3:</span><select id="s1-3"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
+                    <div class="selector-row"><span>Вектор 1:</span><select id="s1-1"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
+                    <div class="selector-row"><span>Вектор 2:</span><select id="s1-2"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
+                    <div class="selector-row"><span>Вектор 3:</span><select id="s1-3"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
                 </div>
                 <button class="btn btn-check" onclick="checkGroupQuiz('g1', { 's1-1':'tyazh', 's1-2':'ves', 's1-3':'tren' })">Проверить</button>
                 <div class="feedback-badge" id="fb-g1"></div>
             </div>
         </div>
     </div>
-
-    <!-- Слайд 3: Схема 2 (Тяжесть, Упругость) -->
-    <div class="slide" id="slide-3">
+    <!-- Слайд 8: Комплексная схема 2 (Тяжесть, Упругость - вертикально) -->
+    <div class="slide" id="slide-8">
         <div class="quiz-compact">
             <div class="visual-pane">
                 <svg viewBox="0 0 200 160" width="100%" height="100%">
                     <line x1="60" y1="15" x2="140" y2="15" stroke="#64748b" stroke-width="3"/>
                     <line x1="100" y1="15" x2="100" y2="65" stroke="#475569" stroke-width="2"/>
                     <rect x="80" y="65" width="40" height="40" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" rx="2"/>
-                    <line x1="100" y1="65" x2="100" y2="25" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="100" y1="65" x2="100" y2="25" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <text x="110" y="35" fill="#ef4444" font-weight="bold" font-size="14">1</text>
-                    <line x1="100" y1="85" x2="100" y2="135" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="100" y1="85" x2="100" y2="135" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <circle cx="100" cy="85" r="3" fill="#38bdf8"/>
                     <text x="110" y="125" fill="#38bdf8" font-weight="bold" font-size="14">2</text>
                 </svg>
             </div>
             <div class="action-pane">
-                <h2 class="slide-header">Схема 2. Груз неподвижно висит.</h2>
+                <h2 class="slide-header">Задача 7. Нить удерживает подвешенный груз.</h2>
                 <div class="select-group" data-group-id="g2">
-                    <div class="selector-row"><span>Стрелка 1:</span><select id="s2-1"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="upr">Упругости</option></select></div>
-                    <div class="selector-row"><span>Стрелка 2:</span><select id="s2-2"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="upr">Упругости</option></select></div>
+                    <div class="selector-row"><span>Вектор 1:</span><select id="s2-1"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="upr">Упругости</option></select></div>
+                    <div class="selector-row"><span>Вектор 2:</span><select id="s2-2"><option value="" disabled selected>Сила...</option><option value="tyazh">Тяжести</option><option value="upr">Упругости</option></select></div>
                 </div>
                 <button class="btn btn-check" onclick="checkGroupQuiz('g2', { 's2-1':'upr', 's2-2':'tyazh' })">Проверить</button>
                 <div class="feedback-badge" id="fb-g2"></div>
             </div>
         </div>
     </div>
-    <!-- Слайд 4: Схема 3 (Тяжесть, Вес, Трение, Упругость) -->
-    <div class="slide" id="slide-4">
+
+    <!-- Слайд 9: Комплексная схема 3 (Тяжесть, Вес, Трение, Упругость) -->
+    <div class="slide" id="slide-9">
         <div class="quiz-compact">
             <div class="visual-pane">
                 <svg viewBox="0 0 200 160" width="100%" height="100%">
@@ -89,12 +209,12 @@
                     <line x1="15" y1="40" x2="15" y2="110" stroke="#64748b" stroke-width="3"/>
                     <path d="M 15 85 Q 25 75 35 85 Q 45 95 55 85 Q 65 75 75 85 L 90 85" fill="none" stroke="#475569" stroke-width="1.5"/>
                     <rect x="90" y="60" width="55" height="50" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" rx="2"/>
-                    <line x1="90" y1="85" x2="50" y2="85" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="90" y1="85" x2="50" y2="85" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <text x="55" y="75" fill="#ef4444" font-weight="bold" font-size="13">1</text>
-                    <line x1="117" y1="85" x2="117" y2="130" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="117" y1="85" x2="117" y2="130" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <circle cx="117" cy="85" r="3" fill="#38bdf8"/>
                     <text x="125" y="125" fill="#38bdf8" font-weight="bold" font-size="13">2</text>
-                    <line x1="127" y1="110" x2="127" y2="152" stroke="#fb923c" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="127" y1="110" x2="127" y2="152" stroke="#fb923c" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <circle cx="127" cy="110" r="3" fill="#fb923c"/>
                     <text x="135" y="145" fill="#fb923c" font-weight="bold" font-size="13">3</text>
                     <line x1="90" y1="110" x2="60" y2="110" stroke="#a855f7" stroke-width="2.5" marker-end="url(#arr-m)"/>
@@ -103,12 +223,12 @@
                 </svg>
             </div>
             <div class="action-pane">
-                <h2 class="slide-header">Схема 3. Растягиваем пружину вправо.</h2>
+                <h2 class="slide-header">Задача 8. Горизонтальное крепление пружины.</h2>
                 <div class="select-group" data-group-id="g3">
-                    <div class="selector-row"><span>Стрелка 1:</span><select id="s3-1"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
-                    <div class="selector-row"><span>Стрелка 2:</span><select id="s3-2"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
-                    <div class="selector-row"><span>Стрелка 3:</span><select id="s3-3"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
-                    <div class="selector-row"><span>Стрелка 4:</span><select id="s3-4"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
+                    <div class="selector-row"><span>Вектор 1:</span><select id="s3-1"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
+                    <div class="selector-row"><span>Вектор 2:</span><select id="s3-2"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
+                    <div class="selector-row"><span>Вектор 3:</span><select id="s3-3"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
+                    <div class="selector-row"><span>Вектор 4:</span><select id="s3-4"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="tyazh">Тяжести</option><option value="ves">Вес тела</option><option value="tren">Трение</option></select></div>
                 </div>
                 <button class="btn btn-check" onclick="checkGroupQuiz('g3', { 's3-1':'upr', 's3-2':'tyazh', 's3-3':'ves', 's3-4':'tren' })">Проверить</button>
                 <div class="feedback-badge" id="fb-g3"></div>
@@ -116,34 +236,34 @@
         </div>
     </div>
 
-    <!-- Слайд 5: Схема 4 (Архимед, Тяжесть) -->
-    <div class="slide" id="slide-5">
+    <!-- Слайд 10: Комплексная схема 4 (Архимед, Тяжесть) -->
+    <div class="slide" id="slide-10">
         <div class="quiz-compact">
             <div class="visual-pane">
                 <svg viewBox="0 0 200 160" width="100%" height="100%">
                     <rect x="40" y="40" width="120" height="100" fill="#0f172a" stroke="#334155" stroke-width="2"/>
                     <line x1="40" y1="55" x2="160" y2="55" stroke="#38bdf8" stroke-opacity="0.4" stroke-width="2"/>
                     <rect x="85" y="70" width="30" height="30" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" rx="1"/>
-                    <line x1="100" y1="70" x2="100" y2="25" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="100" y1="70" x2="100" y2="25" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <text x="110" y="38" fill="#ef4444" font-weight="bold" font-size="14">1</text>
-                    <line x1="100" y1="85" x2="100" y2="130" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="100" y1="85" x2="100" y2="130" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <circle cx="100" cy="85" r="3" fill="#38bdf8"/>
                     <text x="110" y="125" fill="#38bdf8" font-weight="bold" font-size="14">2</text>
                 </svg>
             </div>
             <div class="action-pane">
-                <h2 class="slide-header">Схема 4. Кубик полностью в воде.</h2>
+                <h2 class="slide-header">Задача 9. Погружение объекта в жидкость.</h2>
                 <div class="select-group" data-group-id="g4">
-                    <div class="selector-row"><span>Стрелка 1:</span><select id="s4-1"><option value="" disabled selected>Сила...</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
-                    <div class="selector-row"><span>Стрелка 2:</span><select id="s4-2"><option value="" disabled selected>Сила...</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
+                    <div class="selector-row"><span>Вектор 1:</span><select id="s4-1"><option value="" disabled selected>Сила...</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
+                    <div class="selector-row"><span>Вектор 2:</span><select id="s4-2"><option value="" disabled selected>Сила...</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
                 </div>
                 <button class="btn btn-check" onclick="checkGroupQuiz('g4', { 's4-1':'arch', 's4-2':'tyazh' })">Проверить</button>
                 <div class="feedback-badge" id="fb-g4"></div>
             </div>
         </div>
     </div>
-    <!-- Слайд 6: Схема 5 (Архимед, Тяжесть, Упругость в воде) -->
-    <div class="slide" id="slide-6">
+    <!-- Слайд 11: Комплексная схема 5 (Архимед, Тяжесть, Упругость в воде) -->
+    <div class="slide" id="slide-11">
         <div class="quiz-compact">
             <div class="visual-pane">
                 <svg viewBox="0 0 200 160" width="100%" height="100%">
@@ -152,21 +272,21 @@
                     <line x1="70" y1="15" x2="130" y2="15" stroke="#64748b" stroke-width="3"/>
                     <line x1="100" y1="15" x2="100" y2="75" stroke="#475569" stroke-dasharray="3"/>
                     <rect x="85" y="75" width="30" height="30" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" rx="1"/>
-                    <line x1="95" y1="75" x2="95" y2="35" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="95" y1="75" x2="95" y2="35" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <text x="85" y="45" fill="#ef4444" font-weight="bold" font-size="13">1</text>
-                    <line x1="105" y1="75" x2="105" y2="30" stroke="#34d399" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="105" y1="75" x2="105" y2="30" stroke="#34d399" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <text x="113" y="45" fill="#34d399" font-weight="bold" font-size="13">2</text>
-                    <line x1="100" y1="90" x2="100" y2="135" stroke="#fb923c" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                    <line x1="100" y1="90" x2="100" y2="135" stroke="#fb923c" stroke-width="2.5" marker-end="url(#arr-main)"/>
                     <circle cx="100" cy="90" r="3" fill="#fb923c"/>
                     <text x="110" y="125" fill="#fb923c" font-weight="bold" font-size="13">3</text>
                 </svg>
             </div>
             <div class="action-pane">
-                <h2 class="slide-header">Схема 5. Пружина в воде.</h2>
+                <h2 class="slide-header">Задача 10. Пружинный подвес кубика в воде.</h2>
                 <div class="select-group" data-group-id="g5">
-                    <div class="selector-row"><span>Стрелка 1:</span><select id="s5-1"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
-                    <div class="selector-row"><span>Стрелка 2:</span><select id="s5-2"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
-                    <div class="selector-row"><span>Стрелка 3:</span><select id="s5-3"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
+                    <div class="selector-row"><span>Вектор 1:</span><select id="s5-1"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
+                    <div class="selector-row"><span>Вектор 2:</span><select id="s5-2"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
+                    <div class="selector-row"><span>Вектор 3:</span><select id="s5-3"><option value="" disabled selected>Сила...</option><option value="upr">Упругости</option><option value="arch">Архимеда</option><option value="tyazh">Тяжести</option></select></div>
                 </div>
                 <button class="btn btn-check" onclick="checkGroupQuiz('g5', { 's5-1':'upr', 's5-2':'arch', 's5-3':'tyazh' })">Проверить</button>
                 <div class="feedback-badge" id="fb-g5"></div>
@@ -174,22 +294,25 @@
         </div>
     </div>
 
-    <!-- Слайд 7: Итоги -->
-    <div class="slide" id="slide-7">
+    <!-- Слайд 12: Полные итоги диагностики -->
+    <div class="slide" id="slide-12">
         <div class="visual-intro">
-            <div class="score-circle"><span id="score-num">0</span>/5</div>
-            <h2 class="slide-header" style="font-size:1.5rem;">Анализ векторного мышления</h2>
-            <div class="mini-verdict" id="verdict-text">Нажмите «Результат» для формирования диагностического профиля.</div>
-            <button class="btn" style="background:var(--accent-green); color:#0f172a; padding:10px 24px;" onclick="showFinalVerdict()">Результат</button>
+            <div class="score-circle" style="width:110px; height:110px; font-size:2.2rem;"><span id="score-num">0</span>/10</div>
+            <h2 class="slide-header" style="font-size:1.6rem;">Карта векторного мышления</h2>
+            <div class="mini-verdict" id="verdict-text" style="max-width:550px; text-align:left;">Нажмите кнопку ниже для генерации отчета.</div>
+            <button class="btn" style="background:var(--accent-green); color:#0f172a; font-weight:700;" onclick="showFinalVerdict()">Сформировать отчет</button>
         </div>
     </div>
 
     <!-- Системные маркеры стрелок -->
     <svg width="0" height="0" style="position:absolute;">
-        <defs><marker id="arr-m" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#475569"/></marker></defs>
+        <defs>
+            <marker id="arr-main" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#f43f5e"/></marker>
+            <marker id="arr-sub" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#34d399"/></marker>
+        </defs>
     </svg>
 
-    <!-- Навигация -->
+    <!-- Нижняя панель управления -->
     <div class="controls">
         <button class="control-nav-btn" id="nav-prev" disabled>&larr;</button>
         <div class="progress-line-container"><div class="progress-line-fill" id="progress-fill"></div></div>
@@ -209,7 +332,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
     
-    .lab-container { width: 95vw; max-width: 820px; height: 85vh; max-height: 520px; background: var(--card-bg); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.7); position: relative; }
+    .lab-container { width: 95vw; max-width: 850px; height: 85vh; max-height: 540px; background: var(--card-bg); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.7); overflow: hidden; }
     
     .slide { display: none; width: 100%; height: calc(100% - 50px); padding: 25px; }
     .slide.active { display: flex; animation: cubicFade 0.2s ease-out; }
@@ -217,35 +340,37 @@
 
     .quiz-compact { display: grid; grid-template-columns: 1.1fr 1fr; gap: 25px; width: 100%; height: 100%; align-items: center; }
     .visual-pane { width: 100%; height: 100%; background: #020617; border-radius: 12px; border: 1px solid #1e293b; display: flex; justify-content: center; align-items: center; padding: 5px; }
-    .action-pane { display: flex; flex-direction: column; gap: 12px; height: 100%; justify-content: center; }
+    .action-pane { display: flex; flex-direction: column; gap: 10px; height: 100%; justify-content: center; }
     
-    .slide-header { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
+    .slide-header { font-size: 1.2rem; font-weight: 700; line-height: 1.3; }
+    .highlight-underline { border-bottom: 2px dashed var(--accent); color: var(--accent); }
+
+    .quiz-options-buttons { display: flex; flex-direction: column; gap: 6px; }
+    .option-btn { background: #1e293b; border: 1px solid #334155; color: var(--text-main); padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; text-align: left; cursor: pointer; width: 100%; transition: all 0.15s; }
+    .option-btn:hover { background: #334155; border-color: var(--accent); }
+    
+    .quiz-options-buttons.lock .option-btn { pointer-events: none; opacity: 0.3; }
+    .quiz-options-buttons.lock .option-btn.selected-correct { background: rgba(34, 197, 94, 0.15); border-color: var(--accent-green); color: #4ade80; opacity: 1; }
+    .quiz-options-buttons.lock .option-btn.selected-wrong { background: rgba(239, 68, 68, 0.15); border-color: var(--accent-red); color: #f87171; opacity: 1; }
 </style>
 <style>
-    .select-group { display: flex; flex-direction: column; gap: 8px; background: #020617; padding: 12px; border-radius: 10px; border: 1px solid #1e293b; }
-    .selector-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; font-weight: 500; }
+    .select-group { display: flex; flex-direction: column; gap: 6px; background: #020617; padding: 10px; border-radius: 10px; border: 1px solid #1e293b; }
+    .selector-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 500; }
     .selector-row span { color: #94a3b8; }
     
-    select { background: #1e293b; color: var(--text-main); border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; outline: none; cursor: pointer; width: 60%; transition: border 0.15s; }
-    select:focus { border-color: var(--accent); }
-    
-    .select-group.checked-correct { border-color: var(--accent-green); background: rgba(34, 197, 94, 0.03); }
-    .select-group.checked-wrong { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.03); }
-    
+    select { background: #1e293b; color: var(--text-main); border: 1px solid #334155; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; outline: none; cursor: pointer; width: 60%; }
     .select-group.disabled select { pointer-events: none; opacity: 0.7; }
     select.row-correct { border-color: var(--accent-green) !important; color: #4ade80; }
     select.row-wrong { border-color: var(--accent-red) !important; color: #f87171; }
 
-    .btn-check { background: #334155; color: white; padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; align-self: flex-start; font-size: 0.9rem; }
+    .btn-check { background: #334155; color: white; padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; align-self: flex-start; font-size: 0.85rem; }
     .btn-check:hover { background: #475569; }
-    .feedback-badge { font-size: 0.95rem; font-weight: 600; min-height: 20px; }
+    .feedback-badge { font-size: 0.9rem; font-weight: 600; min-height: 18px; }
 
-    .visual-intro { text-align: center; margin: auto; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-    .main-title { font-size: 2.1rem; font-weight: 800; }
-    .sub-title { font-size: 1.05rem; color: #64748b; }
-    
-    .score-circle { width: 85px; height: 85px; border-radius: 50%; background: #020617; border: 3px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.7rem; font-weight: 800; color: var(--accent); }
-    .mini-verdict { font-size: 0.95rem; color: #94a3b8; max-width: 420px; line-height: 1.4; text-align: center; }
+    .visual-intro { text-align: center; margin: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .main-title { font-size: 2rem; font-weight: 800; }
+    .sub-title { font-size: 1rem; color: #64748b; }
+    .score-circle { border: 3px solid var(--accent); background: #020617; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-weight: 800; }
 
     .controls { height: 50px; border-top: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
     .control-nav-btn { background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; padding: 5px 15px; }
@@ -258,8 +383,7 @@
 
     @media (max-width: 640px) {
         .quiz-compact { grid-template-columns: 1fr; gap: 15px; }
-        .visual-pane { height: 150px; }
-        select { width: 55%; }
+        .visual-pane { height: 140px; }
     }
 </style>
 <script>
@@ -268,93 +392,83 @@ const navPrev = document.getElementById('nav-prev');
 const navNext = document.getElementById('nav-next');
 const progressFill = document.getElementById('progress-fill');
 let currentIdx = 0;
-let diagnosticResults = { g1: false, g2: false, g3: false, g4: false, g5: false };
 
-// Автоматическая генерация точек по числу слайдов
-slides.forEach((_, i) => {
-    const dot = document.createElement('span');
-    dot.className = i === 0 ? 'dot active' : 'dot';
-});
+// Хранилище результатов всех 10 задач теста
+let singleAnswers = { q1: null, q2: null, q3: null, q4: null, q5: null };
+let groupAnswers = { g1: false, g2: false, g3: false, g4: false, g5: false };
 
 function updateLayout() {
     slides.forEach((slide, idx) => slide.classList.toggle('active', idx === currentIdx));
     navPrev.disabled = currentIdx === 0;
     navNext.disabled = currentIdx === slides.length - 1;
-    
-    const pct = (currentIdx / (slides.length - 1)) * 100;
-    progressFill.style.width = `${pct}%`;
+    progressFill.style.width = `${(currentIdx / (slides.length - 1)) * 100}%`;
 }
 
-function goToSlide(idx) {
-    currentIdx = idx;
-    updateLayout();
-}
+function goToSlide(idx) { currentIdx = idx; updateLayout(); }
+navNext.addEventListener('click', () => { if (currentIdx < slides.length - 1) { currentIdx++; updateLayout(); } });
+navPrev.addEventListener('click', () => { if (currentIdx > 0) { currentIdx--; updateLayout(); } });
 
-navNext.addEventListener('click', () => {
-    if (currentIdx < slides.length - 1) { currentIdx++; updateLayout(); }
+// Клик по кнопкам (Задачи 1-5)
+document.querySelectorAll('.quiz-options-buttons').forEach(wrapper => {
+    wrapper.addEventListener('click', (e) => {
+        const btn = e.target.closest('.option-btn');
+        if (!btn || wrapper.classList.contains('lock')) return;
+        const qId = wrapper.getAttribute('data-quiz-id');
+        const isCorrect = btn.getAttribute('data-correct') === 'true';
+        wrapper.classList.add('lock');
+        const badge = document.getElementById(`fb-${qId}`);
+        
+        if (isCorrect) {
+            btn.classList.add('selected-correct');
+            badge.innerHTML = '<span style="color:var(--accent-green)">🛑 Верно!</span>';
+            singleAnswers[qId] = true;
+        } else {
+            btn.classList.add('selected-wrong');
+            wrapper.querySelector('[data-correct="true"]').classList.add('selected-correct');
+            badge.innerHTML = '<span style="color:var(--accent-red)">❌ Мимо.</span>';
+            singleAnswers[qId] = false;
+        }
+        setTimeout(() => { if (currentIdx < slides.length - 1) { currentIdx++; updateLayout(); } }, 1000);
+    });
 });
 
-navPrev.addEventListener('click', () => {
-    if (currentIdx > 0) { currentIdx--; updateLayout(); }
-});
-</script>
-<script>
+// Проверка выпадающих списков (Задачи 6-10)
 function checkGroupQuiz(groupId, correctAnswers) {
     const container = document.querySelector(`[data-group-id="${groupId}"]`);
     if (container.classList.contains('disabled')) return;
-    
-    const feedback = document.getElementById(`fb-${groupId}`);
-    let allRight = true;
-    let anyEmpty = false;
+    const badge = document.getElementById(`fb-${groupId}`);
+    let allRight = true, anyEmpty = false;
 
-    Object.keys(correctAnswers).forEach(selectId => {
-        const selectEl = document.getElementById(selectId);
-        if (!selectEl.value) anyEmpty = true;
-    });
+    Object.keys(correctAnswers).forEach(id => { if (!document.getElementById(id).value) anyEmpty = true; });
+    if (anyEmpty) { badge.style.color = 'var(--accent-orange)'; badge.innerText = '⚠️ Заполните все строки!'; return; }
 
-    if (anyEmpty) {
-        feedback.style.color = 'var(--accent-orange)';
-        feedback.innerText = '⚠️ Выберите силы во всех строках!';
-        return;
-    }
-
-    Object.keys(correctAnswers).forEach(selectId => {
-        const selectEl = document.getElementById(selectId);
-        if (selectEl.value === correctAnswers[selectId]) {
-            selectEl.classList.add('row-correct');
-        } else {
-            selectEl.classList.add('row-wrong');
-            allRight = false;
-        }
+    Object.keys(correctAnswers).forEach(id => {
+        const el = document.getElementById(id);
+        if (el.value === correctAnswers[id]) el.classList.add('row-correct');
+        else { el.classList.add('row-wrong'); allRight = false; }
     });
 
     container.classList.add('disabled');
-    diagnosticResults[groupId] = allRight;
-
-    if (allRight) {
-        container.classList.add('checked-correct');
-        feedback.innerHTML = '<span style="color:var(--accent-green)">🛑 Отлично! Схема зафиксирована.</span>';
-    } else {
-        container.classList.add('checked-wrong');
-        feedback.innerHTML = '<span style="color:var(--accent-red)">❌ Ошибка в векторах.</span>';
-    }
-
-    setTimeout(() => {
-        if (currentIdx < slides.length - 1) { currentIdx++; updateLayout(); }
-    }, 1200);
+    groupAnswers[groupId] = allRight;
+    badge.innerHTML = allRight ? '<span style="color:var(--accent-green)">🛑 Безупречно!</span>' : '<span style="color:var(--accent-red)">❌ Ошибка в векторе.</span>';
+    setTimeout(() => { if (currentIdx < slides.length - 1) { currentIdx++; updateLayout(); } }, 1200);
 }
 
+// Итоговое аналитическое заключение
 function showFinalVerdict() {
-    const totalCorrect = Object.values(diagnosticResults).filter(Boolean).length;
-    document.getElementById('score-num').innerText = totalCorrect;
-    const verdictEl = document.getElementById('verdict-text');
+    const scoreSingle = Object.values(singleAnswers).filter(Boolean).length;
+    const scoreGroup = Object.values(groupAnswers).filter(Boolean).length;
+    const total = scoreSingle + scoreGroup;
     
-    if (totalCorrect === 5) {
-        verdictEl.innerHTML = "🏆 <b>Векторное мышление развито отлично!</b> Ученик без труда отличает силы по точкам приложения и среде.";
-    } else if (totalCorrect >= 3) {
-        verdictEl.innerHTML = "⚖️ <b>Хороший уровень, но есть просадки.</b> Допущены ошибки в многовекторных схемах. Обычно путают вес тела и силу упругости.";
+    document.getElementById('score-num').innerText = total;
+    const txt = document.getElementById('verdict-text');
+    
+    if (total === 10) {
+        txt.innerHTML = "🏆 <b>Идеальное векторное мышление!</b> Ребенок безошибочно считывает физическую природу сил и точки крепления стрелок как на простых, так и на сложных комбинированных схемах.";
+    } else if (total >= 7) {
+        txt.innerHTML = "⚖️ <b>Хороший результат. Базовые силы усвоены.</b> Ошибки возникают в многовекторных задачах (Задачи 6-10). Обратите внимание на разницу начала стрелок веса и силы тяжести.";
     } else {
-        verdictEl.innerHTML = "🔄 <b>Требуется проработка образов.</b> Ученик определяет силы хаотично, не обращая внимания на начало стрелки.";
+        txt.innerHTML = "🔄 <b>Требуется повторение образов.</b> Ученик испытывает трудности при анализе направления сил в жидкостях и деформированных средах. Рекомендуется разобрать схемы по точкам приложения векторов.";
     }
 }
 </script>
