@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Физическая Лаборатория: Механическая Работа</title>
+    <!-- Место для стилей CSS (Часть 2) -->
+</head>
+<body>
+
+<div class="lab-container">
+    <!-- Слайд 1: Введение -->
+    <div class="slide active" id="slide-1">
+        <div class="intro-text">
+            <h1 class="main-title">Механическую работу <br><span class="highlight">ВСЕГДА</span> совершает конкретная сила <span class="math-variable">F</span></h1>
+            <p class="sub-title">Под действием этой силы или против неё тело перемещается.</p>
+        </div>
+    </div>
+
+    <!-- Слайд 2: Формула -->
+    <div class="slide" id="slide-2">
+        <div class="formula-container">
+            <h2>Механическую работу ВСЕГДА совершает конкретная сила F</h2>
+            <p>Под действием этой силы или против неё тело перемещается.</p>
+            <div class="formula-box">A = F · s · cos(α)</div>
+            <div class="svg-illustration">
+                <svg viewBox="0 0 400 150" width="100%" height="150">
+                    <line x1="10" y1="130" x2="390" y2="130" stroke="#ccc" stroke-width="2"/>
+                    <rect x="50" y="70" width="80" height="60" fill="#3498db" rx="5"/>
+                    <rect x="250" y="70" width="80" height="60" fill="#3498db" rx="5" fill-opacity="0.3" stroke="#3498db" stroke-dasharray="4"/>
+                    <!-- Сила F -->
+                    <line x1="130" y1="100" x2="210" y2="60" stroke="#e74c3c" stroke-width="3" marker-end="url(#arrow-red)"/>
+                    <text x="180" y="50" fill="#e74c3c" font-weight="bold">F</text>
+                    <!-- Перемещение s -->
+                    <line x1="130" y1="120" x2="240" y2="120" stroke="#2ecc71" stroke-width="3" marker-end="url(#arrow-green)"/>
+                    <text x="185" y="115" fill="#2ecc71" font-weight="bold">s</text>
+                    <!-- Угол -->
+                    <path d="M 160 120 A 30 30 0 0 0 155 108" fill="none" stroke="#f39c12" stroke-width="2"/>
+                    <text x="165" y="115" fill="#f39c12">α</text>
+                    <!-- Маркеры стрелок -->
+                    <defs>
+                        <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#e74c3c"/>
+                        </marker>
+                        <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#2ecc71"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Слайды 3-6: Симуляции -->
+    <div class="slide" id="slide-3">
+        <div class="sim-layout">
+            <div class="sim-info">
+                <h2>1. Сонаправленное действие (α = 0°)</h2>
+                <p>Сила толкает тело <strong>в сторону его движения</strong> (например, разгон санок). Сила помогает движению.</p>
+                <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-3">0</span> Дж (<span class="status positive">Положительная</span>)</div>
+            </div>
+            <div class="canvas-wrapper"><canvas id="canvas-3"></canvas></div>
+        </div>
+    </div>
+
+    <div class="slide" id="slide-4">
+        <div class="sim-layout">
+            <div class="sim-info">
+                <h2>2. Противоположное действие (α = 180°)</h2>
+                <p>Сила направлена <strong>против движения</strong> (например, сила трения при торможении). Сила мешает движению.</p>
+                <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-4">0</span> Дж (<span class="status negative">Отрицательная</span>)</div>
+            </div>
+            <div class="canvas-wrapper"><canvas id="canvas-4"></canvas></div>
+        </div>
+    </div>
+
+    <div class="slide" id="slide-5">
+        <div class="sim-layout">
+            <div class="sim-info">
+                <h2>3. Движение под углом (0° < α < 90°)</h2>
+                <p>Сила направлена <strong>под острым углом</strong> (например, мы тянем чемодан за ручку). Часть силы помогает движению.</p>
+                <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-5">0</span> Дж (<span class="status positive">Положительная</span>)</div>
+            </div>
+            <div class="canvas-wrapper"><canvas id="canvas-5"></canvas></div>
+        </div>
+    </div>
+
+    <div class="slide" id="slide-6">
+        <div class="sim-layout">
+            <div class="sim-info">
+                <h2>4. Перпендикулярное действие (α = 90°)</h2>
+                <p>Сила направлена <strong>строго вверх или вниз</strong> относительно движения (как раз тот самый случай с портфелем!). Сила не помогает и не мешает ехать вперед.</p>
+                <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-6">0</span> Дж (<span class="status zero">Равна НУЛЮ!</span>)</div>
+            </div>
+            <div class="canvas-wrapper"><canvas id="canvas-6"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Интерфейс управления -->
+    <div class="controls">
+        <button class="btn" id="btn-prev" disabled>Назад</button>
+        <div class="progress-dots">
+            <span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+        <button class="btn" id="btn-next">Вперед</button>
+    </div>
+</div>
+
+<!-- Место для скриптов JS (Части 3, 4, 5) -->
+</body>
+</html>
+<style>
+    :root {
+        --bg-color: #0f172a;
+        --card-bg: #1e293b;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-red: #f43f5e;
+        --accent-green: #34d399;
+        --accent-orange: #fb923c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+    
+    .lab-container { width: 95vw; max-width: 1000px; height: 85vh; background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; position: relative; border: 1px solid #334155; }
+    
+    .slide { display: none; width: 100%; height: calc(100% - 70px); padding: 40px; overflow-y: auto; }
+    .slide.active { display: flex; flex-direction: column; justify-content: center; align-items: center; animation: fadeIn 0.4s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Слайд 1 */
+    .intro-text { text-align: center; max-width: 800px; }
+    .main-title { font-size: 3rem; line-height: 1.2; margin-bottom: 24px; font-weight: 800; }
+    .highlight { color: var(--accent-red); text-transform: uppercase; letter-spacing: 2px; }
+    .sub-title { font-size: 1.5rem; color: var(--text-muted); font-weight: 400; }
+    .math-variable { font-style: italic; font-family: 'Times New Roman', serif; font-weight: bold; }
+
+    /* Слайд 2 */
+    .formula-container { text-align: center; width: 100%; max-width: 650px; }
+    .formula-container h2 { font-size: 1.6rem; margin-bottom: 12px; }
+    .formula-container p { color: var(--text-muted); margin-bottom: 30px; }
+    .formula-box { font-size: 3.5rem; font-weight: 700; background: #0f172a; padding: 20px 40px; border-radius: 12px; display: inline-block; margin-bottom: 30px; border: 2px solid var(--accent); color: var(--accent); letter-spacing: 1px; }
+    .svg-illustration { background: #0f172a; border-radius: 12px; padding: 15px; border: 1px solid #334155; }
+
+    /* Слайды симуляций (3-6) */
+    .sim-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; width: 100%; height: 100%; align-items: center; }
+    .sim-info { display: flex; flex-direction: column; gap: 15px; }
+    .sim-info h2 { font-size: 1.8rem; color: var(--accent); }
+    .sim-info p { color: var(--text-muted); font-size: 1.1rem; line-height: 1.5; }
+    .live-data { font-size: 1.3rem; background: #0f172a; padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); margin-top: 10px; }
+    .status { font-weight: bold; }
+    .status.positive { color: var(--accent-green); }
+    .status.negative { color: var(--accent-red); }
+    .status.zero { color: var(--accent-orange); }
+    .canvas-wrapper { width: 100%; height: 320px; background: #0f172a; border-radius: 12px; border: 1px solid #334155; overflow: hidden; position: relative; }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    /* Панель управления */
+    .controls { height: 70px; border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background: #1e293b; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+    .btn { background: var(--accent); color: #0f172a; border: none; padding: 10px 24px; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .btn:hover:not(:disabled) { background: #7dd3fc; transform: translateY(-1px); }
+    .btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+    .progress-dots { display: flex; gap: 8px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #334155; transition: background 0.3s; }
+    .dot.active { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+    @media (max-width: 768px) {
+        .sim-layout { grid-template-columns: 1fr; gap: 15px; }
+        .canvas-wrapper { height: 200px; }
+        .main-title { font-size: 1.8rem; }
+        .formula-box { font-size: 2rem; }
+    }
+</style>
+<script>
+// Глобальное управление слайдами
+const slides = document.querySelectorAll('.slide');
+const dots = document.querySelectorAll('.dot');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
+let currentSlideIdx = 0;
+let simulationInstances = {};
+
+function updateNavigation() {
+    slides.forEach((slide, idx) => {
+        slide.classList.toggle('active', idx === currentSlideIdx);
+        dots[idx].classList.toggle('active', idx === currentSlideIdx);
+    });
+    btnPrev.disabled = currentSlideIdx === 0;
+    btnNext.innerText = currentSlideIdx === slides.length - 1 ? 'Заново' : 'Вперед';
+    
+    // Запуск анимации, если слайд содержит симуляцию
+    const currentSlideId = slides[currentSlideIdx].id;
+    if (simulationInstances[currentSlideId]) {
+        simulationInstances[currentSlideId].start();
+    }
+}
+
+btnNext.addEventListener('click', () => {
+    if (currentSlideIdx < slides.length - 1) {
+        currentSlideIdx++;
+    } else {
+        currentSlideIdx = 0;
+    }
+    updateNavigation();
+});
+
+btnPrev.addEventListener('click', () => {
+    if (currentSlideIdx > 0) {
+        currentSlideIdx--;
+        updateNavigation();
+    }
+});
+</script>
+<script>
+// Физический движок для симуляций на Canvas
+class PhysicsSimulation {
+    constructor(canvasId, valueId, angleDeg, forceMagnitude) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.valueEl = document.getElementById(valueId);
+        this.angleRad = (angleDeg * Math.PI) / 180;
+        this.F = forceMagnitude;
+        this.reset();
+        
+        // Поддержка Retina дисплеев
+        const rect = this.canvas.parentNode.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+    }
+
+    reset() {
+        this.box = { x: 50, y: 0, width: 70, height: 50, speed: 2 };
+        this.s = 0; // Перемещение
+        this.isWorking = false;
+    }
+
+    start() {
+        if (!this.isWorking) {
+            this.reset();
+            this.isWorking = true;
+            this.animate();
+        }
+    }
+
+    drawArrow(x, y, len, angle, color, label) {
+        this.ctx.save();
+        this.ctx.translate(x, y);
+        this.ctx.rotate(angle);
+        this.ctx.strokeStyle = color;
+        this.ctx.fillStyle = color;
+        this.ctx.lineWidth = 3;
+        
+        // Линия стрелки
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, 0);
+        this.ctx.lineTo(len, 0);
+        this.ctx.stroke();
+        
+        // Наконечник стрелки
+        this.ctx.beginPath();
+        this.ctx.moveTo(len, 0);
+        this.ctx.lineTo(len - 10, -5);
+        this.ctx.lineTo(len - 10, 5);
+        this.ctx.fill();
+        
+        // Подпись вектора
+        this.ctx.restore();
+        this.ctx.save();
+        this.ctx.fillStyle = color;
+        this.ctx.font = 'bold 16px Arial';
+        
+        // Вычисление позиции текста на основе тригонометрии
+        let textX = x + Math.cos(angle) * (len + 15) - 5;
+        let textY = y + Math.sin(angle) * (len + 15) + 5;
+        this.ctx.fillText(label, textX, textY);
+        this.ctx.restore();
+    }
+</script>
+<script>
+    // Продолжение класса PhysicsSimulation: Отрисовка сцены и расчеты
+    animate() {
+        if (!this.isWorking) return;
+        
+        const groundY = this.canvas.height - 60;
+        this.box.y = groundY - this.box.height;
+        
+        // Очистка экрана
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Рисуем землю
+        this.ctx.strokeStyle = '#334155';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, groundY);
+        this.ctx.lineTo(this.canvas.width, groundY);
+        this.ctx.stroke();
+
+        // Рисуем начальную точку для визуализации перемещения
+        this.ctx.strokeStyle = '#334155';
+        this.ctx.setLineDash([4, 4]);
+        this.ctx.strokeRect(50, this.box.y, this.box.width, this.box.height);
+        this.ctx.setLineDash([]);
+
+        // Логика движения тела (кубика)
+        const maxPath = this.canvas.width - this.box.width - 80;
+        if (this.box.x < 50 + maxPath) {
+            this.box.x += this.box.speed;
+            this.s = (this.box.x - 50) / 10; // Масштабируем пиксели в метры для красоты
+        } else {
+            this.isWorking = false; // Остановка в конце пути
+            setTimeout(() => this.start(), 2000); // Цикличный перезапуск через 2 сек
+        }
+
+        // Рисуем текущее тело
+        this.ctx.fillStyle = '#38bdf8';
+        this.ctx.fillRect(this.box.x, this.box.y, this.box.width, this.box.height);
+        this.ctx.strokeStyle = '#0284c7';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(this.box.x, this.box.y, this.box.width, this.box.height);
+
+        // Расчет центра тела для отрисовки векторов сил из одной точки
+        const centerX = this.box.x + this.box.width / 2;
+        const centerY = this.box.y + this.box.height / 2;
+
+        // Рисуем вектор Перемещения S (всегда направлен в сторону движения)
+        this.drawArrow(centerX, centerY + 10, 60, 0, '#34d399', 's');
+        
+        // Рисуем вектор Силы F (под заданным углом)
+        this.drawArrow(centerX, centerY, 70, this.angleRad, '#f43f5e', 'F');
+
+        // Вычисляем работу: A = F * s * cos(alpha)
+        // Меняем знак угла в косинусе, так как ось Y в Canvas перевернута (вниз - плюс)
+        const cosAlpha = Math.cos(-this.angleRad);
+        let work = this.F * this.s * cosAlpha;
+        
+        // Защита от погрешности вычислений JavaScript (например, для cos(90) около нуля)
+        if (Math.abs(work) < 0.001) work = 0;
+        
+        // Обновляем текст на слайде
+        this.valueEl.innerText = work.toFixed(1);
+
+        requestAnimationFrame(() => this.animate());
+    }
+}
+
+// Запуск симуляций при загрузке документа
+window.addEventListener('DOMContentLoaded', () => {
+    // Слайд 3: Сонаправлено (угол 0 градусов, сила 5Н)
+    simulationInstances['slide-3'] = new PhysicsSimulation('canvas-3', 'a-3', 0, 5);
+    // Слайд 4: Противоположно (угол 180 градусов, сила 5Н)
+    simulationInstances['slide-4'] = new PhysicsSimulation('canvas-4', 'a-4', 180, 5);
+    // Слайд 5: Под углом (угол -35 градусов на Canvas, чтобы стрелка смотрела вверх-вперед, сила 5Н)
+    simulationInstances['slide-5'] = new PhysicsSimulation('canvas-5', 'a-5', -35, 5);
+    // Слайд 6: Перпендикулярно (угол -90 градусов, сила 5Н направлена вверх)
+    simulationInstances['slide-6'] = new PhysicsSimulation('canvas-6', 'a-6', -90, 5);
+
+    // Первичная настройка интерфейса
+    updateNavigation();
+});
+</script>
+</body>
+</html>
