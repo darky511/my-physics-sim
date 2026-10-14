@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ультра-Блиц Диагностика: Силы (7 класс)</title>
+    <title>Диагностика: Силы (7 класс)</title>
     <!-- Место для стилей CSS (Часть 5) -->
 </head>
 <body>
@@ -451,9 +451,9 @@ function showFinalVerdict() {
     const total = scoreSingle + scoreGroup;
     document.getElementById('score-num').innerText = total;
     const txt = document.getElementById('verdict-text');
-    if (total === 10) txt.innerHTML = "🏆 <b>Идеальное векторное мышление!</b> Ребенок безупречно считывает физическую природу сил и точки крепления стрелок.";
+    if (total === 10) txt.innerHTML = "🏆 <b>Идеальное векторное мышление!</b> Безупречное считывание физической природы сил и точек приложения векторов.";
     else if (total >= 7) txt.innerHTML = "⚖️ <b>Хороший результат.</b> Ошибки возникают в многовекторных задачах. Обратите внимание на разницу начала стрелок веса и силы тяжести.";
-    else txt.innerHTML = "🔄 <b>Требуется повторение образов.</b> Рекомендуется повторно разобрать схемы по точкам приложения векторов.";
+    else txt.innerHTML = "🔄 <b>Требуется повторение.</b> Рекомендуется повторно разобрать схемы по точкам приложения векторов.";
 }
 updateLayout();
 </script>
