@@ -50,7 +50,7 @@
         <div class="sim-layout">
             <div class="sim-info">
                 <h2 class="slide-header">1. Сила помогает движению</h2>
-                <p class="slide-description">Сила толкает тело <strong>в ту же сторону</strong>, куда оно движется (например, разгон санок). Работа силы — <strong>положительная</strong>.</p>
+                <p class="slide-description">Сила толкает тело <strong>в ту же сторону</strong>, куда оно движется (разгон санок). Работа силы — <strong>положительная</strong>.</p>
                 <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-3">0</span> Дж (<span class="status positive">A > 0</span>)</div>
             </div>
             <div class="canvas-wrapper"><canvas id="canvas-3"></canvas></div>
@@ -62,7 +62,7 @@
         <div class="sim-layout">
             <div class="sim-info">
                 <h2 class="slide-header">2. Сила мешает движению</h2>
-                <p class="slide-description">Сила направлена <strong>против движения</strong> (например, сила трения при торможении). Сила сопротивляется движению. Работа силы — <strong>отрицательная</strong>.</p>
+                <p class="slide-description">Сила направлена <strong>против движения</strong> (сила трения при торможении). Работа силы — <strong>отрицательная</strong>.</p>
                 <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-4">0</span> Дж (<span class="status negative">A < 0</span>)</div>
             </div>
             <div class="canvas-wrapper"><canvas id="canvas-4"></canvas></div>
@@ -74,7 +74,7 @@
         <div class="sim-layout">
             <div class="sim-info">
                 <h2 class="slide-header">3. Сила действует под углом</h2>
-                <p class="slide-description">Мы тянем чемодан за ручку вверх и вперед. Сила направлена косо, но тело движется вперед. В работу засчитывается <strong>только та часть силы</strong>, которая направлена вдоль движения!</p>
+                <p class="slide-description">Тянем чемодан за ручку косо вверх и вперед. В работу засчитывается <strong>только та часть силы</strong>, которая помогает ехать вперед!</p>
                 <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-5">0</span> Дж (<span class="status positive">A > 0</span>)</div>
             </div>
             <div class="canvas-wrapper"><canvas id="canvas-5"></canvas></div>
@@ -86,65 +86,158 @@
         <div class="sim-layout">
             <div class="sim-info">
                 <h2 class="slide-header">4. Сила перпендикулярна движению</h2>
-                <p class="slide-description">Тот самый случай с портфелем! Сила руки держит его <strong>строго вверх</strong>, а идем мы <strong>вперед</strong>. Эта сила никак не помогает и не мешает движению вперед. Её работа <strong>равна НУЛЮ</strong>.</p>
+                <p class="slide-description">Несем портфель строго вверх, а движемся вперед. Сила не помогает и не мешает движению по горизонтали. Её работа <strong>равна НУЛЮ</strong>.</p>
                 <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-6">0</span> Дж (<span class="status zero">A = 0</span>)</div>
             </div>
             <div class="canvas-wrapper"><canvas id="canvas-6"></canvas></div>
         </div>
     </div>
 
-    <!-- Слайд 7: Движение по инерции (НОВЫЙ) -->
+    <!-- Слайд 7: Подъем груза вертикально (НОВЫЙ СЛАЙД) -->
     <div class="slide" id="slide-7">
         <div class="sim-layout">
             <div class="sim-info">
-                <h2 class="slide-header">5. Движение по инерции</h2>
-                <p class="slide-description">Тело скользит по идеальной поверхности. <strong>Трения нет, и никто его не толкает.</strong> Движение (перемещение s) есть, но внешняя сила F равна нулю! Механическая работа <strong>не совершается</strong>strong>.</p>
-                <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-7">0</span> Дж (<span class="status zero">A = 0</span>)</div>
+                <h2 class="slide-header">5. Вертикальный подъем груза</h2>
+                <p class="slide-description">Мы поднимаем груз вертикально вверх. Сила тяги направлена <strong>вверх</strong>, и перемещение идет <strong>вверх</strong>. Работа нашей силы — <strong>положительная</strong> (мы преодолеваем тяжесть Земли!).</p>
+                <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-7">0</span> Дж (<span class="status positive">A > 0</span>)</div>
             </div>
             <div class="canvas-wrapper"><canvas id="canvas-7"></canvas></div>
         </div>
     </div>
-
-    <!-- Слайд 8: Тест - Вопрос 1 -->
+    <!-- Слайд 8: Движение по инерции -->
     <div class="slide" id="slide-8">
+        <div class="sim-layout">
+            <div class="sim-info">
+                <h2 class="slide-header">6. Движение по инерции</h2>
+                <p class="slide-description">Тело скользит по идеальной поверхности. <strong>Трения нет, тянущей силы тоже нет.</strong> Перемещение есть, но сила \(F = 0\). Работа <strong>равна НУЛЮ</strong>.</p>
+                <div class="live-data">Работа <span class="math-variable">A</span> = <span class="val-a" id="a-8">0</span> Дж (<span class="status zero">A = 0</span>)</div>
+            </div>
+            <div class="canvas-wrapper"><canvas id="canvas-8"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Слайд 9: Тест - Шкаф -->
+    <div class="slide" id="slide-9">
         <div class="quiz-container">
             <h2 class="slide-header">Проверка знаний. Ситуация 1</h2>
-            <p class="quiz-question">Ученик изо всех сил толкает тяжелый шкаф, но шкаф не сдвинулся с места ни на сантиметр. Совершил ли ученик механическую работу с точки зрения физики?</p>
+            <p class="quiz-question">Ученик изо всех сил толкает тяжелый шкаф, но шкаф не сдвинулся с места. Совершил ли ученик механическую работу с точки зрения физики?</p>
             <div class="quiz-options" data-quiz-id="q1">
-                <div class="option-card" data-correct="false">Да, конечно! Он ведь сильно устал и потратил много энергии.</div>
+                <div class="option-card" data-correct="false">Да, конечно! Ведь он сильно устал.</div>
                 <div class="option-card" data-correct="true">Нет. Сила была приложена, но перемещения тела нет (s = 0), значит работа равна 0.</div>
-                <div class="option-card" data-correct="false">Работа совершена, но она отрицательная, потому что шкаф сопротивлялся.</div>
+                <div class="option-card" data-correct="false">Работа совершена, но она отрицательная.</div>
             </div>
             <button class="btn btn-check" onclick="checkQuiz('q1')">Проверить ответ</button>
             <div class="quiz-feedback" id="feedback-q1"></div>
         </div>
     </div>
 
-    <!-- Слайд 9: Тест - Вопрос 2 -->
-    <div class="slide" id="slide-9">
+    <!-- Слайд 10: Тест - Портфель -->
+    <div class="slide" id="slide-10">
         <div class="quiz-container">
             <h2 class="slide-header">Проверка знаний. Ситуация 2</h2>
-            <p class="quiz-question">Школьник поднял портфель с пола и несёт его в руке в школу по прямой горизонтальной дороге. Совершает ли <b>сила руки, удерживающая портфель</b>, механическую работу при переноске?</p>
+            <p class="quiz-question">Школьник несёт портфель в руке по горизонтальной дороге. Совершает ли работа <b>силы руки, удерживающей портфель</b>, механическую работу?</p>
             <div class="quiz-options" data-quiz-id="q2">
-                <div class="option-card" data-correct="false">Да, совершает положительную работу, ведь портфель перемещается в школу.</div>
-                <div class="option-card" data-correct="true">Нет, не совершает. Сила руки направлена вверх, а движение идет вперед (угол 90°). Сила не помогает идти.</div>
-                <div class="option-card" data-correct="false">Да, совершает отрицательную работу, потому что портфель тянет руку вниз.</div>
+                <div class="option-card" data-correct="false">Да, совершает положительную работу.</div>
+                <div class="option-card" data-correct="true">Нет, сила руки направлена вверх, а движение идет вперед (90°). Сила не помогает движению.</div>
+                <div class="option-card" data-correct="false">Да, совершает отрицательную работу.</div>
             </div>
             <button class="btn btn-check" onclick="checkQuiz('q2')">Проверить ответ</button>
             <div class="quiz-feedback" id="feedback-q2"></div>
         </div>
     </div>
 
+    <!-- Слайд 11: Графический тест по картинкам (НОВЫЙ СЛАЙД) -->
+    <div class="slide" id="slide-11">
+        <div class="quiz-container img-quiz">
+            <h2 class="slide-header">Интерактивный блиц: Сопоставь знаки работы</h2>
+            <p class="quiz-question" style="margin-bottom:10px;">Внимательно посмотри на три картинки ниже. Какая работа совершается на каждой из них?</p>
+            
+            <div class="img-quiz-grid">
+                <!-- Картинка А -->
+                <div class="img-quiz-card" data-card-id="qa">
+                    <div class="img-holder">
+                        <svg viewBox="0 0 150 100" width="100%" height="100%">
+                            <line x1="10" y1="80" x2="140" y2="80" stroke="#475569" stroke-width="2"/>
+                            <rect x="40" y="45" width="45" height="35" fill="#38bdf8" rx="3"/>
+                            <line x1="85" y1="62" x2="125" y2="62" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-g)"/>
+                            <text x="100" y="55" fill="#34d399" font-size="12" font-weight="bold">s</text>
+                            <line x1="40" y1="62" x2="10" y2="62" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow-r)"/>
+                            <text x="20" y="55" fill="#f43f5e" font-size="12" font-weight="bold">F</text>
+                        </svg>
+                    </div>
+                    <span class="img-label">Схема А</span>
+                    <select class="quiz-select" id="select-qa">
+                        <option value="" disabled selected>Выбрать...</option>
+                        <option value="pos">Положительная (A > 0)</option>
+                        <option value="neg">Отрицательная (A < 0)</option>
+                        <option value="zero">Равна нулю (A = 0)</option>
+                    </select>
+                </div>
+
+                <!-- Картинка Б -->
+                <div class="img-quiz-card" data-card-id="qb">
+                    <div class="img-holder">
+                        <svg viewBox="0 0 150 100" width="100%" height="100%">
+                            <line x1="10" y1="80" x2="140" y2="80" stroke="#475569" stroke-width="2"/>
+                            <rect x="40" y="45" width="45" height="35" fill="#38bdf8" rx="3"/>
+                            <line x1="85" y1="62" x2="125" y2="62" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-g)"/>
+                            <text x="100" y="55" fill="#34d399" font-size="12" font-weight="bold">s</text>
+                            <line x1="62" y1="45" x2="62" y2="15" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow-u)"/>
+                            <text x="70" y="25" fill="#f43f5e" font-size="12" font-weight="bold">F</text>
+                        </svg>
+                    </div>
+                    <span class="img-label">Схема Б</span>
+                    <select class="quiz-select" id="select-qb">
+                        <option value="" disabled selected>Выбрать...</option>
+                        <option value="pos">Положительная (A > 0)</option>
+                        <option value="neg">Отрицательная (A < 0)</option>
+                        <option value="zero">Равна нулю (A = 0)</option>
+                    </select>
+                </div>
+
+                <!-- Картинка В -->
+                <div class="img-quiz-card" data-card-id="qc">
+                    <div class="img-holder">
+                        <svg viewBox="0 0 150 100" width="100%" height="100%">
+                            <line x1="10" y1="80" x2="140" y2="80" stroke="#475569" stroke-width="2"/>
+                            <rect x="30" y="45" width="45" height="35" fill="#38bdf8" rx="3"/>
+                            <line x1="75" y1="62" x2="115" y2="62" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-g)"/>
+                            <text x="90" y="55" fill="#34d399" font-size="12" font-weight="bold">s</text>
+                            <line x1="75" y1="62" x2="115" y2="62" stroke="#f43f5e" stroke-width="2" marker-end="url(#arrow-r)"/>
+                            <text x="90" y="75" fill="#f43f5e" font-size="12" font-weight="bold">F</text>
+                        </svg>
+                    </div>
+                    <span class="img-label">Схема В</span>
+                    <select class="quiz-select" id="select-qc">
+                        <option value="" disabled selected>Выбрать...</option>
+                        <option value="pos">Положительная (A > 0)</option>
+                        <option value="neg">Отрицательная (A < 0)</option>
+                        <option value="zero">Равна нулю (A = 0)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Глобальные маркеры стрелок для SVG графического теста -->
+            <svg width="0" height="0" style="position:absolute;">
+                <defs>
+                    <marker id="arrow-r" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#f43f5e"/></marker>
+                    <marker id="arrow-g" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#34d399"/></marker>
+                    <marker id="arrow-u" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#f43f5e"/></marker>
+                </defs>
+            </svg>
+
+            <button class="btn btn-check" onclick="checkVisualQuiz()">Проверить схему</button>
+            <div class="quiz-feedback" id="feedback-visual"></div>
+        </div>
+    </div>
+
     <!-- Управление -->
     <div class="controls">
         <button class="btn" id="btn-prev" disabled>Назад</button>
-        <div class="progress-dots" id="dots-container">
-            <!-- Точки сгенерируются автоматически в JS -->
-        </div>
+        <div class="progress-dots" id="dots-container"></div>
         <button class="btn" id="btn-next">Вперед</button>
     </div>
 </div>
-<!-- Место для стилей и скриптов -->
 <style>
     :root {
         --bg-color: #0f172a;
@@ -161,7 +254,7 @@
     
     .lab-container { width: 95vw; max-width: 950px; height: 90vh; max-height: 700px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; position: relative; border: 1px solid #334155; overflow: hidden; }
     
-    .slide { display: none; width: 100%; height: calc(100% - 60px); padding: 25px 35px; overflow: hidden; }
+    .slide { display: none; width: 100%; height: calc(100% - 60px); padding: 20px 35px; overflow: hidden; }
     .slide.active { display: flex; flex-direction: column; justify-content: center; align-items: center; animation: fadeIn 0.3s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -172,13 +265,13 @@
     .math-variable { font-style: italic; font-family: 'Times New Roman', serif; font-weight: bold; }
 
     .formula-container { text-align: center; width: 100%; max-width: 600px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
-    .slide-header { font-size: 1.4rem; margin-bottom: 6px; color: var(--accent); }
+    .slide-header { font-size: 1.4rem; margin-bottom: 4px; color: var(--accent); }
     .slide-description { color: var(--text-muted); font-size: 0.95rem; line-height: 1.4; }
-    .formula-box { font-size: 2.8rem; font-weight: 700; background: #0f172a; padding: 12px 30px; border-radius: 12px; display: inline-block; margin: 15px auto; border: 2px solid var(--accent); color: var(--accent); width: fit-content; }
+    .formula-box { font-size: 2.8rem; font-weight: 700; background: #0f172a; padding: 12px 30px; border-radius: 12px; display: inline-block; margin: 10px auto; border: 2px solid var(--accent); color: var(--accent); width: fit-content; }
     .svg-illustration { background: #0f172a; border-radius: 12px; padding: 10px; border: 1px solid #334155; }
 
     .sim-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; height: 100%; align-items: center; }
-    .sim-info { display: flex; flex-direction: column; gap: 12px; }
+    .sim-info { display: flex; flex-direction: column; gap: 10px; }
     .live-data { font-size: 1.2rem; background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent); margin-top: 5px; }
     .status { font-weight: bold; }
     .status.positive { color: var(--accent-green); }
@@ -188,37 +281,45 @@
     .canvas-wrapper { width: 100%; height: 100%; min-height: 250px; max-height: 320px; background: #0f172a; border-radius: 12px; border: 1px solid #334155; overflow: hidden; position: relative; }
     canvas { width: 100%; height: 100%; display: block; }
 
-    /* Стили интерактивного ТЕСТА */
-    .quiz-container { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 15px; }
-    .quiz-question { font-size: 1.15rem; line-height: 1.5; color: var(--text-main); margin-bottom: 5px; }
-    .quiz-options { display: flex; flex-direction: column; gap: 10px; }
-    .option-card { background: #0f172a; border: 1px solid #334155; padding: 12px 20px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; line-height: 1.4; }
+    /* Тесты */
+    .quiz-container { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 12px; }
+    .quiz-question { font-size: 1.1rem; line-height: 1.4; color: var(--text-main); }
+    .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+    .option-card { background: #0f172a; border: 1px solid #334155; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 0.95rem; }
     .option-card:hover { border-color: var(--accent); background: #132038; }
-    .option-card.selected { border-color: var(--accent); background: #1e293b; box-shadow: 0 0 8px rgba(56, 189, 248, 0.3); }
+    .option-card.selected { border-color: var(--accent); background: #1e293b; }
     
-    /* Состояния проверки */
     .quiz-options.checked .option-card { pointer-events: none; }
-    .quiz-options.checked .option-card[data-correct="true"] { border-color: var(--accent-green); background: rgba(52, 211, 153, 0.1); color: #a7f3d0; }
-    .quiz-options.checked .option-card.selected[data-correct="false"] { border-color: var(--accent-red); background: rgba(244, 63, 94, 0.1); color: #fecdd3; }
+    .quiz-options.checked .option-card[data-correct="true"] { border-color: var(--accent-green); background: rgba(52, 211, 153, 0.1); }
+    .quiz-options.checked .option-card.selected[data-correct="false"] { border-color: var(--accent-red); background: rgba(244, 63, 94, 0.1); }
     
-    .btn-check { margin-top: 5px; align-self: flex-start; background: #475569; color: white; }
-    .btn-check:hover { background: #64748b; }
-    .quiz-feedback { font-size: 1.05rem; font-weight: 500; min-height: 24px; margin-top: 5px; }
+    /* Специфические стили Блиц-теста по графикам */
+    .img-quiz-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 10px 0; }
+    .img-quiz-card { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .img-holder { width: 100%; height: 90px; background: #1e293b; border-radius: 6px; border: 1px solid #334155; }
+    .img-label { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); }
+    .quiz-select { background: #1e293b; color: var(--text-main); border: 1px solid #475569; padding: 6px; border-radius: 6px; width: 100%; font-size: 0.85rem; outline: none; cursor: pointer; }
+    .quiz-select:focus { border-color: var(--accent); }
+    
+    /* Подсветка селекторов после проверки */
+    .img-quiz-card.correct { border-color: var(--accent-green); background: rgba(52, 211, 153, 0.05); }
+    .img-quiz-card.incorrect { border-color: var(--accent-red); background: rgba(244, 63, 94, 0.05); }
 
-    /* Панель управления */
+    .btn-check { margin-top: 5px; align-self: flex-start; background: #475569; color: white; }
+    .quiz-feedback { font-size: 1rem; font-weight: 500; min-height: 24px; }
+
     .controls { height: 60px; border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background: #1e293b; z-index: 10; }
     .btn { background: var(--accent); color: #0f172a; border: none; padding: 8px 20px; font-size: 0.95rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
     .btn:hover:not(:disabled) { background: #7dd3fc; }
     .btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
-    .progress-dots { display: flex; gap: 8px; }
+    .progress-dots { display: flex; gap: 6px; }
     .dot { width: 8px; height: 8px; border-radius: 50%; background: #334155; }
     .dot.active { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 
     @media (max-width: 768px) {
         .sim-layout { grid-template-columns: 1fr; gap: 10px; }
-        .canvas-wrapper { min-height: 155px; }
-        .main-title { font-size: 1.5rem; }
-        .formula-box { font-size: 2rem; }
+        .img-quiz-grid { grid-template-columns: 1fr; }
+        .canvas-wrapper { min-height: 150px; }
     }
 </style>
 <script>
@@ -229,7 +330,7 @@ const dotsContainer = document.getElementById('dots-container');
 let currentSlideIdx = 0;
 let simulationInstances = {};
 
-// Динамическая генерация точек под любое число слайдов
+// Генерация точек прогресса
 slides.forEach((_, i) => {
     const dot = document.createElement('span');
     dot.className = i === 0 ? 'dot active' : 'dot';
@@ -268,19 +369,17 @@ btnPrev.addEventListener('click', () => {
     }
 });
 
-// Клик по карточкам вариантов ответов в тесте
+// Работа селектора вариантов в текстовых тестах
 document.querySelectorAll('.quiz-options').forEach(container => {
     container.addEventListener('click', (e) => {
         if (container.classList.contains('checked')) return;
         const card = e.target.closest('.option-card');
         if (!card) return;
-        
         container.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
     });
 });
 
-// Проверка ответов в тесте
 function checkQuiz(quizId) {
     const container = document.querySelector(`[data-quiz-id="${quizId}"]`);
     const feedback = document.getElementById(`feedback-${quizId}`);
@@ -291,31 +390,66 @@ function checkQuiz(quizId) {
         feedback.innerText = 'Выберите один из вариантов ответа!';
         return;
     }
-    
     container.classList.add('checked');
-    const isCorrect = selected.getAttribute('data-correct') === 'true';
-    
-    if (isCorrect) {
+    if (selected.getAttribute('data-correct') === 'true') {
         feedback.style.color = 'var(--accent-green)';
-        feedback.innerText = '✨ Абсолютно верно! Отличный ответ!';
+        feedback.innerText = '✨ Абсолютно верно!';
     } else {
         feedback.style.color = 'var(--accent-red)';
-        feedback.innerText = '❌ Не совсем так. Попробуйте проанализировать векторы ещё раз.';
+        feedback.innerText = '❌ Ошибка. Сила и путь не сонаправлены или перемещение равно нулю.';
+    }
+}
+
+// Проверка графического теста по картинкам
+function checkVisualQuiz() {
+    const selA = document.getElementById('select-qa');
+    const selB = document.getElementById('select-qb');
+    const selC = document.getElementById('select-qc');
+    const fb = document.getElementById('feedback-visual');
+
+    if(!selA.value || !selB.value || !selC.value) {
+        fb.style.color = 'var(--accent-orange)';
+        fb.innerText = 'Пожалуйста, выберите ответы для всех трех схем!';
+        return;
+    }
+
+    const answers = { qa: 'neg', qb: 'zero', qc: 'pos' };
+    let correctCount = 0;
+
+    ['qa', 'qb', 'qc'].forEach(id => {
+        const select = document.getElementById(`select-${id}`);
+        const card = document.querySelector(`[data-card-id="${id}"]`);
+        select.disabled = true; // блокируем изменение
+        
+        if(select.value === answers[id]) {
+            card.classList.add('correct');
+            card.classList.remove('incorrect');
+            correctCount++;
+        } else {
+            card.classList.add('incorrect');
+            card.classList.remove('correct');
+        }
+    });
+
+    if(correctCount === 3) {
+        fb.style.color = 'var(--accent-green)';
+        fb.innerText = '🎉 Браво! Все три схемы определены абсолютно верно!';
+    } else {
+        fb.style.color = 'var(--accent-red)';
+        fb.innerText = `Вы угадали ${correctCount} из 3. Исправьте неверные карточки (подсвечены красным).`;
     }
 }
 </script>
 <script>
 class PhysicsSimulation {
-    constructor(canvasId, valueId, angleDeg, forceMagnitude) {
+    constructor(canvasId, valueId, mode, forceMagnitude) {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.valueEl = document.getElementById(valueId);
-        this.angleDeg = angleDeg;
-        this.angleRad = (angleDeg * Math.PI) / 180;
+        this.mode = mode; // 'pos', 'neg', 'angle', 'perp', 'vertical', 'inertia'
         this.F = forceMagnitude;
         this.animationId = null;
         this.isWorking = false;
-        
         this.resizeCanvas();
     }
 
@@ -326,121 +460,108 @@ class PhysicsSimulation {
     }
 
     reset() {
-        this.box = { x: 40, width: 65, height: 45, speed: 1.5 };
+        this.box = { x: 40, y: 0, width: 65, height: 45, speed: 1.5 };
         this.s = 0;
+        if(this.mode === 'vertical') {
+            this.box.x = this.canvas.width / 2 - 32;
+            this.box.y = this.canvas.height - 55;
+        }
     }
 
     start() {
-        this.stop();
-        this.resizeCanvas();
-        this.reset();
-        this.isWorking = true;
-        this.animate();
+        this.stop(); this.resizeCanvas(); this.reset();
+        this.isWorking = true; this.animate();
     }
 
     stop() {
         this.isWorking = false;
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-            this.animationId = null;
-        }
+        if (this.animationId) { cancelAnimationFrame(this.animationId); this.animationId = null; }
     }
 
     drawArrow(x, y, len, angle, color, label) {
         this.ctx.save();
         this.ctx.translate(x, y);
         this.ctx.rotate(angle);
-        this.ctx.strokeStyle = color;
-        this.ctx.fillStyle = color;
-        this.ctx.lineWidth = 3;
-        
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, 0);
-        this.ctx.lineTo(len, 0);
-        this.ctx.stroke();
-        
-        this.ctx.beginPath();
-        this.ctx.moveTo(len, 0);
-        this.ctx.lineTo(len - 8, -4);
-        this.ctx.lineTo(len - 8, 4);
-        this.ctx.fill();
-        
-        this.ctx.restore();
-        this.ctx.save();
-        this.ctx.fillStyle = color;
-        this.ctx.font = 'bold 15px sans-serif';
-        
+        this.ctx.strokeStyle = color; this.ctx.fillStyle = color; this.ctx.lineWidth = 3;
+        this.ctx.beginPath(); this.ctx.moveTo(0, 0); this.ctx.lineTo(len, 0); this.ctx.stroke();
+        this.ctx.beginPath(); this.ctx.moveTo(len, 0); this.ctx.lineTo(len - 8, -4); this.ctx.lineTo(len - 8, 4); this.ctx.fill();
+        this.ctx.restore(); this.ctx.save();
+        this.ctx.fillStyle = color; this.ctx.font = 'bold 15px sans-serif';
         let textX = x + Math.cos(angle) * (len + 12) - 4;
         let textY = y + Math.sin(angle) * (len + 12) + 4;
         this.ctx.fillText(label, textX, textY);
         this.ctx.restore();
     }
+
     animate() {
         if (!this.isWorking) return;
-        
         const groundY = this.canvas.height - 45;
-        this.box.y = groundY - this.box.height;
-        
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Отрисовка идеального льда/земли
-        this.ctx.strokeStyle = '#475569';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, groundY);
-        this.ctx.lineTo(this.canvas.width, groundY);
-        this.ctx.stroke();
 
-        // Начальная позиция тела
-        this.ctx.strokeStyle = '#334155';
-        this.ctx.setLineDash([4, 4]);
-        this.ctx.strokeRect(40, this.box.y, this.box.width, this.box.height);
-        this.ctx.setLineDash([]);
+        // Земля
+        this.ctx.strokeStyle = '#475569'; this.ctx.lineWidth = 2;
+        this.ctx.beginPath(); this.ctx.moveTo(0, groundY); this.ctx.lineTo(this.canvas.width, groundY); this.ctx.stroke();
 
-        // Движение кубика
-        const maxPath = this.canvas.width - this.box.width - 90;
-        if (this.box.x < 40 + maxPath) {
-            this.box.x += this.box.speed;
-            this.s = (this.box.x - 40) / 15; 
-        } else {
-            this.box.x = 40 + maxPath;
-            this.isWorking = false;
-            setTimeout(() => this.start(), 1500);
-        }
+        let centerX, centerY, work = 0;
 
-        // Рендеринг кубика
-        this.ctx.fillStyle = this.angleDeg === null ? '#1e293b' : '#38bdf8';
-        this.ctx.fillRect(this.box.x, this.box.y, this.box.width, this.box.height);
-        this.ctx.strokeStyle = this.angleDeg === null ? '#94a3b8' : '#0284c7';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(this.box.x, this.box.y, this.box.width, this.box.height);
-
-        const centerX = this.box.x + this.box.width / 2;
-        const centerY = this.box.y + this.box.height / 2;
-
-        // Вектор перемещения s
-        this.drawArrow(centerX, centerY + 8, 50, 0, '#34d399', 's');
-        
-        // Логика расчета механической работы и отрисовки векторов сил
-        let work = 0;
-        if (this.angleDeg === 0) {
-            this.drawArrow(centerX, centerY - 4, 55, this.angleRad, '#f43f5e', 'F');
+        if (this.mode === 'vertical') {
+            // Вертикальный подъем
+            if (this.box.y > 35) {
+                this.box.y -= this.box.speed * 0.7;
+                this.s = (groundY - this.box.height - this.box.y) / 15;
+            } else {
+                this.isWorking = false; setTimeout(() => this.start(), 1500);
+            }
+            // Контур старта
+            this.ctx.strokeStyle = '#334155'; this.ctx.setLineDash([4,4]);
+            this.ctx.strokeRect(this.box.x, groundY - this.box.height, this.box.width, this.box.height);
+            this.ctx.setLineDash([]);
+            
+            // Кубик груза
+            this.ctx.fillStyle = '#0ea5e9'; this.ctx.fillRect(this.box.x, this.box.y, this.box.width, this.box.height);
+            this.ctx.strokeRect(this.box.x, this.box.y, this.box.width, this.box.height);
+            
+            centerX = this.box.x + this.box.width / 2;
+            centerY = this.box.y + this.box.height / 2;
+            
+            this.drawArrow(centerX - 10, centerY, 45, -Math.PI/2, '#34d399', 's'); // Путь вверх
+            this.drawArrow(centerX + 10, centerY, 50, -Math.PI/2, '#f43f5e', 'F'); // Сила вверх
             work = this.F * this.s;
-        } else if (this.angleDeg === 180) {
-            this.drawArrow(centerX, centerY - 4, 55, this.angleRad, '#f43f5e', 'F');
-            work = -this.F * this.s;
-        } else if (this.angleDeg === -35) {
-            this.drawArrow(centerX, centerY - 4, 55, this.angleRad, '#f43f5e', 'F');
-            work = this.F * this.s * Math.cos(35 * Math.PI / 180);
-        } else if (this.angleDeg === -90) {
-            this.drawArrow(centerX, centerY - 4, 55, this.angleRad, '#f43f5e', 'F');
-            work = 0;
-        } else if (this.angleDeg === null) {
-            // Режим инерции: Сила отсутствует, выводим только текст оповещения на кубике
-            this.ctx.fillStyle = '#94a3b8';
-            this.ctx.font = '10px sans-serif';
-            this.ctx.fillText('F = 0', this.box.x + 18, this.box.y - 8);
-            work = 0;
+        } else {
+            // Горизонтальные режимы
+            this.box.y = groundY - this.box.height;
+            this.ctx.strokeStyle = '#334155'; this.ctx.setLineDash([4,4]);
+            this.ctx.strokeRect(40, this.box.y, this.box.width, this.box.height);
+            this.ctx.setLineDash([]);
+
+            const maxPath = this.canvas.width - this.box.width - 90;
+            if (this.box.x < 40 + maxPath) {
+                this.box.x += this.box.speed;
+                this.s = (this.box.x - 40) / 15;
+            } else {
+                this.box.x = 40 + maxPath; this.isWorking = false; setTimeout(() => this.start(), 1500);
+            }
+
+            this.ctx.fillStyle = (this.mode === 'inertia') ? '#1e293b' : '#38bdf8';
+            this.ctx.fillRect(this.box.x, this.box.y, this.box.width, this.box.height);
+            this.ctx.strokeRect(this.box.x, this.box.y, this.box.width, this.box.height);
+
+            centerX = this.box.x + this.box.width / 2;
+            centerY = this.box.y + this.box.height / 2;
+            this.drawArrow(centerX, centerY + 8, 45, 0, '#34d399', 's');
+
+            if (this.mode === 'pos') {
+                this.drawArrow(centerX, centerY - 4, 50, 0, '#f43f5e', 'F'); work = this.F * this.s;
+            } else if (this.mode === 'neg') {
+                this.drawArrow(centerX, centerY - 4, 50, Math.PI, '#f43f5e', 'F'); work = -this.F * this.s;
+            } else if (this.mode === 'angle') {
+                this.drawArrow(centerX, centerY - 4, 50, -35 * Math.PI / 180, '#f43f5e', 'F'); work = this.F * this.s * Math.cos(35 * Math.PI / 180);
+            } else if (this.mode === 'perp') {
+                this.drawArrow(centerX, centerY - 4, 50, -Math.PI / 2, '#f43f5e', 'F'); work = 0;
+            } else if (this.mode === 'inertia') {
+                this.ctx.fillStyle = '#94a3b8'; this.ctx.font = '11px sans-serif';
+                this.ctx.fillText('F = 0', this.box.x + 18, this.box.y - 8); work = 0;
+            }
         }
 
         this.valueEl.innerText = work.toFixed(1);
@@ -448,22 +569,14 @@ class PhysicsSimulation {
     }
 }
 
-// Запуск и связывание модулей
 window.addEventListener('load', () => {
-    simulationInstances['slide-3'] = new PhysicsSimulation('canvas-3', 'a-3', 0, 6);
-    simulationInstances['slide-4'] = new PhysicsSimulation('canvas-4', 'a-4', 180, 6);
-    simulationInstances['slide-5'] = new PhysicsSimulation('canvas-5', 'a-5', -35, 6);
-    simulationInstances['slide-6'] = new PhysicsSimulation('canvas-6', 'a-6', -90, 6);
-    simulationInstances['slide-7'] = new PhysicsSimulation('canvas-7', 'a-7', null, 0); // Инерция
-
+    simulationInstances['slide-3'] = new PhysicsSimulation('canvas-3', 'a-3', 'pos', 6);
+    simulationInstances['slide-4'] = new PhysicsSimulation('canvas-4', 'a-4', 'neg', 6);
+    simulationInstances['slide-5'] = new PhysicsSimulation('canvas-5', 'a-5', 'angle', 6);
+    simulationInstances['slide-6'] = new PhysicsSimulation('canvas-6', 'a-6', 'perp', 6);
+    simulationInstances['slide-7'] = new PhysicsSimulation('canvas-7', 'a-7', 'vertical', 6);
+    simulationInstances['slide-8'] = new PhysicsSimulation('canvas-8', 'a-8', 'inertia', 0);
     updateNavigation();
-});
-
-window.addEventListener('resize', () => {
-    const currentSlideId = slides[currentSlideIdx].id;
-    if (simulationInstances[currentSlideId]) {
-        simulationInstances[currentSlideId].start();
-    }
 });
 </script>
 </body>
