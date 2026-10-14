@@ -17,13 +17,14 @@
         </div>
     </div>
 
-    <!-- Слайд 2: Формула -->
+    <!-- Слайд 2: Формула (ОБНОВЛЕННЫЙ) -->
     <div class="slide" id="slide-2">
         <div class="formula-container">
             <h2 class="slide-header">Как посчитать мощность?</h2>
             <p class="slide-description">Разделим выполненную работу на время, которое ушло на её выполнение:</p>
             <div class="formula-box">N = A / t</div>
-            <p class="slide-description">Измеряется в <strong>Ваттах (Вт)</strong>. <br>1 Ватт — это когда работа в 1 Джоуль совершается за 1 секунду.</p>
+            <div class="formula-box-sub">N = (F · s) / t = F · (s / t) &rArr; N = F · v</div>
+            <p class="slide-description" style="margin-top: 5px;">Измеряется в <strong>Ваттах (Вт)</strong>. <br>1 Ватт — это когда работа в 1 Джоуль совершается за 1 секунду.</p>
         </div>
     </div>
 
@@ -47,7 +48,7 @@
         <div class="sim-layout">
             <div class="sim-info">
                 <h2 class="slide-header">2. Медленная работа (Малая мощность)</h2>
-                <p class="slide-description">Тот же груз поднимается на ту же высоту, но медленно — за <strong>6 секунд</strong>. Работа та же, но так как времени ушло больше, мощность силы — <strong>меньше</strong>.</p>
+                <p class="slide-description">Тот же груз поднимается на ту же высоту, но медленно — за <strong>6 секунд</strong>. Работа та же, но мощность силы — <strong>меньше</strong>.</p>
                 <div class="live-data">
                     Время: <span class="math-variable" id="t-4">0.0</span> с<br>
                     Мощность <span class="math-variable">N</span> = <span class="val-n" id="n-4">0</span> Вт (<span class="status negative">Низкая</span>)
@@ -62,7 +63,7 @@
         <div class="sim-layout">
             <div class="sim-info">
                 <h2 class="slide-header">3. Мощность и скорость автомобиля</h2>
-                <p class="slide-description">Формулу мощности можно записать иначе: <strong>N = F · v</strong> (Сила умножить на скорость). Чтобы ехать быстрее при той же силе сопротивления, двигателю требуется развивать <strong>большую мощность</strong>.</p>
+                <p class="slide-description">Используем нижнюю формулу со второго слайда: <strong>N = F · v</strong>. Чтобы ехать быстрее при той же силе сопротивления дороги, двигателю требуется развивать <strong>большую мощность</strong>.</p>
                 <div class="live-data">
                     Скорость <span class="math-variable">v</span> = <span id="v-5">1.0</span> м/с<br>
                     Мощность <span class="math-variable">N</span> = <span class="val-n" id="n-5">0</span> Вт
@@ -175,7 +176,6 @@
         <button class="btn" id="btn-next">Вперед</button>
     </div>
 </div>
-<!-- Место для стилей CSS и JS-логики -->
 <style>
     :root {
         --bg-color: #0f172a;
@@ -205,7 +205,12 @@
     .formula-container { text-align: center; width: 100%; max-width: 600px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
     .slide-header { font-size: 1.4rem; margin-bottom: 4px; color: var(--accent); }
     .slide-description { color: var(--text-muted); font-size: 0.95rem; line-height: 1.4; margin-bottom: 5px; }
-    .formula-box { font-size: 3rem; font-weight: 700; background: #0f172a; padding: 12px 30px; border-radius: 12px; display: inline-block; margin: 15px auto; border: 2px solid var(--accent); color: var(--accent); width: fit-content; letter-spacing: 1px; }
+    
+    /* Основная рамка */
+    .formula-box { font-size: 3rem; font-weight: 700; background: #0f172a; padding: 12px 30px; border-radius: 12px; display: inline-block; margin: 10px auto 8px auto; border: 2px solid var(--accent); color: var(--accent); width: fit-content; letter-spacing: 1px; }
+    
+    /* Новая суб-рамка (вывод через скорость) */
+    .formula-box-sub { font-size: 1.4rem; font-weight: 600; background: #0f172a; padding: 8px 24px; border-radius: 10px; display: inline-block; margin: 0 auto 10px auto; border: 1.5px dashed #475569; color: var(--text-main); width: fit-content; letter-spacing: 0.5px; }
 
     .sim-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; height: 100%; align-items: center; }
     .sim-info { display: flex; flex-direction: column; gap: 10px; }
@@ -378,7 +383,7 @@ class PowerSimulation {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.valEl = document.getElementById(valId);
-        this.timeEl = document.getElementById(timeId); // Может быть null в режиме авто
+        this.timeEl = document.getElementById(timeId);
         this.mode = mode; // 'fast', 'slow', 'car'
         this.animationId = null;
         this.isWorking = false;
@@ -396,7 +401,6 @@ class PowerSimulation {
         this.isWorking = true;
         this.startTime = performance.now();
         
-        // Начальные параметры тел
         this.box = { x: this.canvas.width/2 - 25, y: this.canvas.height - 55, w: 50, h: 40 };
         this.car = { x: 30, y: this.canvas.height - 55, w: 65, h: 35 };
         
@@ -413,11 +417,11 @@ class PowerSimulation {
         const groundY = this.canvas.height - 40;
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Дорога / Земля
+        // Земля
         this.ctx.strokeStyle = '#475569'; this.ctx.lineWidth = 2;
         this.ctx.beginPath(); this.ctx.moveTo(0, groundY); this.ctx.lineTo(this.canvas.width, groundY); this.ctx.stroke();
 
-        let elapsed = (performance.now() - this.startTime) / 1000; // время в сек
+        let elapsed = (performance.now() - this.startTime) / 1000;
 
         if (this.mode === 'fast' || this.mode === 'slow') {
             const targetDuration = this.mode === 'fast' ? 2.0 : 6.0;
@@ -429,16 +433,15 @@ class PowerSimulation {
 
             this.box.y = startY - (startY - endY) * progress;
 
-            // Блок лебедки сверху
+            // Блок лебедки
             this.ctx.fillStyle = '#475569'; this.ctx.beginPath(); this.ctx.arc(this.canvas.width/2, 25, 12, 0, Math.PI*2); this.ctx.fill();
             // Трос
             this.ctx.strokeStyle = '#94a3b8'; this.ctx.beginPath(); this.ctx.moveTo(this.canvas.width/2, 25); this.ctx.lineTo(this.canvas.width/2, this.box.y); this.ctx.stroke();
 
-            // Рисуем груз
+            // Груз
             this.ctx.fillStyle = '#38bdf8'; this.ctx.fillRect(this.box.x, this.box.y, this.box.w, this.box.h);
             this.ctx.strokeStyle = '#0284c7'; this.ctx.strokeRect(this.box.x, this.box.y, this.box.w, this.box.h);
 
-            // Расчеты: Работа A = m*g*h = 10 * 10 * 3 = 300 Дж постоянна.
             const work = 300;
             const currentPower = elapsed > 0 ? (work / elapsed) : 0;
 
@@ -446,13 +449,11 @@ class PowerSimulation {
             this.valEl.innerText = Math.round(currentPower);
 
         } else if (this.mode === 'car') {
-            // Машина циклично меняет скорость, чтобы показать изменение мощности N = F * v
-            // Сила тяги постоянна F = 50 Н. Скорость v волной от 1 до 5 м/с
             const speed = 2.5 + Math.sin(elapsed * 2) * 1.5; 
             this.car.x += speed * 0.8;
             if (this.car.x > this.canvas.width) this.car.x = -this.car.w;
 
-            // Кузов машинки
+            // Корпус машины
             this.ctx.fillStyle = '#f43f5e'; this.ctx.fillRect(this.car.x, this.car.y, this.car.w, this.car.h);
             // Колеса
             this.ctx.fillStyle = '#0f172a';
