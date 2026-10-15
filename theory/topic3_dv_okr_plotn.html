@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Физика ОГЭ: Вращение и Плотность</title>
+    <title>Физика ОГЭ: Окружность и Плотность</title>
     <!-- Место для стилей CSS (Часть 5) -->
 </head>
 <body>
@@ -15,7 +15,7 @@
             <svg viewBox="0 0 200 120" width="160" height="100">
                 <circle cx="100" cy="60" r="35" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4"/>
                 <circle cx="100" cy="25" r="7" fill="#38bdf8"/>
-                <line x1="100" y1="25" x2="145" y2="25" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-m)"/>
+                <line x1="100" y1="25" x2="145" y2="25" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-main)"/>
                 <text x="120" y="18" fill="#ef4444" font-weight="bold" font-size="12">v</text>
             </svg>
             <h1 class="main-title">Вращение и Плотность</h1>
@@ -24,11 +24,12 @@
         </div>
     </div>
 
-    <!-- Слайд 2: Теория — Период и Частота -->
+    <!-- Слайд 2: Теория — Время и обороты -->
     <div class="slide" id="slide-2">
         <div class="quiz-compact">
             <div class="visual-pane">
                 <div class="rotation-timer" id="timer-box">0.0с</div>
+                <div class="live-results" id="live-results-s2"></div>
                 <svg viewBox="0 0 200 160" width="100%" height="100%">
                     <circle cx="100" cy="80" r="45" fill="none" stroke="#1e293b" stroke-width="2"/>
                     <line x1="100" y1="80" x2="100" y2="35" stroke="#475569" stroke-width="1" id="rad-line"/>
@@ -38,228 +39,256 @@
             <div class="action-pane">
                 <span class="step-badge">Теория</span>
                 <h2 class="slide-header">Время и Обороты</h2>
-                <div class="formula-box-mini">T = t / N &nbsp;&bull;&nbsp; &nu; = N / t</div>
-                <p class="pure-text"><b>Период ($T$)</b> — время одного полного круга [с].<br><b>Частота ($\nu$)</b> — число кругов за 1 секунду [Гц].</p>
+                <div class="formula-box-mini">T = t / N &nbsp;&nbsp;&nbsp;&nbsp; &nu; = N / t</div>
+                <div class="formula-box-mini" style="margin-top:5px; font-size:1.1rem; border-style:solid;">&nu; = 1 / T</div>
+                <p class="pure-text"><b>Период (T)</b> — время одного полного круга [с].<br><b>Частота (&nu;)</b> — число кругов за 1 секунду [Гц].</p>
                 <button class="btn-check" onclick="triggerRotationDemo()">Запустить 1 оборот</button>
             </div>
         </div>
     </div>
-
-    <!-- Слайд 3: Теория — Вектор Скорости -->
+    <!-- Слайд 3: Теория — Направление скорости -->
     <div class="slide" id="slide-3">
         <div class="quiz-compact">
-            <div class="visual-pane" style="position:relative;">
-                <svg viewBox="0 0 200 160" width="100%" height="100%" id="svg-tangent">
+            <div class="visual-pane">
+                <svg viewBox="0 0 200 160" width="100%" height="100%">
                     <circle cx="100" cy="80" r="40" fill="none" stroke="#1e293b" stroke-width="2"/>
-                    <circle cx="100" cy="40" r="7" fill="#38bdf8" id="tangent-ball"/>
-                    <line x1="100" y1="40" x2="150" y2="40" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-m)" id="v-vector"/>
+                    <g id="tangent-group">
+                        <circle cx="100" cy="40" r="7" fill="#38bdf8" id="tangent-ball"/>
+                        <line x1="100" y1="40" x2="145" y2="40" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arr-main)" id="v-vector"/>
+                    </g>
                 </svg>
             </div>
             <div class="action-pane">
                 <span class="step-badge">Теория</span>
                 <h2 class="slide-header">Куда летит тело?</h2>
                 <div class="formula-box-mini">v = 2&pi;R / T</div>
-                <p class="pure-text">Вектор линейной скорости всегда направлен <b>по касательной</b> к окружности. Если нить порвется — тело мгновенно улетит по прямой.</p>
-                <button class="btn-check" onclick="triggerBreakDemo()">Оборвать нить</button>
+                <p class="pure-text">Вектор скорости направлен <b>по касательной</b>. <br><small style="color:var(--accent); font-weight:600;">* 2&pi;R — это полная длина окружности.</small></p>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-check" onclick="triggerRotationMode()">Вращение векторов</button>
+                    <button class="btn-check" style="border-color:var(--accent-red);" onclick="triggerBreakDemo()">Оборвать нить</button>
+                </div>
             </div>
         </div>
     </div>
+
     <!-- Слайд 4: Теория — Центростремительное ускорение -->
     <div class="slide" id="slide-4">
         <div class="quiz-compact">
             <div class="visual-pane">
                 <svg viewBox="0 0 200 160" width="100%" height="100%">
                     <circle cx="100" cy="80" r="40" fill="none" stroke="#1e293b" stroke-width="2"/>
-                    <circle cx="140" cy="80" r="7" fill="#38bdf8"/>
-                    <!-- Скорость по касательной -->
-                    <line x1="140" y1="80" x2="140" y2="35" stroke="#ef4444" stroke-width="2" marker-end="url(#arr-m)"/>
-                    <text x="145" y="45" fill="#ef4444" font-weight="bold" font-size="11">v</text>
-                    <!-- Ускорение к центру -->
-                    <line x1="140" y1="80" x2="105" y2="80" stroke="#22c55e" stroke-width="2.5" marker-end="url(#arr-m)"/>
-                    <text x="115" y="73" fill="#22c55e" font-weight="bold" font-size="11">a</text>
-                    <!-- Угол 90 -->
-                    <path d="M 132 80 L 132 72 L 140 72" fill="none" stroke="#475569" stroke-width="1"/>
+                    <g id="accel-group">
+                        <circle cx="140" cy="80" r="7" fill="#38bdf8"/>
+                        <line x1="140" y1="80" x2="140" y2="35" stroke="#ef4444" stroke-width="2" marker-end="url(#arr-main)"/>
+                        <text x="146" y="45" fill="#ef4444" font-weight="bold" font-size="11">v</text>
+                        <line x1="140" y1="80" x2="105" y2="80" stroke="#22c55e" stroke-width="2.5" marker-end="url(#arr-main)"/>
+                        <text x="115" y="73" fill="#22c55e" font-weight="bold" font-size="11">a</text>
+                    </g>
                 </svg>
             </div>
             <div class="action-pane">
                 <span class="step-badge">Теория</span>
-                <h2 class="slide-header">Ускорение $a_n$</h2>
-                <div class="formula-box-mini">a_n = v^2 / R</div>
-                <p class="pure-text">Направлено <b>строго к центру</b> вращения. <br>Угол между скоростью $&vec{v}$ и ускорением $&vec{a}$ всегда равен <b>90&deg;</b>.</p>
+                <h2 class="slide-header">Ускорение а</h2>
+                <div class="formula-box-mini">a = v² / R</div>
+                <p class="pure-text">Направлено <b>строго к центру</b> окружности. Угол между скоростью v и ускорением а в любой точке всегда равен <b>90 градусов</b>.</p>
+                <button class="btn-check" onclick="triggerAccelAnim()">Запустить движение векторов</button>
             </div>
         </div>
     </div>
-
-    <!-- Слайд 5: Ловушка ОГЭ — Постоянство плотности -->
+    <!-- Слайд 5: Теория — Деление куска (Плотность) -->
     <div class="slide" id="slide-5">
         <div class="quiz-compact">
             <div class="visual-pane">
-                <svg viewBox="0 0 200 160" width="100%" height="100%">
-                    <!-- Целый кусок -->
-                    <rect x="20" y="45" width="60" height="60" fill="#38bdf8" fill-opacity="0.2" stroke="#38bdf8" stroke-width="1.5"/>
-                    <text x="35" y="80" fill="#38bdf8" font-size="10" font-weight="600">&rho; = const</text>
-                    <!-- Отрезанный кусок -->
-                    <rect x="115" y="45" width="30" height="60" fill="#38bdf8" fill-opacity="0.2" stroke="#38bdf8" stroke-width="1.5"/>
-                    <path d="M 100 75 L 110 75" stroke="#475569" stroke-width="2"/>
-                    <text x="120" y="80" fill="#38bdf8" font-size="10" font-weight="600">&rho;</text>
+                <svg viewBox="0 0 220 160" width="100%" height="100%">
+                    <rect x="20" y="50" width="60" height="60" fill="#38bdf8" fill-opacity="0.15" stroke="#38bdf8" stroke-width="1.5"/>
+                    <line x1="50" y1="50" x2="50" y2="110" stroke="#ef4444" stroke-width="2" stroke-dasharray="3"/>
+                    <text x="26" y="85" fill="#38bdf8" font-size="11" font-weight="bold">&rho;</text>
+                    <line x1="95" y1="80" x2="115" y2="80" stroke="#475569" stroke-width="2" marker-end="url(#arr-main)"/>
+                    <rect x="135" y="50" width="30" height="60" fill="#38bdf8" fill-opacity="0.15" stroke="#38bdf8" stroke-width="1.5"/>
+                    <text x="144" y="85" fill="#38bdf8" font-size="11" font-weight="bold">&rho;</text>
                 </svg>
             </div>
             <div class="action-pane">
-                <span class="step-badge" style="background:var(--accent-orange); color:#000;">Ловушка ОГЭ</span>
-                <h2 class="slide-header">Отрезали половину?</h2>
-                <p class="pure-text">Если от куска алюминия отрезать часть, его <b>масса и объем уменьшатся</b> в 2 раза. Но <b>плотность останется неизменной</b>! Она зависит только от вещества.</p>
+                <span class="step-badge" style="background:var(--accent-orange); color:#000;">Важный нюанс</span>
+                <h2 class="slide-header">Отрезали половину куска</h2>
+                <p class="pure-text">Если от куска материала отрезать ровно половину, то его <b>масса и объем уменьшатся в 2 раза</b>. Но плотность материала останется <b>абсолютно прежней</b>!</p>
             </div>
         </div>
     </div>
 
-    <!-- Слайд 6: Ловушка ОГЭ — Радиус и Ускорение -->
+    <!-- Слайд 6: Теория — Радиус и Ускорение -->
     <div class="slide" id="slide-6">
         <div class="quiz-compact">
             <div class="visual-pane">
-                <svg viewBox="0 0 200 160" width="100%" height="100%">
-                    <!-- Малый радиус -->
-                    <circle cx="60" cy="80" r="20" fill="none" stroke="#334155" stroke-dasharray="2"/>
-                    <line x1="60" y1="80" x2="80" y2="80" stroke="#64748b"/>
-                    <line x1="80" y1="80" x2="65" y2="80" stroke="#22c55e" stroke-width="2" marker-end="url(#arr-m)"/>
-                    <text x="55" y="73" fill="#22c55e" font-size="9">a</text>
-                    <!-- Большой радиус -->
-                    <circle cx="140" cy="80" r="40" fill="none" stroke="#334155" stroke-dasharray="2"/>
-                    <line x1="140" y1="80" x2="180" y2="80" stroke="#64748b"/>
-                    <line x1="180" y1="80" x2="172" y2="80" stroke="#22c55e" stroke-width="2" marker-end="url(#arr-m)"/>
-                    <text x="165" y="73" fill="#22c55e" font-size="9">a/2</text>
+                <svg viewBox="0 0 220 160" width="100%" height="100%">
+                    <circle cx="55" cy="80" r="20" fill="none" stroke="#334155" stroke-dasharray="2"/>
+                    <line x1="55" y1="80" x2="75" y2="80" stroke="#64748b"/>
+                    <line x1="75" y1="80" x2="55" y2="80" stroke="#22c55e" stroke-width="2.5" marker-end="url(#arr-main)"/>
+                    <text x="42" y="95" fill="#22c55e" font-size="11" font-weight="bold">а</text>
+                    <text x="50" y="55" fill="#94a3b8" font-size="10">Радиус R</text>
+                    <circle cx="155" cy="80" r="40" fill="none" stroke="#334155" stroke-dasharray="2"/>
+                    <line x1="155" y1="80" x2="195" y2="80" stroke="#64748b"/>
+                    <line x1="195" y1="80" x2="175" y2="80" stroke="#22c55e" stroke-width="2.5" marker-end="url(#arr-main)"/>
+                    <text x="160" y="95" fill="#22c55e" font-size="11" font-weight="bold">а / 2</text>
+                    <text x="140" y="35" fill="#94a3b8" font-size="10">Радиус 2R</text>
                 </svg>
             </div>
             <div class="action-pane">
-                <span class="step-badge" style="background:var(--accent-orange); color:#000;">Ловушка ОГЭ</span>
-                <h2 class="slide-header">Радиус увеличили в 2 раза</h2>
-                <p class="pure-text">Если скорость $v$ неизменна, а радиус траектории $R$ вырос в 2 раза, то ускорение $a_n = v^2/R$ <b>уменьшится в 2 раза</b>, так как радиус стоит в знаменателе.</p>
+                <span class="step-badge" style="background:var(--accent-orange); color:#000;">Зависимость</span>
+                <h2 class="slide-header">Рост радиуса в 2 раза</h2>
+                <p class="pure-text">Если линейная скорость тела неизменна, а радиус окружности увеличивают в 2 раза, то центростремительное ускорение <b>уменьшится ровно в 2 раза</b>.</p>
             </div>
         </div>
     </div>
-    <!-- Слайд 7: Задача 1 — Направление скорости -->
+
+    <!-- Слайд 7: Задача 1 — Направление векторов -->
     <div class="slide" id="slide-7">
         <div class="quiz-compact">
             <div class="visual-pane">
+                <div class="clockwise-badge">Вращение по часовой</div>
                 <svg viewBox="0 0 200 160" width="100%" height="100%">
                     <circle cx="100" cy="80" r="35" fill="none" stroke="#1e293b" stroke-width="2"/>
                     <circle cx="100" cy="45" r="6" fill="#38bdf8"/>
-                    <!-- Векторы вариантов -->
-                    <line x1="100" y1="45" x2="140" y2="45" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-main)"/>
-                    <text x="130" y="38" fill="#64748b" font-weight="bold">1</text>
-                    <line x1="100" y1="45" x2="100" y2="80" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-main)"/>
-                    <text x="106" y="70" fill="#64748b" font-weight="bold">2</text>
-                    <line x1="100" y1="45" x2="65" y2="45" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-main)"/>
-                    <text x="75" y="38" fill="#64748b" font-weight="bold">3</text>
-                    <text x="130" y="90" fill="#6b7280" font-size="10">Вращение по часовой &orarr;</text>
+                    <line x1="100" y1="45" x2="145" y2="45" stroke="#64748b" stroke-width="2" marker-end="url(#arr-main)"/>
+                    <text x="135" y="38" fill="#64748b" font-weight="bold">1</text>
+                    <line x1="100" y1="45" x2="100" y2="90" stroke="#64748b" stroke-width="2" marker-end="url(#arr-main)"/>
+                    <text x="108" y="75" fill="#64748b" font-weight="bold">2</text>
+                    <line x1="100" y1="45" x2="55" y2="45" stroke="#64748b" stroke-width="2" marker-end="url(#arr-main)"/>
+                    <text x="65" y="38" fill="#64748b" font-weight="bold">3</text>
                 </svg>
             </div>
             <div class="action-pane">
-                <span class="step-badge" style="background:var(--accent); color:#000;">Диагностика</span>
-                <h2 class="slide-header">Какой вектор показывает скорость?</h2>
+                <span class="step-badge" style="background:var(--accent); color:#000;">Контроль</span>
+                <h2 class="slide-header">Где вектор скорости?</h2>
                 <div class="quiz-options-buttons" data-quiz-id="q1">
-                    <button class="option-btn" data-correct="true">Вектор 1 (по касательной)</button>
-                    <button class="option-btn" data-correct="false">Вектор 2 (к центру)</button>
-                    <button class="option-btn" data-correct="false">Вектор 3 (против движения)</button>
+                    <button class="option-btn" data-correct="true">Вектор 1 (по касательной по ходу движения)</button>
+                    <button class="option-btn" data-correct="false">Вектор 2 (строго к центру круга)</button>
+                    <button class="option-btn" data-correct="false">Вектор 3 (по касательной против хода)</button>
                 </div>
                 <div class="feedback-badge" id="fb-q1"></div>
             </div>
         </div>
     </div>
-
-    <!-- Слайд 8: Задача 2 — Связь периода и частоты -->
+    <!-- Слайд 8: Задача 2 — Два круга сравнения частоты -->
     <div class="slide" id="slide-8">
         <div class="quiz-compact">
-            <div class="visual-pane">
-                <svg viewBox="0 0 200 150" width="100%" height="100%">
-                    <rect x="40" y="45" width="120" height="60" fill="#030712" stroke="#1f2937" rx="6"/>
-                    <text x="55" y="82" fill="#38bdf8" font-size="14" font-weight="bold">Период T вырос в 4 раза</text>
-                </svg>
+            <div class="visual-pane" style="flex-direction:row; gap:15px;">
+                <div class="sub-canvas-box">
+                    <span class="canvas-label">Круг 1 (База)</span>
+                    <svg viewBox="0 0 100 100" width="85" height="85">
+                        <circle cx="50" cy="50" r="25" fill="none" stroke="#1e293b"/>
+                        <circle cx="50" cy="25" r="5" fill="#38bdf8" id="c1-ball"/>
+                    </svg>
+                    <button class="mini-btn-run" onclick="runCircleDemo(1, 1000)">Старт 1</button>
+                </div>
+                <div class="sub-canvas-box">
+                    <span class="canvas-label">Круг 2 (Период х4)</span>
+                    <svg viewBox="0 0 100 100" width="85" height="85">
+                        <circle cx="50" cy="50" r="25" fill="none" stroke="#1e293b"/>
+                        <circle cx="50" cy="25" r="5" fill="#38bdf8" id="c2-ball"/>
+                    </svg>
+                    <button class="mini-btn-run" onclick="runCircleDemo(2, 4000)">Старт 2</button>
+                </div>
             </div>
             <div class="action-pane">
-                <span class="step-badge" style="background:var(--accent); color:#000;">Диагностика</span>
-                <h2 class="slide-header">Что произойдет с частотой &nu;?</h2>
+                <span class="step-badge" style="background:var(--accent); color:#000;">Контроль</span>
+                <h2 class="slide-header">Период Т вырос в 4 раза. Что с частотой?</h2>
                 <div class="quiz-options-buttons" data-quiz-id="q2">
-                    <button class="option-btn" data-correct="false">Вырастет в 4 раза</button>
-                    <button class="option-btn" data-correct="true">Уменьшится в 4 раза</button>
-                    <button class="option-btn" data-correct="false">Не изменится</button>
+                    <button class="option-btn" data-correct="false">Частота тоже увеличится в 4 раза</button>
+                    <button class="option-btn" data-correct="true">Частота уменьшится в 4 раза</button>
+                    <button class="option-btn" data-correct="false">Частота останется прежней</button>
                 </div>
                 <div class="feedback-badge" id="fb-q2"></div>
             </div>
         </div>
     </div>
 
-    <!-- Слайд 9: Задача 3 — Сравнение кубиков (Таблицы ОГЭ) -->
+    <!-- Слайд 9: Задача 3 — Кристаллические структуры кубиков -->
     <div class="slide" id="slide-9">
         <div class="quiz-compact">
-            <div class="visual-pane">
-                <svg viewBox="0 0 200 150" width="100%" height="100%">
-                    <rect x="25" y="60" width="40" height="40" fill="#ef4444" fill-opacity="0.2" stroke="#ef4444"/>
-                    <text x="32" y="85" fill="#ef4444" font-size="9" font-weight="bold">Свинец</text>
-                    <rect x="80" y="60" width="40" height="40" fill="#34d399" fill-opacity="0.2" stroke="#34d399"/>
-                    <text x="90" y="85" fill="#34d399" font-size="10" font-weight="bold">Дуб</text>
-                    <rect x="135" y="60" width="40" height="40" fill="#38bdf8" fill-opacity="0.2" stroke="#38bdf8"/>
-                    <text x="142" y="85" fill="#38bdf8" font-size="10" font-weight="bold">Сталь</text>
-                    <text x="50" y="40" fill="#64748b" font-size="11">Объемы кубиков равны</text>
-                </svg>
+            <div class="visual-pane" style="flex-direction:row; gap:10px;">
+                <div class="lattice-box">
+                    <svg viewBox="0 0 50 50" width="45" height="45" style="border:1px solid #ef4444; background:rgba(239,68,68,0.05);">
+                        <circle cx="10" cy="10" r="2" fill="#ef4444"/><circle cx="20" cy="10" r="2" fill="#ef4444"/><circle cx="30" cy="10" r="2" fill="#ef4444"/><circle cx="40" cy="10" r="2" fill="#ef4444"/>
+                        <circle cx="10" cy="20" r="2" fill="#ef4444"/><circle cx="20" cy="20" r="2" fill="#ef4444"/><circle cx="30" cy="20" r="2" fill="#ef4444"/><circle cx="40" cy="20" r="2" fill="#ef4444"/>
+                        <circle cx="10" cy="30" r="2" fill="#ef4444"/><circle cx="20" cy="30" r="2" fill="#ef4444"/><circle cx="30" cy="30" r="2" fill="#ef4444"/><circle cx="40" cy="30" r="2" fill="#ef4444"/>
+                        <circle cx="10" cy="40" r="2" fill="#ef4444"/><circle cx="20" cy="40" r="2" fill="#ef4444"/><circle cx="30" cy="40" r="2" fill="#ef4444"/><circle cx="40" cy="40" r="2" fill="#ef4444"/>
+                    </svg>
+                    <span style="font-size:10px; color:#ef4444;">Кубик 1</span>
+                </div>
+                <div class="lattice-box">
+                    <svg viewBox="0 0 50 50" width="45" height="45" style="border:1px solid #38bdf8; background:rgba(56,189,248,0.05);">
+                        <circle cx="12" cy="12" r="2" fill="#38bdf8"/><circle cx="25" cy="12" r="2" fill="#38bdf8"/><circle cx="38" cy="12" r="2" fill="#38bdf8"/>
+                        <circle cx="12" cy="25" r="2" fill="#38bdf8"/><circle cx="25" cy="25" r="2" fill="#38bdf8"/><circle cx="38" cy="25" r="2" fill="#38bdf8"/>
+                        <circle cx="12" cy="38" r="2" fill="#38bdf8"/><circle cx="25" cy="38" r="2" fill="#38bdf8"/><circle cx="38" cy="38" r="2" fill="#38bdf8"/>
+                    </svg>
+                    <span style="font-size:10px; color:#38bdf8;">Кубик 2</span>
+                </div>
+                <div class="lattice-box">
+                    <svg viewBox="0 0 50 50" width="45" height="45" style="border:1px solid #34d399; background:rgba(52,211,153,0.05);">
+                        <circle cx="15" cy="15" r="2" fill="#34d399"/><circle cx="35" cy="15" r="2" fill="#34d399"/>
+                        <circle cx="15" cy="35" r="2" fill="#34d399"/><circle cx="35" cy="35" r="2" fill="#34d399"/>
+                    </svg>
+                    <span style="font-size:10px; color:#34d399;">Кубик 3</span>
+                </div>
             </div>
             <div class="action-pane">
-                <span class="step-badge" style="background:var(--accent); color:#000;">Диагностика</span>
-                <h2 class="slide-header">Какой кубик имеет самую малую массу?</h2>
+                <span class="step-badge" style="background:var(--accent); color:#000;">Контроль</span>
+                <h2 class="slide-header">Объемы кубиков равны. Какой самый легкий по массе?</h2>
                 <div class="quiz-options-buttons" data-quiz-id="q3">
-                    <button class="option-btn" data-correct="false">Свинец (максимальная плотность)</button>
-                    <button class="option-btn" data-correct="true">Дуб (минимальная плотность)</button>
-                    <button class="option-btn" data-correct="false">Сталь (средняя плотность)</button>
+                    <button class="option-btn" data-correct="false">Кубик 1 (максимальная плотность узлов)</button>
+                    <button class="option-btn" data-correct="false">Кубик 2 (средняя плотность узлов)</button>
+                    <button class="option-btn" data-correct="true">Кубик 3 (минимальная плотность узлов)</button>
                 </div>
                 <div class="feedback-badge" id="fb-q3"></div>
             </div>
         </div>
     </div>
-    <!-- Слайд 10: Задача 4 — Интерактивный перевод плотности (СИ) -->
+
+    <!-- Слайд 10: Задача 4 — Перевод единиц плотности -->
     <div class="slide" id="slide-10">
         <div class="quiz-compact">
             <div class="visual-pane">
                 <svg viewBox="0 0 200 150" width="100%" height="100%">
-                    <rect x="20" y="35" width="160" height="80" fill="#030712" stroke="#1f2937" rx="8"/>
-                    <text x="45" y="65" fill="#94a3b8" font-size="12">Плотность льда:</text>
-                    <text x="55" y="90" fill="#fb923c" font-size="18" font-weight="bold">0.9 г/см³</text>
+                    <rect x="20" y="45" width="160" height="60" fill="#02040a" stroke="#1e293b" rx="6"/>
+                    <text x="45" y="80" fill="#fb923c" font-size="16" font-weight="bold">Плотность: 0.9 г/см³</text>
                 </svg>
             </div>
             <div class="action-pane">
-                <span class="step-badge" style="background:var(--accent); color:#000;">Диагностика</span>
-                <h2 class="slide-header">Сколько это в системе СИ (кг/м³)?</h2>
+                <span class="step-badge" style="background:var(--accent); color:#000;">Контроль</span>
+                <h2 class="slide-header">Переведите плотность в систему СИ:</h2>
                 <div class="select-group" data-group-id="g1">
                     <div class="selector-row">
-                        <span>Выберите правильный перевод:</span>
                         <select id="s1-1">
-                            <option value="" disabled selected>Вариант...</option>
+                            <option value="" disabled selected>Выберите ответ...</option>
                             <option value="w1">0.0009 кг/м³</option>
                             <option value="w2">90 кг/м³</option>
                             <option value="right">900 кг/м³</option>
                         </select>
                     </div>
                 </div>
-                <button class="btn btn-check" onclick="checkGroupQuiz('g1', { 's1-1':'right' })">Проверить перевод</button>
+                <button class="btn btn-check" onclick="checkGroupQuiz('g1', { 's1-1':'right' })">Проверить</button>
                 <div class="feedback-badge" id="fb-g1"></div>
             </div>
         </div>
     </div>
 
-    <!-- Слайд 11: Финал -->
+    <!-- Слайд 11: Финальные итоги -->
     <div class="slide" id="slide-11">
         <div class="visual-intro">
             <div class="score-circle"><span id="score-num">0</span>/4</div>
-            <h2 class="slide-header" style="font-size:1.6rem;">Карта готовности к ОГЭ</h2>
-            <div class="mini-verdict" id="verdict-text">Нажмите «Итог» для завершения диагностического сеанса.</div>
-            <button class="btn" style="background:var(--accent-green); color:#090d16;" onclick="showFinalVerdict()">Итог</button>
+            <h2 class="slide-header" style="font-size:1.5rem;">Профиль готовности к ОГЭ</h2>
+            <div class="mini-verdict" id="verdict-text">Нажмите кнопку «Итог» для завершения сессии.</div>
+            <button class="btn" style="background:var(--accent-green); color:#05070f;" onclick="showFinalVerdict()">Итог</button>
         </div>
     </div>
 
-    <!-- Фиксированные маркеры для стрелок -->
+    <!-- Системные стрелки -->
     <svg width="0" height="0" style="position:absolute;">
-        <defs><marker id="arr-m" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/></marker></defs>
+        <defs><marker id="arr-main" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/></marker></defs>
     </svg>
 
-    <!-- Панель управления -->
+    <!-- Нижняя панель -->
     <div class="controls">
         <button class="control-nav-btn" id="nav-prev" disabled>&larr;</button>
         <div class="progress-line-container"><div class="progress-line-fill" id="progress-fill"></div></div>
@@ -268,10 +297,10 @@
 </div>
 <style>
     :root {
-        --bg-color: #05070f;
-        --card-bg: #0b0f19;
-        --text-main: #f9fafb;
-        --text-muted: #4b5563;
+        --bg-color: #04060a;
+        --card-bg: #090d16;
+        --text-main: #f8fafc;
+        --text-muted: #334155;
         --accent: #38bdf8;
         --accent-red: #ef4444;
         --accent-green: #22c55e;
@@ -283,18 +312,17 @@
     .lab-container { width: 95vw; max-width: 820px; height: 85vh; max-height: 520px; background: var(--card-bg); border-radius: 20px; display: flex; flex-direction: column; border: 1px solid #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.8); overflow: hidden; }
     
     .slide { display: none; width: 100%; height: calc(100% - 50px); padding: 25px; }
-    .slide.active { display: flex; animation: cubicFade 0.25s ease-out; }
-    @keyframes cubicFade { from { opacity: 0; transform: scale(0.99); } to { opacity: 1; transform: scale(1); } }
+    .slide.active { display: flex; animation: smoothStepIn 0.2s ease-out; }
+    @keyframes smoothStepIn { from { opacity: 0; transform: scale(0.99); } to { opacity: 1; transform: scale(1); } }
 
-    .quiz-compact { display: grid; grid-template-columns: 1.1fr 1fr; gap: 30px; width: 100%; height: 100%; align-items: center; }
-    .visual-pane { width: 100%; height: 100%; background: #02040a; border-radius: 12px; border: 1px solid #1e293b; display: flex; justify-content: center; align-items: center; padding: 10px; position: relative; }
+    .quiz-compact { display: grid; grid-template-columns: 1.1fr 1fr; gap: 25px; width: 100%; height: 100%; align-items: center; }
+    .visual-pane { width: 100%; height: 100%; background: #010307; border-radius: 12px; border: 1px solid #1e293b; display: flex; justify-content: center; align-items: center; padding: 10px; position: relative; }
     .action-pane { display: flex; flex-direction: column; gap: 12px; height: 100%; justify-content: center; align-items: flex-start; }
     
-    .slide-header { font-size: 1.4rem; font-weight: 700; line-height: 1.3; }
-    .step-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background: #1e293b; color: var(--accent); padding: 4px 10px; border-radius: 4px; letter-spacing: 0.5px; }
-    .formula-box-mini { font-family: 'Times New Roman', serif; font-size: 1.3rem; font-style: italic; color: var(--accent); background: #02040a; padding: 6px 16px; border-radius: 6px; border: 1px dashed #334155; font-weight: bold; }
+    .slide-header { font-size: 1.35rem; font-weight: 700; line-height: 1.3; }
+    .step-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background: #1e293b; color: var(--accent); padding: 4px 10px; border-radius: 4px; }
+    .formula-box-mini { font-family: 'Times New Roman', serif; font-size: 1.3rem; font-style: italic; color: var(--accent); background: #010307; padding: 6px 14px; border-radius: 6px; border: 1px dashed #334155; font-weight: bold; }
     .pure-text { font-size: 0.95rem; line-height: 1.5; color: #94a3b8; }
-    .highlight-underline { border-bottom: 2px dashed var(--accent); color: var(--accent); }
 </style>
 <style>
     .quiz-options-buttons { display: flex; flex-direction: column; gap: 6px; width: 100%; }
@@ -305,22 +333,30 @@
     .quiz-options-buttons.lock .option-btn.selected-correct { background: rgba(34, 197, 94, 0.15); border-color: var(--accent-green); color: #4ade80; opacity: 1; }
     .quiz-options-buttons.lock .option-btn.selected-wrong { background: rgba(239, 68, 68, 0.15); border-color: var(--accent-red); color: #f87171; opacity: 1; }
 
-    .select-group { display: flex; flex-direction: column; gap: 6px; background: #02040a; padding: 10px; border-radius: 8px; border: 1px solid #1e293b; width: 100%; }
+    .select-group { display: flex; flex-direction: column; gap: 6px; background: #010307; padding: 10px; border-radius: 8px; border: 1px solid #1e293b; width: 100%; }
     .selector-row { display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; }
     select { background: #111827; color: var(--text-main); border: 1px solid #334155; padding: 8px; border-radius: 6px; font-size: 0.85rem; outline: none; width: 100%; }
     select.row-correct { border-color: var(--accent-green) !important; color: #4ade80; }
     select.row-wrong { border-color: var(--accent-red) !important; color: #f87171; }
 
-    .btn-check { background: #1e293b; color: white; padding: 8px 16px; border-radius: 6px; border: 1px solid #334155; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    .btn-check { background: #1e293b; color: white; padding: 8px 14px; border-radius: 6px; border: 1px solid #334155; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
     .btn-check:hover { background: #334155; border-color: var(--accent); }
     .feedback-badge { font-size: 0.9rem; font-weight: 600; min-height: 18px; }
 
     .visual-intro { text-align: center; margin: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
     .main-title { font-size: 2rem; font-weight: 800; }
-    .sub-title { font-size: 1rem; color: #4b5563; }
-    .score-circle { width: 85px; height: 85px; border: 3px solid var(--accent); background: #02040a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.7rem; font-weight: 800; }
+    .sub-title { font-size: 1rem; color: #475569; }
+    .score-circle { width: 85px; height: 85px; border: 3px solid var(--accent); background: #010307; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.7rem; font-weight: 800; }
     .mini-verdict { font-size: 0.95rem; color: #94a3b8; max-width: 420px; line-height: 1.4; text-align: center; }
+    
     .rotation-timer { position: absolute; top: 12px; right: 12px; background: #111827; padding: 4px 10px; border-radius: 6px; border: 1px solid #1e293b; font-family: monospace; font-size: 0.9rem; color: var(--accent-orange); }
+    .live-results { position: absolute; bottom: 12px; left: 12px; font-size: 0.85rem; color: #a7f3d0; line-height: 1.4; font-weight: 600; }
+
+    .sub-canvas-box { display: flex; flex-direction: column; align-items: center; gap: 5px; background: #02040a; padding: 8px; border-radius: 8px; border: 1px solid #1e293b; }
+    .canvas-label { font-size: 10px; color: #64748b; font-weight: bold; }
+    .mini-btn-run { background: #1e293b; border: none; color: white; padding: 3px 10px; font-size: 10px; border-radius: 4px; cursor: pointer; }
+    .lattice-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .clockwise-badge { position: absolute; top: 10px; left: 10px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 3px 8px; font-size: 11px; border-radius: 5px; font-weight: 600; }
 
     .controls { height: 50px; border-top: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
     .control-nav-btn { background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; padding: 5px 15px; }
@@ -330,7 +366,6 @@
     .progress-line-container { flex-grow: 1; height: 4px; background: #1e293b; margin: 0 20px; border-radius: 2px; }
     .progress-line-fill { width: 0%; height: 100%; background: var(--accent); transition: width 0.2s ease; }
     .btn-next-step { background: var(--text-main); color: var(--bg-color); border: none; padding: 10px 24px; font-size: 0.95rem; font-weight: 700; border-radius: 8px; cursor: pointer; }
-
     @media (max-width: 640px) { .quiz-compact { grid-template-columns: 1fr; gap: 15px; } .visual-pane { height: 140px; } }
 </style>
 <script>
@@ -339,58 +374,105 @@ const navPrev = document.getElementById('nav-prev');
 const navNext = document.getElementById('nav-next');
 const progressFill = document.getElementById('progress-fill');
 let currentIdx = 0;
-
 let singleAnswers = { q1: null, q2: null, q3: null };
 let groupAnswers = { g1: false };
+let s3AnimId = null, s4AnimId = null;
 
 function updateLayout() {
     slides.forEach((slide, idx) => slide.classList.toggle('active', idx === currentIdx));
     navPrev.disabled = currentIdx === 0;
     navNext.disabled = currentIdx === slides.length - 1;
     progressFill.style.width = `${(currentIdx / (slides.length - 1)) * 100}%`;
+    if(currentIdx !== 2 && s3AnimId) { cancelAnimationFrame(s3AnimId); s3AnimId = null; }
+    if(currentIdx !== 3 && s4AnimId) { cancelAnimationFrame(s4AnimId); s4AnimId = null; }
 }
 function goToSlide(idx) { currentIdx = idx; updateLayout(); }
 navNext.addEventListener('click', () => { if (currentIdx < slides.length - 1) { currentIdx++; updateLayout(); } });
 navPrev.addEventListener('click', () => { if (currentIdx > 0) { currentIdx--; updateLayout(); } });
 
-// Анимация 1: Демонстрация Периода вращения
 function triggerRotationDemo() {
     const body = document.getElementById('rot-body');
     const line = document.getElementById('rad-line');
     const timerBox = document.getElementById('timer-box');
-    let angle = 0, start = null;
+    const resBox = document.getElementById('live-results-s2');
+    resBox.innerText = ""; let start = null;
     
     function step(timestamp) {
         if (!start) start = timestamp;
-        let progress = (timestamp - start) / 2000; // Период T = 2 секунды
+        let elapsed = (timestamp - start) / 1000;
+        let progress = elapsed / 2.0; 
         if (progress > 1) progress = 1;
         
-        angle = progress * 360;
+        let angle = progress * 360;
         body.setAttribute('transform', `rotate(${angle}, 100, 80)`);
         line.setAttribute('transform', `rotate(${angle}, 100, 80)`);
-        timerBox.innerText = (progress * 2).toFixed(1) + 'с';
+        timerBox.innerText = (progress * 2.0).toFixed(1) + 'с';
         
-        if (progress < 1) requestAnimationFrame(step);
+        if (progress < 1) {
+            requestAnimationFrame(step);
+        } else {
+            resBox.innerHTML = "Результат круга:<br>T = 2.0 с<br>&nu; = 0.5 Гц";
+        }
     }
     requestAnimationFrame(step);
 }
 
-// Анимация 2: Демонстрация Инерции при обрыве
+function triggerRotationMode() {
+    if(s3AnimId) cancelAnimationFrame(s3AnimId);
+    const grp = document.getElementById('tangent-group');
+    let start = null;
+    function run(ts) {
+        if(!start) start = ts;
+        let angle = ((ts - start) / 15) % 360;
+        grp.setAttribute('transform', `rotate(${angle}, 100, 80)`);
+        s3AnimId = requestAnimationFrame(run);
+    }
+    s3AnimId = requestAnimationFrame(run);
+}
+
 function triggerBreakDemo() {
+    if(s3AnimId) cancelAnimationFrame(s3AnimId);
+    const grp = document.getElementById('tangent-group');
+    grp.setAttribute('transform', 'rotate(0, 100, 80)'); 
     const ball = document.getElementById('tangent-ball');
     const vector = document.getElementById('v-vector');
     let posX = 100;
-    
     function anim() {
-        posX += 2;
+        posX += 2.5;
         ball.setAttribute('cx', posX);
         vector.setAttribute('transform', `translate(${posX - 100}, 0)`);
-        if (posX < 240) requestAnimationFrame(anim);
+        if (posX < 240) s3AnimId = requestAnimationFrame(anim);
     }
-    requestAnimationFrame(anim);
+    s3AnimId = requestAnimationFrame(anim);
+}
+</script>
+<script>
+function triggerAccelAnim() {
+    if(s4AnimId) cancelAnimationFrame(s4AnimId);
+    const grp = document.getElementById('accel-group');
+    let start = null;
+    function run(ts) {
+        if(!start) start = ts;
+        let angle = ((ts - start) / 20) % 360;
+        grp.setAttribute('transform', `rotate(${angle}, 100, 80)`);
+        s4AnimId = requestAnimationFrame(run);
+    }
+    s4AnimId = requestAnimationFrame(run);
 }
 
-// Кнопки вариантов (Задачи 1-3)
+function runCircleDemo(id, duration) {
+    const ball = document.getElementById(`c${id}-ball`);
+    let start = null;
+    function step(ts) {
+        if(!start) start = ts;
+        let progress = (ts - start) / duration;
+        if(progress > 1) progress = 1;
+        ball.setAttribute('transform', `rotate(${progress * 360}, 50, 50)`);
+        if(progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
 document.querySelectorAll('.quiz-options-buttons').forEach(wrapper => {
     wrapper.addEventListener('click', (e) => {
         const btn = e.target.closest('.option-btn');
@@ -399,22 +481,20 @@ document.querySelectorAll('.quiz-options-buttons').forEach(wrapper => {
         const isCorrect = btn.getAttribute('data-correct') === 'true';
         wrapper.classList.add('lock');
         const badge = document.getElementById(`fb-${qId}`);
-        
         if (isCorrect) {
             btn.classList.add('selected-correct');
-            badge.innerHTML = '<span style="color:var(--accent-green)">🛑 Верно!</span>';
+            badge.innerHTML = '<span style="color:var(--accent-green)">🛑 Правильно!</span>';
             singleAnswers[qId] = true;
         } else {
             btn.classList.add('selected-wrong');
             wrapper.querySelector('[data-correct="true"]').classList.add('selected-correct');
-            badge.innerHTML = '<span style="color:var(--accent-red)">❌ Ошибка.</span>';
+            badge.innerHTML = '<span style="color:var(--accent-red)">❌ Неверно.</span>';
             singleAnswers[qId] = false;
         }
-        setTimeout(() => { if (currentIdx < slides.length - 1) { currentIdx++; updateLayout(); } }, 1100);
+        setTimeout(() => { if (currentIdx < slides.length - 1) { currentIdx++; updateLayout(); } }, 1200);
     });
 });
 
-// Проверка селектора (Задача 4)
 function checkGroupQuiz(groupId, correctAnswers) {
     const container = document.querySelector(`[data-group-id="${groupId}"]`);
     if (container.classList.contains('disabled')) return;
@@ -426,18 +506,16 @@ function checkGroupQuiz(groupId, correctAnswers) {
     sel.classList.add(isCorrect ? 'row-correct' : 'row-wrong');
     container.classList.add('disabled');
     groupAnswers[groupId] = isCorrect;
-    badge.innerHTML = isCorrect ? '<span style="color:var(--accent-green)">🛑 Точно!</span>' : '<span style="color:var(--accent-red)">❌ Ошибка перевода.</span>';
+    badge.innerHTML = isCorrect ? '<span style="color:var(--accent-green)">🛑 Абсолютно верно!</span>' : '<span style="color:var(--accent-red)">❌ Ошибка перевода.</span>';
     setTimeout(() => { if (currentIdx < slides.length - 1) { currentIdx++; updateLayout(); } }, 1200);
 }
 
-// Вердикт
 function showFinalVerdict() {
     const score = Object.values(singleAnswers).filter(Boolean).length + Object.values(groupAnswers).filter(Boolean).length;
     document.getElementById('score-num').innerText = score;
     const txt = document.getElementById('verdict-text');
-    
     if (score === 4) txt.innerHTML = "🏆 <b>Превосходный результат!</b> Ловушки ОГЭ на вращение векторов и перевод плотности СИ пройдены без единой ошибки.";
-    else if (score >= 2) txt.innerHTML = "⚖️ <b>Базовые формулы понятны.</b> Однако зафиксированы ошибки в зависимостях единиц плотности или направлении скорости.";
+    else if (score >= 2) txt.innerHTML = "⚖️ <b>Базовые формулы понятны.</b> Однако зафиксированы ошибки в зависимостях частоты от периода или решетках плотности.";
     else txt.innerHTML = "🔄 <b>Низкий фокус внимания.</b> Рекомендуется повторно разобрать анимационные чертежи векторов на Слайдах 3 и 4.";
 }
 updateLayout();
