@@ -68,6 +68,7 @@
                 <div style="display:flex; gap:8px;">
                     <button class="btn-check" id="btn-s3-start" onclick="triggerRotationMode()">Вращение</button>
                     <button class="btn-check" id="btn-s3-break" style="border-color:var(--accent-red);" onclick="triggerBreakDemo()" disabled>Оборвать нить</button>
+                    <button class="btn-check" style="border-color:var(--text-muted);" onclick="resetSlide3Demo()">Сброс</button>
                 </div>
             </div>
         </div>
@@ -476,7 +477,7 @@ function updateLayout() {
     navPrev.disabled = currentIdx === 0;
     navNext.disabled = currentIdx === slides.length - 1;
     progressFill.style.width = `${(currentIdx / (slides.length - 1)) * 100}%`;
-    if(currentIdx !== 2 && s3AnimId) { cancelAnimationFrame(s3AnimId); s3AnimId = null; s3State.isRotating = false; }
+    if(currentIdx !== 2) { resetSlide3Demo(); }
     if(currentIdx !== 3 && s4AnimId) { cancelAnimationFrame(s4AnimId); s4AnimId = null; }
 }
 function goToSlide(idx) { currentIdx = idx; updateLayout(); }
@@ -559,6 +560,41 @@ function triggerBreakDemo() {
         }
     }
     s3AnimId = requestAnimationFrame(launch);
+}
+
+// Новая функция: Полный сброс симуляции Слайда 3 в исходное состояние
+function resetSlide3Demo() {
+    s3State.isRotating = false;
+    if(s3AnimId) cancelAnimationFrame(s3AnimId);
+    s3AnimId = null;
+
+    // Включаем обратно кнопку вращения и гасим обрыв
+    document.getElementById('btn-s3-break').disabled = true;
+    document.getElementById('rope-s3').style.display = "block";
+
+    // Сбрасываем трансформации и возвращаем шарик в координаты (100, 40)
+    const grp = document.getElementById('tangent-group');
+    const rope = document.getElementById('rope-s3');
+    const ball = document.getElementById('tangent-ball');
+    const vector = document.getElementById('v-vector');
+    const label = document.getElementById('v-label');
+
+    grp.removeAttribute('transform');
+    rope.removeAttribute('transform');
+
+    // Возврат базовых координат в SVG
+    ball.setAttribute('cx', '100');
+    ball.setAttribute('cy', '40');
+    
+    vector.setAttribute('x1', '100');
+    vector.setAttribute('y1', '40');
+    vector.setAttribute('x2', '140');
+    vector.setAttribute('y2', '40');
+    vector.removeAttribute('transform');
+
+    label.setAttribute('x', '115');
+    label.setAttribute('y', '32');
+    label.removeAttribute('transform');
 }
 </script>
 <script>
